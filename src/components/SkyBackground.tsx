@@ -151,7 +151,7 @@ const SkyBackground: Component<SkyBackgroundProps> = (props) => {
         </For>
       </div>
 
-      {/* 太陽 */}
+      {/* 太陽（放射状の光線＋にっこり顔） */}
       <Show when={sun().visible}>
         <div
           class="absolute"
@@ -159,16 +159,45 @@ const SkyBackground: Component<SkyBackgroundProps> = (props) => {
             left: `${sun().xPct}%`,
             top: `${sun().yPct}%`,
             transform: "translate(-50%, -50%)",
-            width: "72px",
-            height: "72px",
-            "border-radius": "50%",
-            background: "radial-gradient(circle, #fffae0 0%, #ffd860 55%, #ff9828 100%)",
-            "box-shadow": "0 0 50px #ffe090, 0 0 100px #ffc060cc",
+            width: "120px",
+            height: "120px",
+            filter: "drop-shadow(0 0 24px #ffd06080)",
           }}
-        />
+        >
+          <svg viewBox="-60 -60 120 120" class="w-full h-full">
+            {/* 光線（12本） */}
+            <g stroke="#FFB020" stroke-width="4" stroke-linecap="round">
+              <For each={Array.from({ length: 12 })}>
+                {(_, i) => {
+                  const ang = (i() * 30 * Math.PI) / 180;
+                  const r1 = 34;
+                  const r2 = 52;
+                  return (
+                    <line
+                      x1={r1 * Math.cos(ang)}
+                      y1={r1 * Math.sin(ang)}
+                      x2={r2 * Math.cos(ang)}
+                      y2={r2 * Math.sin(ang)}
+                    />
+                  );
+                }}
+              </For>
+            </g>
+            {/* 本体 */}
+            <circle cx="0" cy="0" r="28" fill="#FFD848" stroke="#FFB020" stroke-width="2.5" />
+            {/* ほっぺ */}
+            <circle cx="-13" cy="6" r="4.5" fill="#FF9BB0" opacity="0.75" />
+            <circle cx="13" cy="6" r="4.5" fill="#FF9BB0" opacity="0.75" />
+            {/* 目 */}
+            <circle cx="-8" cy="-4" r="2.2" fill="#3A2818" />
+            <circle cx="8" cy="-4" r="2.2" fill="#3A2818" />
+            {/* 口 */}
+            <path d="M -6 6 Q 0 11 6 6" stroke="#3A2818" stroke-width="2" stroke-linecap="round" fill="none" />
+          </svg>
+        </div>
       </Show>
 
-      {/* 月 */}
+      {/* 月（三日月＋にっこり顔） */}
       <Show when={moon().visible}>
         <div
           class="absolute"
@@ -176,13 +205,37 @@ const SkyBackground: Component<SkyBackgroundProps> = (props) => {
             left: `${moon().xPct}%`,
             top: `${moon().yPct}%`,
             transform: "translate(-50%, -50%)",
-            width: "56px",
-            height: "56px",
-            "border-radius": "50%",
-            background: "radial-gradient(circle at 35% 35%, #fffdf0 0%, #f0f0d8 50%, #c8c8a8 100%)",
-            "box-shadow": "0 0 30px #fff8c880, 0 0 60px #e8e0b060",
+            width: "84px",
+            height: "84px",
+            filter: "drop-shadow(0 0 16px #fff8c880)",
           }}
-        />
+        >
+          <svg viewBox="-42 -42 84 84" class="w-full h-full">
+            <defs>
+              {/* 満月から少し右上に欠けた円を差し引いて三日月にする */}
+              <mask id="crescent-mask">
+                <rect x="-42" y="-42" width="84" height="84" fill="black" />
+                <circle cx="0" cy="0" r="32" fill="white" />
+                <circle cx="14" cy="-8" r="28" fill="black" />
+              </mask>
+            </defs>
+            {/* 月本体（三日月） */}
+            <g mask="url(#crescent-mask)">
+              <circle cx="0" cy="0" r="32" fill="#FFF5C8" />
+              <circle cx="0" cy="0" r="32" fill="#FFE88A" opacity="0.5" />
+            </g>
+            {/* 輪郭（三日月の内外にほんのり） */}
+            <g mask="url(#crescent-mask)">
+              <circle cx="0" cy="0" r="31" fill="none" stroke="#E8C060" stroke-width="1.2" />
+            </g>
+            {/* 顔（三日月の左側の"太い部分"に配置） */}
+            <circle cx="-14" cy="2" r="1.6" fill="#3A2818" />
+            <circle cx="-5" cy="-1" r="1.6" fill="#3A2818" />
+            <path d="M -14 7 Q -10 10 -6 7" stroke="#3A2818" stroke-width="1.3" stroke-linecap="round" fill="none" />
+            {/* ほっぺ */}
+            <circle cx="-18" cy="6" r="2.4" fill="#FFB0A0" opacity="0.6" />
+          </svg>
+        </div>
       </Show>
     </div>
   );
