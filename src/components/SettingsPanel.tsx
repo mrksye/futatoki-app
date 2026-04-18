@@ -17,6 +17,8 @@ const SettingsPanel: Component = () => {
     exitRotate,
     resetRotate,
     setRotateMinutes,
+    setRotateMode,
+    randomizeRotate,
   } = useSettings();
   const isLandscape = useOrientation();
 
@@ -66,43 +68,62 @@ const SettingsPanel: Component = () => {
 
       {/* ===== 自由回転モード専用UI ===== */}
       <Show when={rotate.active}>
-        {/* 左上: リセット */}
-        <button class={`fixed top-2 left-2 z-50 ${btnClass}`} onClick={resetRotate}>
-          {strings.settings.rotateReset}
+        {/* 左下: じどうかいてん 開始/停止（auto/manual問わず常時表示） */}
+        <button
+          class={`fixed bottom-2 left-2 z-50 ${btnClass}`}
+          onClick={() => setRotateMode(rotate.mode === "auto" ? "manual" : "auto")}
+        >
+          {rotate.mode === "auto" ? strings.settings.autoStop : strings.settings.autoStart}
         </button>
 
-        {/* スタイル切替（横長=上センター, 縦長=左センター）表示は切替先 */}
-        <button
-          class={
-            "fixed z-50 " +
-            (isLandscape()
-              ? "left-1/2 top-2 -translate-x-1/2"
-              : "left-2 top-1/2 -translate-y-1/2") +
-            " " + btnClass
-          }
-          onClick={toggleRotateStyle}
-        >
-          {rotate.style === "crank"
-            ? strings.settings.styleToDrag
-            : strings.settings.styleToCrank}
-        </button>
+        {/* manualサブモードのみの操作UI（auto中は非表示） */}
+        <Show when={rotate.mode === "manual"}>
+          {/* 左上: リセット */}
+          <button class={`fixed top-2 left-2 z-50 ${btnClass}`} onClick={resetRotate}>
+            {strings.settings.rotateReset}
+          </button>
 
-        {/* 1ふんもどす（横長=下センター, 縦長=右センター）長押しで連続 */}
-        <button
-          class={
-            "fixed z-50 " +
-            (isLandscape()
-              ? "bottom-2 left-1/2 -translate-x-1/2"
-              : "right-2 top-1/2 -translate-y-1/2") +
-            " " + btnClass
-          }
-          style={{ "touch-action": "none" }}
-          onPointerDown={startRewind}
-          onPointerUp={stopRewind}
-          onPointerCancel={stopRewind}
-        >
-          {strings.settings.rewindMinute}
-        </button>
+          {/* スタイル切替（横長=上センター, 縦長=左センター）表示は切替先 */}
+          <button
+            class={
+              "fixed z-50 " +
+              (isLandscape()
+                ? "left-1/2 top-2 -translate-x-1/2"
+                : "left-2 top-1/2 -translate-y-1/2") +
+              " " + btnClass
+            }
+            onClick={toggleRotateStyle}
+          >
+            {rotate.style === "crank"
+              ? strings.settings.styleToDrag
+              : strings.settings.styleToCrank}
+          </button>
+
+          {/* 1ふんもどす（横長=下センター, 縦長=右センター）長押しで連続 */}
+          <button
+            class={
+              "fixed z-50 " +
+              (isLandscape()
+                ? "bottom-2 left-1/2 -translate-x-1/2"
+                : "right-2 top-1/2 -translate-y-1/2") +
+              " " + btnClass
+            }
+            style={{ "touch-action": "none" }}
+            onPointerDown={startRewind}
+            onPointerUp={stopRewind}
+            onPointerCancel={stopRewind}
+          >
+            {strings.settings.rewindMinute}
+          </button>
+
+          {/* 右下: らんだむ（押すたびに15分刻みの別時刻へ） */}
+          <button
+            class={`fixed bottom-2 right-2 z-50 ${btnClass}`}
+            onClick={randomizeRotate}
+          >
+            {strings.settings.random}
+          </button>
+        </Show>
       </Show>
 
       {/* ===== 通常モードUI（自由回転時は非表示） ===== */}

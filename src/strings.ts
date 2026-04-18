@@ -24,6 +24,11 @@ export const strings = {
     // 自由回転の操作スタイル（ボタン表示は「切替先」）
     styleToCrank: "てまわし",
     styleToDrag: "どらっぐ",
+    // 自由回転のサブ機能
+    autoStart: "じどうかいてん",
+    autoStop: "じどうをとめる",
+    /** 押すたびに15分刻みの別時刻へ */
+    random: "らんだむ",
   },
   badge: {
     am: "\u2600\uFE0F AM",

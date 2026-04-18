@@ -1,4 +1,4 @@
-import { createMemo, createSignal, onCleanup, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, on, onCleanup, Show, untrack } from "solid-js";
 import type { Component } from "solid-js";
 import AnalogClock from "./AnalogClock";
 import SecondsBar from "./SecondsBar";
@@ -104,7 +104,7 @@ export const ClockLayout: Component = () => {
   };
 
   const onDragStart = (e: PointerEvent) => {
-    if (!rotate.active) return;
+    if (!rotate.active || rotate.mode !== "manual") return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     if (rotate.style === "crank") {
       const pivot = nearestClockCenter(e.clientX, e.clientY);
@@ -179,6 +179,27 @@ export const ClockLayout: Component = () => {
     if (rafId !== null) cancelAnimationFrame(rafId);
   });
 
+  // ===== 自動回転: 1日 ≒ 24 秒で進行 =====
+  const MIN_PER_MS = 1440 / 24000;
+  createEffect(
+    on(
+      () => rotate.active && rotate.mode === "auto",
+      (running) => {
+        if (!running) return;
+        let last = performance.now();
+        let id = 0;
+        const tick = (now: number) => {
+          const dt = now - last;
+          last = now;
+          setRotateMinutes(untrack(() => rotate.minutes) + dt * MIN_PER_MS);
+          id = requestAnimationFrame(tick);
+        };
+        id = requestAnimationFrame(tick);
+        onCleanup(() => cancelAnimationFrame(id));
+      },
+    ),
+  );
+
   return (
     <div class="w-full h-full overflow-hidden relative">
       {/* 空背景（自由回転時のみ） */}
@@ -190,8 +211,11 @@ export const ClockLayout: Component = () => {
       <div
         class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}
         style={{
-          "touch-action": rotate.active ? "none" : "auto",
-          cursor: rotate.active ? (dragging() ? "grabbing" : "grab") : "default",
+          "touch-action": rotate.active && rotate.mode === "manual" ? "none" : "auto",
+          cursor:
+            rotate.active && rotate.mode === "manual"
+              ? (dragging() ? "grabbing" : "grab")
+              : "default",
         }}
         onPointerDown={onDragStart}
         onPointerMove={onDragMove}

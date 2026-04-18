@@ -11,6 +11,8 @@ export type TimeFormat = "24h" | "12h";
 export type DetailMode = "kuwashiku" | "sukkiri";
 /** 自由回転の操作スタイル: crank=角度CW限定(てまわし), drag=距離ベース(どらっぐ) */
 export type RotateStyle = "crank" | "drag";
+/** 自由回転のサブモード: manual=手動, auto=自動進行 (らんだむは単発アクションなのでここには無い) */
+export type RotateMode = "manual" | "auto";
 
 export interface Settings {
   colorMode: ColorMode;
@@ -27,6 +29,8 @@ export interface RotateState {
   minutes: number;
   /** 操作スタイル。エントリ時は常に "drag" に初期化（セッション内のみ有効） */
   style: RotateStyle;
+  /** サブモード。エントリ時は常に "manual" に初期化 */
+  mode: RotateMode;
 }
 
 interface SettingsContextValue {
@@ -43,9 +47,35 @@ interface SettingsContextValue {
   resetRotate: () => void;
   setRotateMinutes: (m: number) => void;
   toggleRotateStyle: () => void;
+  setRotateMode: (mode: RotateMode) => void;
+  /** 15分刻みのランダム時刻を設定（単発アクション） */
+  randomizeRotate: () => void;
 }
 
 const STORAGE_KEY = "educlock-settings";
+
+/**
+ * らんだむボタンが出す時刻の候補（子どもが起きてる時間帯）。
+ * 6:00〜21:00 を 15 分刻みで列挙。ここを編集すれば対象時刻を絞れる。
+ */
+const RANDOM_AWAKE_TIMES: readonly [number, number][] = [
+  [6, 0], [6, 15], [6, 30], [6, 45],
+  [7, 0], [7, 15], [7, 30], [7, 45],
+  [8, 0], [8, 15], [8, 30], [8, 45],
+  [9, 0], [9, 15], [9, 30], [9, 45],
+  [10, 0], [10, 15], [10, 30], [10, 45],
+  [11, 0], [11, 15], [11, 30], [11, 45],
+  [12, 0], [12, 15], [12, 30], [12, 45],
+  [13, 0], [13, 15], [13, 30], [13, 45],
+  [14, 0], [14, 15], [14, 30], [14, 45],
+  [15, 0], [15, 15], [15, 30], [15, 45],
+  [16, 0], [16, 15], [16, 30], [16, 45],
+  [17, 0], [17, 15], [17, 30], [17, 45],
+  [18, 0], [18, 15], [18, 30], [18, 45],
+  [19, 0], [19, 15], [19, 30], [19, 45],
+  [20, 0], [20, 15], [20, 30], [20, 45],
+  [21, 0],
+];
 
 const defaultSettings: Settings = {
   colorMode: "sector",
@@ -92,6 +122,7 @@ export const SettingsProvider: ParentComponent = (props) => {
     active: false,
     minutes: nowAsMinutes(),
     style: "drag",
+    mode: "manual",
   });
 
   const value: SettingsContextValue = {
@@ -126,11 +157,11 @@ export const SettingsProvider: ParentComponent = (props) => {
       return rotate;
     },
     enterRotate() {
-      // エントリ時は style を drag にリセット
-      setRotate({ active: true, minutes: nowAsMinutes(), style: "drag" });
+      // エントリ時は style を drag、mode を manual にリセット
+      setRotate({ active: true, minutes: nowAsMinutes(), style: "drag", mode: "manual" });
     },
     exitRotate() {
-      setRotate("active", false);
+      setRotate({ active: false, mode: "manual" });
     },
     resetRotate() {
       setRotate("minutes", nowAsMinutes());
@@ -141,6 +172,15 @@ export const SettingsProvider: ParentComponent = (props) => {
     },
     toggleRotateStyle() {
       setRotate("style", rotate.style === "crank" ? "drag" : "crank");
+    },
+    setRotateMode(mode) {
+      setRotate("mode", mode);
+    },
+    randomizeRotate() {
+      const pick = RANDOM_AWAKE_TIMES[
+        Math.floor(Math.random() * RANDOM_AWAKE_TIMES.length)
+      ]!;
+      setRotate("minutes", pick[0] * 60 + pick[1]);
     },
   };
 
