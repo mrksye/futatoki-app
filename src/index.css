@@ -8,6 +8,9 @@ html, body, #root {
   height: 100%;
   overflow: hidden;
   font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* やわらかグラデーション背景 */

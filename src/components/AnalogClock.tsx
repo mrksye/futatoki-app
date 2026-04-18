@@ -215,7 +215,13 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
                   y={y()}
                   text-anchor="middle"
                   dominant-baseline="central"
-                  font-size={isKuwashiku() ? (num >= 10 ? "24" : "28") : (num >= 10 ? "32" : "36")}
+                  font-size={
+                    settings.colorMode === "badge"
+                      ? (num >= 10 ? "18" : "24")
+                      : isKuwashiku()
+                        ? (num >= 10 ? "24" : "28")
+                        : (num >= 10 ? "32" : "36")
+                  }
                   font-weight="900"
                   font-family="Nunito, sans-serif"
                   fill={settings.colorMode === "badge" ? color()!.text : "#111111"}
