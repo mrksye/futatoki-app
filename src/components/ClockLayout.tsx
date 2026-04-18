@@ -4,9 +4,11 @@ import AnalogClock from "./AnalogClock";
 import SecondsBar from "./SecondsBar";
 import SettingsPanel from "./SettingsPanel";
 import { useCurrentTime } from "../hooks/useCurrentTime";
+import { useOrientation } from "../hooks/useOrientation";
 
 export const ClockLayout: Component = () => {
   const time = useCurrentTime();
+  const isLandscape = useOrientation();
 
   // AM/PMバッジ押してる間だけ反対側をプレビュー
   const [flipped, setFlipped] = createSignal(false);
@@ -34,9 +36,14 @@ export const ClockLayout: Component = () => {
       {/* 秒バー：存在感は最小限 */}
       <SecondsBar seconds={time().seconds} hours={time().hours} />
 
-      {/* 現在のAM/PM表示（長押しで反対側プレビュー）: ポートレート=左センター, ランドスケープ=上センター */}
+      {/* 現在のAM/PM表示（押してる間だけ反対側プレビュー）: ポートレート=左センター, ランドスケープ=上センター */}
       <div
-        class="absolute z-20 left-2 top-1/2 -translate-y-1/2 landscape:left-1/2 landscape:top-2 landscape:translate-y-0 landscape:-translate-x-1/2 px-3 py-1 rounded-full text-xs font-black shadow-md cursor-pointer"
+        class={
+          "absolute z-20 px-3 py-1 rounded-full text-xs font-black shadow-md cursor-pointer " +
+          (isLandscape()
+            ? "left-1/2 top-2 -translate-x-1/2"
+            : "left-2 top-1/2 -translate-y-1/2")
+        }
         style={{
           "background-color": isAm() ? "#0080D8" : "#E02068",
           color: "#ffffff",
@@ -51,7 +58,7 @@ export const ClockLayout: Component = () => {
       </div>
 
       {/* 時計を画面いっぱいに！paddingもgapも最小！ */}
-      <div class="flex-1 flex flex-col landscape:flex-row items-stretch min-h-0">
+      <div class={"flex-1 flex items-stretch min-h-0 " + (isLandscape() ? "flex-row" : "flex-col")}>
         {/* AM */}
         <div class="flex-1 flex flex-col items-center justify-center min-h-0 min-w-0">
           <AnalogClock

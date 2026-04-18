@@ -1,9 +1,11 @@
 import type { Component } from "solid-js";
 import { useSettings } from "../store/settings";
 import { getNextPalette } from "../colors";
+import { useOrientation } from "../hooks/useOrientation";
 
 const SettingsPanel: Component = () => {
   const { settings, setColorMode, setTimeFormat, setDetailMode, cyclePalette } = useSettings();
+  const isLandscape = useOrientation();
 
   const toggleColorMode = () =>
     setColorMode(settings.colorMode === "sector" ? "badge" : "sector");
@@ -52,7 +54,13 @@ const SettingsPanel: Component = () => {
 
       {/* 次パレット名ボタン: ポートレート=右センター, ランドスケープ=下センター */}
       <button
-        class={`fixed z-50 right-2 top-1/2 -translate-y-1/2 landscape:right-auto landscape:top-auto landscape:translate-y-0 landscape:bottom-2 landscape:left-1/2 landscape:-translate-x-1/2 ${btnClass}`}
+        class={
+          "fixed z-50 " +
+          (isLandscape()
+            ? "bottom-2 left-1/2 -translate-x-1/2"
+            : "right-2 top-1/2 -translate-y-1/2") +
+          " " + btnClass
+        }
         onClick={cyclePalette}
       >
         {getNextPalette(settings.paletteId).name}
