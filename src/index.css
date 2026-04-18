@@ -17,3 +17,9 @@ html, body, #root {
 #root {
   background: linear-gradient(160deg, #fef6e4 0%, #fce4ec 35%, #e8eaf6 65%, #e0f7fa 100%);
 }
+
+/* 手回しモードの星のまたたき */
+@keyframes twinkle {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}

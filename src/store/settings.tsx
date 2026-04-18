@@ -9,6 +9,8 @@ import { DEFAULT_PALETTE_ID, getPalette, palettes } from "../colors";
 export type ColorMode = "sector" | "badge";
 export type TimeFormat = "24h" | "12h";
 export type DetailMode = "kuwashiku" | "sukkiri";
+/** 自由回転の操作スタイル: crank=角度CW限定(てまわし), drag=距離ベース(どらっぐ) */
+export type RotateStyle = "crank" | "drag";
 
 export interface Settings {
   colorMode: ColorMode;
@@ -18,6 +20,15 @@ export interface Settings {
   paletteId: string;
 }
 
+export interface RotateState {
+  /** じゆうかいてんモードON/OFF */
+  active: boolean;
+  /** 表示中の分（0-1439） */
+  minutes: number;
+  /** 操作スタイル。エントリ時は常に "drag" に初期化（セッション内のみ有効） */
+  style: RotateStyle;
+}
+
 interface SettingsContextValue {
   settings: Settings;
   setColorMode: (mode: ColorMode) => void;
@@ -25,6 +36,13 @@ interface SettingsContextValue {
   setDetailMode: (mode: DetailMode) => void;
   setPaletteId: (id: string) => void;
   cyclePalette: () => void;
+
+  rotate: RotateState;
+  enterRotate: () => void;
+  exitRotate: () => void;
+  resetRotate: () => void;
+  setRotateMinutes: (m: number) => void;
+  toggleRotateStyle: () => void;
 }
 
 const STORAGE_KEY = "educlock-settings";
@@ -61,10 +79,20 @@ function saveSettings(settings: Settings) {
   }
 }
 
+function nowAsMinutes(): number {
+  const d = new Date();
+  return d.getHours() * 60 + d.getMinutes();
+}
+
 const SettingsContext = createContext<SettingsContextValue>();
 
 export const SettingsProvider: ParentComponent = (props) => {
   const [settings, setSettings] = createStore<Settings>(loadSettings());
+  const [rotate, setRotate] = createStore<RotateState>({
+    active: false,
+    minutes: nowAsMinutes(),
+    style: "drag",
+  });
 
   const value: SettingsContextValue = {
     get settings() {
@@ -92,6 +120,27 @@ export const SettingsProvider: ParentComponent = (props) => {
       const next = palettes[(idx + 1) % palettes.length]!.id;
       setSettings("paletteId", next);
       saveSettings({ ...settings, paletteId: next });
+    },
+
+    get rotate() {
+      return rotate;
+    },
+    enterRotate() {
+      // エントリ時は style を drag にリセット
+      setRotate({ active: true, minutes: nowAsMinutes(), style: "drag" });
+    },
+    exitRotate() {
+      setRotate("active", false);
+    },
+    resetRotate() {
+      setRotate("minutes", nowAsMinutes());
+    },
+    setRotateMinutes(m) {
+      const wrapped = ((m % 1440) + 1440) % 1440;
+      setRotate("minutes", wrapped);
+    },
+    toggleRotateStyle() {
+      setRotate("style", rotate.style === "crank" ? "drag" : "crank");
     },
   };
 

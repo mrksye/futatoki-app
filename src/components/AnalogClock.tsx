@@ -80,6 +80,10 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
     return props.minutes * 6 - 90;
   });
 
+  // 分針の先端座標
+  const minuteHandX2 = () => CX + (R() * 0.78) * Math.cos((minuteAngle() * Math.PI) / 180);
+  const minuteHandY2 = () => CY + (R() * 0.78) * Math.sin((minuteAngle() * Math.PI) / 180);
+
   return (
     <div
       class="w-full h-full flex items-center justify-center"
@@ -261,8 +265,8 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
         <line
           x1={CX - 15 * Math.cos((minuteAngle() * Math.PI) / 180)}
           y1={CY - 15 * Math.sin((minuteAngle() * Math.PI) / 180)}
-          x2={CX + (R() * 0.78) * Math.cos((minuteAngle() * Math.PI) / 180)}
-          y2={CY + (R() * 0.78) * Math.sin((minuteAngle() * Math.PI) / 180)}
+          x2={minuteHandX2()}
+          y2={minuteHandY2()}
           stroke="#ffffff"
           stroke-width="6"
           stroke-linecap="round"
