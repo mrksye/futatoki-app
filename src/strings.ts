@@ -17,8 +17,8 @@ export const strings = {
     badge: "すうじ",
     // 自由回転
     rotateEnter: "じゆうかいてん",
-    rotateExit: "もどる",
-    rotateReset: "リセット",
+    rotateExit: "とけい",
+    rotateReset: "げんざいじこく",
     /** 1分戻すボタン */
     rewindMinute: "１ふんもどす",
     // 自由回転の操作スタイル（ボタン表示は「切替先」）
