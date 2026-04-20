@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24s",
+    "hour12": "12s",
+    "sukkiri": "sade",
+    "kuwashiku": "ayrıntılı",
+    "sector": "dilim",
+    "badge": "rozet",
+    "rotateEnter": "çevir",
+    "rotateExit": "saat",
+    "mergeToSingle": "birleştir",
+    "splitToTwo": "ayır",
+    "rewindMinute": "1 dk geri",
+    "styleToCrank": "kolla çevir",
+    "styleToDrag": "sürükle",
+    "autoStart": "otomatik",
+    "autoStop": "durdur",
+    "random": "rastgele"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "canlı renkler",
+    "vivid": "gökyüzü",
+    "ygb": "mavi sarı yeşil",
+    "primary3": "ana renkler",
+    "wheel": "renk çemberi",
+    "cud12": "herkese renk"
+  }
+}

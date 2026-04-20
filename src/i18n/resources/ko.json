@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "깔끔하게",
+    "kuwashiku": "자세하게",
+    "sector": "조각",
+    "badge": "배지",
+    "rotateEnter": "자유회전",
+    "rotateExit": "시계",
+    "mergeToSingle": "겹치기",
+    "splitToTwo": "나누기",
+    "rewindMinute": "1분 되돌리기",
+    "styleToCrank": "손잡이",
+    "styleToDrag": "쓱쓱",
+    "autoStart": "자동회전",
+    "autoStop": "자동멈춤",
+    "random": "랜덤"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "또렷한 색",
+    "vivid": "하늘색",
+    "ygb": "파랑 노랑 초록",
+    "primary3": "삼원색",
+    "wheel": "색동고리",
+    "cud12": "모두의 색"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "簡潔",
+    "kuwashiku": "詳細",
+    "sector": "扇形",
+    "badge": "徽章",
+    "rotateEnter": "自由轉",
+    "rotateExit": "時鐘",
+    "mergeToSingle": "疊起來",
+    "splitToTwo": "分開",
+    "rewindMinute": "倒退 1 分",
+    "styleToCrank": "轉把手",
+    "styleToDrag": "拖動",
+    "autoStart": "自動轉",
+    "autoStop": "停下來",
+    "random": "隨機"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "鮮明色",
+    "vivid": "天空色",
+    "ygb": "藍黃綠",
+    "primary3": "三原色",
+    "wheel": "色相環",
+    "cud12": "大家的色"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "すっきり",
+    "kuwashiku": "くわしく",
+    "sector": "くぎり",
+    "badge": "ばっじ",
+    "rotateEnter": "じゆうかいてん",
+    "rotateExit": "とけい",
+    "mergeToSingle": "かさねる",
+    "splitToTwo": "わける",
+    "rewindMinute": "１ふんもどす",
+    "styleToCrank": "てまわし",
+    "styleToDrag": "ぐりぐり",
+    "autoStart": "じどうかいてん",
+    "autoStop": "じどうをとめる",
+    "random": "らんだむ"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "くっきりいろ",
+    "vivid": "そらのいろ",
+    "ygb": "あおきみどり",
+    "primary3": "さんげんしょく",
+    "wheel": "いろのわ",
+    "cud12": "みんなのいろ"
+  }
+}

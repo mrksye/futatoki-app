@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "ساده",
+    "kuwashiku": "کامل",
+    "sector": "برش",
+    "badge": "نشان",
+    "rotateEnter": "چرخش آزاد",
+    "rotateExit": "ساعت",
+    "mergeToSingle": "روی هم",
+    "splitToTwo": "جدا",
+    "rewindMinute": "1 دقیقه عقب",
+    "styleToCrank": "دسته‌ای",
+    "styleToDrag": "کشیدنی",
+    "autoStart": "چرخش خودکار",
+    "autoStop": "توقف چرخش",
+    "random": "تصادفی"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "رنگ‌های روشن",
+    "vivid": "رنگ آسمان",
+    "ygb": "آبی زرد سبز",
+    "primary3": "سه رنگ اصلی",
+    "wheel": "چرخه رنگ",
+    "cud12": "رنگ همه"
+  }
+}

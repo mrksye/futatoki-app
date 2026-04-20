@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "بسيط",
+    "kuwashiku": "بالتفصيل",
+    "sector": "شرائح",
+    "badge": "شارة",
+    "rotateEnter": "تدوير حر",
+    "rotateExit": "ساعة",
+    "mergeToSingle": "دمج",
+    "splitToTwo": "فصل",
+    "rewindMinute": "رجوع 1 دقيقة",
+    "styleToCrank": "مقبض",
+    "styleToDrag": "سحب",
+    "autoStart": "تدوير تلقائي",
+    "autoStop": "إيقاف التلقائي",
+    "random": "عشوائي"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "ألوان زاهية",
+    "vivid": "ألوان السماء",
+    "ygb": "أزرق وأصفر وأخضر",
+    "primary3": "الألوان الأساسية",
+    "wheel": "عجلة الألوان",
+    "cud12": "ألوان للجميع"
+  }
+}

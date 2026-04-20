@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "साफ",
+    "kuwashiku": "पूरा",
+    "sector": "टुकड़े",
+    "badge": "बिल्ला",
+    "rotateEnter": "घुमाओ",
+    "rotateExit": "घड़ी",
+    "mergeToSingle": "जोड़ो",
+    "splitToTwo": "अलग",
+    "rewindMinute": "1 मिनट पीछे",
+    "styleToCrank": "हत्था",
+    "styleToDrag": "खींचो",
+    "autoStart": "खुद घूमे",
+    "autoStop": "रुको",
+    "random": "कोई भी"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "चटख रंग",
+    "vivid": "आसमानी रंग",
+    "ygb": "नीला पीला हरा",
+    "primary3": "तीन मूल रंग",
+    "wheel": "रंगों का चक्र",
+    "cud12": "सबके रंग"
+  }
+}

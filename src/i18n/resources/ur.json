@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "صاف",
+    "kuwashiku": "تفصیل",
+    "sector": "ٹکڑے",
+    "badge": "بَیج",
+    "rotateEnter": "آزاد گھماؤ",
+    "rotateExit": "گھڑی",
+    "mergeToSingle": "ملا دو",
+    "splitToTwo": "الگ کرو",
+    "rewindMinute": "1 منٹ پیچھے",
+    "styleToCrank": "ہتھ گھماؤ",
+    "styleToDrag": "کھینچو",
+    "autoStart": "خودکار گھماؤ",
+    "autoStop": "خودکار بند",
+    "random": "کوئی بھی"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "چمکیلے رنگ",
+    "vivid": "آسمانی رنگ",
+    "ygb": "نیلا پیلا ہرا",
+    "primary3": "تین بنیادی رنگ",
+    "wheel": "رنگوں کا دائرہ",
+    "cud12": "سب کے رنگ"
+  }
+}

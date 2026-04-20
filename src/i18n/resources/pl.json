@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "prosto",
+    "kuwashiku": "szczegóły",
+    "sector": "wycinki",
+    "badge": "plakietka",
+    "rotateEnter": "kręć swobodnie",
+    "rotateExit": "zegar",
+    "mergeToSingle": "złącz",
+    "splitToTwo": "rozdziel",
+    "rewindMinute": "cofnij o 1 min",
+    "styleToCrank": "korbka",
+    "styleToDrag": "ciągnij",
+    "autoStart": "auto obrót",
+    "autoStop": "zatrzymaj",
+    "random": "losowo"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "wyraziste",
+    "vivid": "barwy nieba",
+    "ygb": "niebieski, żółty, zielony",
+    "primary3": "trzy podstawowe",
+    "wheel": "koło barw",
+    "cud12": "dla każdego"
+  }
+}

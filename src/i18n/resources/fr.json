@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "épuré",
+    "kuwashiku": "détaillé",
+    "sector": "parts",
+    "badge": "badge",
+    "rotateEnter": "tourner",
+    "rotateExit": "horloge",
+    "mergeToSingle": "empiler",
+    "splitToTwo": "séparer",
+    "rewindMinute": "1 min avant",
+    "styleToCrank": "manivelle",
+    "styleToDrag": "glisser",
+    "autoStart": "auto",
+    "autoStop": "stop auto",
+    "random": "au hasard"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "couleurs vives",
+    "vivid": "ciel du jour",
+    "ygb": "bleu jaune vert",
+    "primary3": "3 primaires",
+    "wheel": "roue des couleurs",
+    "cud12": "pour tous"
+  }
+}

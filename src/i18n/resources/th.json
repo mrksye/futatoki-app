@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "เรียบง่าย",
+    "kuwashiku": "ละเอียด",
+    "sector": "แบ่งสี",
+    "badge": "ป้าย",
+    "rotateEnter": "หมุนอิสระ",
+    "rotateExit": "นาฬิกา",
+    "mergeToSingle": "ซ้อนกัน",
+    "splitToTwo": "แยกกัน",
+    "rewindMinute": "ถอย 1 นาที",
+    "styleToCrank": "หมุนมือ",
+    "styleToDrag": "ลากเล่น",
+    "autoStart": "หมุนเอง",
+    "autoStop": "หยุดหมุน",
+    "random": "สุ่ม"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "สีสดใส",
+    "vivid": "สีท้องฟ้า",
+    "ygb": "ฟ้า เหลือง เขียว",
+    "primary3": "แม่สี",
+    "wheel": "วงล้อสี",
+    "cud12": "สีของทุกคน"
+  }
+}

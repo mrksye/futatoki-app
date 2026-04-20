@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24ч",
+    "hour12": "12ч",
+    "sukkiri": "просто",
+    "kuwashiku": "подробно",
+    "sector": "дольки",
+    "badge": "значок",
+    "rotateEnter": "крутить",
+    "rotateExit": "часы",
+    "mergeToSingle": "вместе",
+    "splitToTwo": "отдельно",
+    "rewindMinute": "-1 минута",
+    "styleToCrank": "ручка",
+    "styleToDrag": "тянуть",
+    "autoStart": "авто старт",
+    "autoStop": "авто стоп",
+    "random": "случайно"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "яркие",
+    "vivid": "небо",
+    "ygb": "синий жёлтый зелёный",
+    "primary3": "три основных",
+    "wheel": "круг цветов",
+    "cud12": "для всех"
+  }
+}

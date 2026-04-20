@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24j",
+    "hour12": "12j",
+    "sukkiri": "simpel",
+    "kuwashiku": "lengkap",
+    "sector": "potongan",
+    "badge": "lencana",
+    "rotateEnter": "putar bebas",
+    "rotateExit": "jam",
+    "mergeToSingle": "tumpuk",
+    "splitToTwo": "pisah",
+    "rewindMinute": "mundur 1 menit",
+    "styleToCrank": "engkol",
+    "styleToDrag": "geser",
+    "autoStart": "putar otomatis",
+    "autoStop": "stop otomatis",
+    "random": "acak"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "warna terang",
+    "vivid": "warna langit",
+    "ygb": "biru kuning hijau",
+    "primary3": "tiga warna dasar",
+    "wheel": "roda warna",
+    "cud12": "warna semua"
+  }
+}

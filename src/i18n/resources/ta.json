@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "எளிய",
+    "kuwashiku": "விரிவாக",
+    "sector": "துண்டு",
+    "badge": "பொத்தான்",
+    "rotateEnter": "சுழற்று",
+    "rotateExit": "கடிகாரம்",
+    "mergeToSingle": "ஒன்றாக",
+    "splitToTwo": "பிரி",
+    "rewindMinute": "1 நிமிடம் பின்",
+    "styleToCrank": "கைச்சுழற்றி",
+    "styleToDrag": "இழு",
+    "autoStart": "தானே சுழலு",
+    "autoStop": "நிறுத்து",
+    "random": "எதோ நேரம்"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "தெளிவு வண்ணம்",
+    "vivid": "வான வண்ணம்",
+    "ygb": "நீலம் மஞ்சள் பச்சை",
+    "primary3": "மூல வண்ணம்",
+    "wheel": "வண்ண வட்டம்",
+    "cud12": "அனைவர் வண்ணம்"
+  }
+}

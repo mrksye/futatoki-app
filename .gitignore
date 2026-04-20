@@ -1,0 +1,11 @@
+node_modules
+dist
+*.tgz
+*.log
+.env
+.env.*
+.cache
+*.tsbuildinfo
+.DS_Store
+.wrangler
+.dev.vars*

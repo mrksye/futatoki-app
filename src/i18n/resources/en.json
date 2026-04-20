@@ -1,0 +1,32 @@
+{
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "simple",
+    "kuwashiku": "detailed",
+    "sector": "slices",
+    "badge": "badge",
+    "rotateEnter": "free spin",
+    "rotateExit": "clock",
+    "mergeToSingle": "stack",
+    "splitToTwo": "split",
+    "rewindMinute": "back 1 min",
+    "styleToCrank": "crank",
+    "styleToDrag": "drag",
+    "autoStart": "auto spin",
+    "autoStop": "stop auto",
+    "random": "random"
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "crisp colors",
+    "vivid": "sky colors",
+    "ygb": "blue yellow green",
+    "primary3": "3 primaries",
+    "wheel": "color wheel",
+    "cud12": "colors for all"
+  }
+}
