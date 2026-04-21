@@ -10,3 +10,25 @@ dist
 .wrangler
 .dev.vars*
 .idea/
+
+# Dependencies
+.pnpm-store/
+
+# Build output
+build/
+.output/
+
+# OS
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.local
