@@ -83,6 +83,6 @@ The name "EduClock" and the project's branding are not covered by the MIT Licens
 
 ## About
 
-Built by [Mrksye](https://github.com/mrksye), a freelance developer based in Kansai, Japan.
+Built by [Mrksye](https://github.com/mrksye), a freelance developer based in Japan.
 
 This project lives under the [Glimmer Works](https://github.com/glimmerworksjp) GitHub organization as a personal side project.
