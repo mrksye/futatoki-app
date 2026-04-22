@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "educlock",
+      "name": "futatoki-app",
       "dependencies": {
         "@solid-primitives/i18n": "^2.2.1",
         "intl-messageformat": "^11.2.1",

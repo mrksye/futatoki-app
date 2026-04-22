@@ -1,4 +1,4 @@
-# Contributing to EduClock
+# Contributing to Futatoki the clock
 
 Thanks for your interest! All contributions are welcome, from fixing a typo to adding a new language.
 
@@ -90,7 +90,7 @@ Open an issue describing the idea. Before suggesting:
 
 ## Philosophy
 
-EduClock exists to help young children learn time. Keep in mind:
+Futatoki exists to help young children learn time. Keep in mind:
 
 - **Simple is better.** If a feature adds complexity for an edge case, it might not belong.
 - **No tracking, ever.** User privacy is non-negotiable.

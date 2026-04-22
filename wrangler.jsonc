@@ -1,12 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "edu-clock-app",
+  "name": "futatoki-app",
   "compatibility_date": "2026-04-19",
   "assets": {
     "directory": "./dist"
   },
   "routes": [
-    { "pattern": "app.edu-clock.com", "custom_domain": true }
+    { "pattern": "play.futatoki.app", "custom_domain": true }
   ],
   "workers_dev": false,
   "observability": {

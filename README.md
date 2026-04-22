@@ -1,16 +1,16 @@
-# EduClock
+# Futatoki the clock
 
 A free, open-source educational analog clock web app for children aged 1-7, where each hour is represented by a distinct color.
 
 <!-- TODO: add docs/screenshot-hero.png and uncomment
-[![EduClock screenshot](docs/screenshot-hero.png)](https://edu-clock.com/)
+[![Futatoki the clock screenshot](docs/screenshot-hero.png)](https://futatoki.app/)
 -->
 
-🌐 [Try it live](https://app.edu-clock.com/) · 📖 [Learn more](https://edu-clock.com/) · 📚 [Usage guide](https://edu-clock.com/guide)
+🌐 [Try it live](https://play.futatoki.app/) · 📖 [Learn more](https://futatoki.app/) · 📚 [Usage guide](https://futatoki.app/guide)
 
 ## Why another clock app?
 
-Most analog clocks overwhelm young children with two overlapping abstractions: reading numbers *and* interpreting hand positions. EduClock reverses the order — children learn time **through color first**, then numbers come later.
+Most analog clocks overwhelm young children with two overlapping abstractions: reading numbers *and* interpreting hand positions. Futatoki reverses the order — children learn time **through color first**, then numbers come later.
 
 - Each hour is a distinct color in a 12-segment ring
 - AM and PM shown as two parallel faces (no "3 o'clock happens twice" confusion)
@@ -47,8 +47,8 @@ Most analog clocks overwhelm young children with two overlapping abstractions: r
 ### Development
 
 ```bash
-git clone https://github.com/glimmerworksjp/edu-clock-app.git
-cd edu-clock-app
+git clone https://github.com/glimmerworksjp/futatoki-app.git
+cd futatoki-app
 bun install
 bun dev
 ```
@@ -79,7 +79,7 @@ Translations live in `src/i18n/resources/` as JSON files (one per language). `ja
 
 MIT — see [LICENSE](./LICENSE)
 
-The name "EduClock" and the project's branding are not covered by the MIT License — see [NOTICE](./NOTICE) for details.
+The name "Futatoki" / "Futatoki the clock" and the project's branding are not covered by the MIT License — see [NOTICE](./NOTICE) for details.
 
 ## About
 

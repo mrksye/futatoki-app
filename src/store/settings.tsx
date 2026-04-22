@@ -56,7 +56,7 @@ interface SettingsContextValue {
   toggleMerged: () => void;
 }
 
-const STORAGE_KEY = "educlock-settings";
+const STORAGE_KEY = "futatoki-settings";
 
 /**
  * らんだむボタンが出す時刻の候補（子どもが起きてる時間帯）。
