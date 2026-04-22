@@ -1,0 +1,17 @@
+{
+  "name": "フタトキ - 知育時計",
+  "short_name": "フタトキ",
+  "description": "子ども向け知育アナログ時計アプリ。1時間ごとに色が違う、ブラウザで動く時計。",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#f8f0e8",
+  "background_color": "#f8f0e8",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

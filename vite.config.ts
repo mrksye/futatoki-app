@@ -23,10 +23,13 @@ export default defineConfig({
       workbox: {
         globIgnores: nonSourceLocaleChunkIgnores,
       },
+      // デフォルト manifest は英語。日本語ブラウザでは index.html の inline JS が
+      // /manifest.ja.webmanifest(public/ 配下に手書き)へ link[rel=manifest] を差し替える。
       manifest: {
-        name: "EduClock - 知育時計",
-        short_name: "EduClock",
-        description: "子ども向け知育アナログ時計アプリ",
+        name: "Futatoki - the clock",
+        short_name: "Futatoki",
+        description: "A kids' educational analog clock app — each hour gets its own color.",
+        lang: "en",
         theme_color: "#f8f0e8",
         background_color: "#f8f0e8",
         display: "standalone",
