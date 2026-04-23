@@ -19,28 +19,6 @@ document.addEventListener("selectionchange", () => {
   if (sel && !sel.isCollapsed) sel.removeAllRanges();
 });
 
-// iOS 16+ では上記だけでも長押し callout(「コピー/検索/翻訳」メニュー)が
-// 残ることがある。touchstart で時刻を記録し、touchend が 400ms 超なら
-// 長押しと判定して preventDefault — これで callout 表示を抑止できる。
-// 400ms 未満の通常タップは素通しさせるのでボタンのクリックは壊さない。
-// rewind ボタンは pointerdown/up ベースなので touchend の default
-// キャンセルには影響されない。
-let touchStartAt = 0;
-document.addEventListener(
-  "touchstart",
-  () => {
-    touchStartAt = Date.now();
-  },
-  { passive: true },
-);
-document.addEventListener(
-  "touchend",
-  (e) => {
-    if (Date.now() - touchStartAt > 400) e.preventDefault();
-  },
-  { passive: false },
-);
-
 // PWA: 新SWが有効化されたらリロードして新アセットを取り込む。
 // 初回インストール（起動時に controller が居ない）の場合はスキップ。
 if ("serviceWorker" in navigator) {

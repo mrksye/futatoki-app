@@ -38,6 +38,15 @@ button, a, [role="button"] {
   touch-action: manipulation;
 }
 
+/* Flutter CanvasKit と同じ発想: DOM にテキストノードを置かず、pseudo-element
+   の content で「文字の絵」を描く。pseudo-element の内容は DOM に存在
+   しないので、iOS の単語検出・長押し callout が絶対に発火できない。
+   各ボタンは <button aria-label="xxx"></button> の形で使う(aria-label は
+   スクリーンリーダー対応も兼ねる)。*/
+button[aria-label]::before {
+  content: attr(aria-label);
+}
+
 /* やわらかグラデーション背景 */
 #root {
   background: linear-gradient(160deg, #fef6e4 0%, #fce4ec 35%, #e8eaf6 65%, #e0f7fa 100%);

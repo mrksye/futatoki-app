@@ -107,10 +107,13 @@ const SettingsPanel: Component = () => {
 
   return (
     <>
-      {/* 右上: じゆうかいてん / もどる（常時表示。上位モードのトグル） */}
-      <button class={`fixed top-2 right-2 z-50 ${btnClass}`} onClick={toggleRotate}>
-        {rotate.active ? t("settings.rotateExit") : t("settings.rotateEnter")}
-      </button>
+      {/* 右上: じゆうかいてん / もどる（常時表示。上位モードのトグル）
+          label は aria-label 経由で ::before が描画する(iOS 長押し callout 対策) */}
+      <button
+        class={`fixed top-2 right-2 z-50 ${btnClass}`}
+        onClick={toggleRotate}
+        aria-label={rotate.active ? t("settings.rotateExit") : t("settings.rotateEnter")}
+      />
 
       {/* ===== 自由回転モード専用UI ===== */}
       <Show when={rotate.active}>
@@ -118,16 +121,17 @@ const SettingsPanel: Component = () => {
         <button
           class={`fixed bottom-2 left-2 z-50 ${btnClass}`}
           onClick={() => setRotateMode(rotate.mode === "auto" ? "manual" : "auto")}
-        >
-          {rotate.mode === "auto" ? t("settings.autoStop") : t("settings.autoStart")}
-        </button>
+          aria-label={rotate.mode === "auto" ? t("settings.autoStop") : t("settings.autoStart")}
+        />
 
         {/* manualサブモードのみの操作UI（auto中は非表示） */}
         <Show when={rotate.mode === "manual"}>
           {/* 左上: かさねる/わける（表示は切替先） */}
-          <button class={`fixed top-2 left-2 z-50 ${btnClass}`} onClick={toggleMerged}>
-            {rotate.merged ? t("settings.splitToTwo") : t("settings.mergeToSingle")}
-          </button>
+          <button
+            class={`fixed top-2 left-2 z-50 ${btnClass}`}
+            onClick={toggleMerged}
+            aria-label={rotate.merged ? t("settings.splitToTwo") : t("settings.mergeToSingle")}
+          />
 
           {/* スタイル切替
               横長分け=上センター, 横長重ね=右上（1ふんもどすと同じ縦ライン）
@@ -150,11 +154,10 @@ const SettingsPanel: Component = () => {
               "view-transition-name": "clock-left-slot",
             }}
             onClick={toggleRotateStyle}
-          >
-            {rotate.style === "crank"
+            aria-label={rotate.style === "crank"
               ? t("settings.styleToDrag")
               : t("settings.styleToCrank")}
-          </button>
+          />
 
           {/* 1ふんもどす
               横長分け=下センター, 横長重ね=右下寄り（てまわしと同じ縦ライン）
@@ -182,36 +185,40 @@ const SettingsPanel: Component = () => {
             onPointerDown={startRewind}
             onPointerUp={stopRewind}
             onPointerCancel={stopRewind}
-          >
-            {t("settings.rewindMinute")}
-          </button>
+            aria-label={t("settings.rewindMinute")}
+          />
 
           {/* 右下: らんだむ（押すたびに15分刻みの別時刻へ） */}
           <button
             class={`fixed bottom-2 right-2 z-50 ${btnClass}`}
             onClick={randomizeRotate}
-          >
-            {t("settings.random")}
-          </button>
+            aria-label={t("settings.random")}
+          />
         </Show>
       </Show>
 
       {/* ===== 通常モードUI（自由回転時は非表示） ===== */}
       <Show when={!rotate.active}>
         {/* 左上: 24h / 12h */}
-        <button class={`fixed top-2 left-2 z-50 ${btnClass}`} onClick={toggleTimeFormat}>
-          {settings.timeFormat === "24h" ? t("settings.hour12") : t("settings.hour24")}
-        </button>
+        <button
+          class={`fixed top-2 left-2 z-50 ${btnClass}`}
+          onClick={toggleTimeFormat}
+          aria-label={settings.timeFormat === "24h" ? t("settings.hour12") : t("settings.hour24")}
+        />
 
         {/* 左下: くわしく / すっきり */}
-        <button class={`fixed bottom-2 left-2 z-50 ${btnClass}`} onClick={toggleDetailMode}>
-          {settings.detailMode === "kuwashiku" ? t("settings.sukkiri") : t("settings.kuwashiku")}
-        </button>
+        <button
+          class={`fixed bottom-2 left-2 z-50 ${btnClass}`}
+          onClick={toggleDetailMode}
+          aria-label={settings.detailMode === "kuwashiku" ? t("settings.sukkiri") : t("settings.kuwashiku")}
+        />
 
         {/* 右下: くぎり / ばっじ */}
-        <button class={`fixed bottom-2 right-2 z-50 ${btnClass}`} onClick={toggleColorMode}>
-          {settings.colorMode === "sector" ? t("settings.badge") : t("settings.sector")}
-        </button>
+        <button
+          class={`fixed bottom-2 right-2 z-50 ${btnClass}`}
+          onClick={toggleColorMode}
+          aria-label={settings.colorMode === "sector" ? t("settings.badge") : t("settings.sector")}
+        />
 
         {/* 次パレット名ボタン: ポートレート=右センター, ランドスケープ=下センター */}
         <button
@@ -224,9 +231,8 @@ const SettingsPanel: Component = () => {
           }
           style={{ "view-transition-name": "clock-right-slot" }}
           onClick={cyclePalette}
-        >
-          {t(`palette.${getNextPalette(settings.paletteId).id}` as never)}
-        </button>
+          aria-label={t(`palette.${getNextPalette(settings.paletteId).id}` as never)}
+        />
       </Show>
     </>
   );
