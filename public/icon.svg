@@ -1,11 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <circle cx="256" cy="256" r="250" fill="#0080D8"/>
-  <circle cx="256" cy="256" r="220" fill="#ffffff"/>
-  <text x="256" y="120" text-anchor="middle" dominant-baseline="central" font-size="64" font-weight="900" font-family="sans-serif" fill="#111">12</text>
-  <text x="390" y="265" text-anchor="middle" dominant-baseline="central" font-size="64" font-weight="900" font-family="sans-serif" fill="#111">3</text>
-  <text x="256" y="405" text-anchor="middle" dominant-baseline="central" font-size="64" font-weight="900" font-family="sans-serif" fill="#111">6</text>
-  <text x="122" y="265" text-anchor="middle" dominant-baseline="central" font-size="64" font-weight="900" font-family="sans-serif" fill="#111">9</text>
-  <line x1="256" y1="256" x2="256" y2="150" stroke="#111" stroke-width="14" stroke-linecap="round"/>
-  <line x1="256" y1="256" x2="340" y2="256" stroke="#111" stroke-width="8" stroke-linecap="round"/>
-  <circle cx="256" cy="256" r="12" fill="#111"/>
+  <!-- 青と紫は同じ大きさの円(r=190)。青は左に 20、紫は右に 20 ずらして
+       配置。両円が接触する部分(= 青の外周のライン)に mask で透明なリング
+       を被せ、青と紫の間に視覚的な隙間を立ち上げる。紫は右側半円のみ。 -->
+  <defs>
+    <mask id="blue-edge-gap" maskUnits="userSpaceOnUse">
+      <rect width="512" height="512" fill="white"/>
+      <!-- 青の外周 r=190 上に線幅 32 で黒ストローク = その帯だけ透明化 -->
+      <circle cx="192" cy="256" r="190" fill="none" stroke="black" stroke-width="32"/>
+    </mask>
+  </defs>
+
+  <!-- 前盤 青 (中心 192, 256)、左へ 20 シフト -->
+  <g>
+    <circle cx="192" cy="256" r="190" fill="#3898e8"/>
+    <circle cx="192" cy="256" r="164" fill="#ffffff"/>
+    <g font-family="system-ui, -apple-system, 'Hiragino Maru Gothic ProN', sans-serif"
+       font-size="48" font-weight="800" fill="#1b1a1f" opacity="0.85"
+       text-anchor="middle" dominant-baseline="central">
+      <text x="192" y="134">12</text>
+      <text x="312" y="256">3</text>
+      <text x="192" y="378">6</text>
+      <text x="72" y="256">9</text>
+    </g>
+    <!-- 時針 14:20 → 角度 70°, 長さ 76 -->
+    <line x1="192" y1="256" x2="264" y2="230" stroke="#1b1a1f" stroke-width="18" stroke-linecap="round"/>
+    <!-- 分針 20分 → 角度 120°, 長さ 117 -->
+    <line x1="192" y1="256" x2="293" y2="315" stroke="#1b1a1f" stroke-width="11" stroke-linecap="round"/>
+    <circle cx="192" cy="256" r="12" fill="#1b1a1f"/>
+  </g>
+
+  <!-- 後盤 紫 (中心 232, 256)、右へ 20 シフト。
+       centerline r=183、stroke-width=26。視覚調整のため青より少しだけ
+       外に(r=183 外縁 196、青 r=190 より +6)。
+       θ=±70° の 140° 円弧(上下を 20° ずつ縮めた形)。
+       mask で青の外周リングを透明化して接触部分に gap を作る。 -->
+  <path d="M 294.59 84.03 A 183 183 0 0 1 294.59 427.97"
+        fill="none"
+        stroke="#8830b8"
+        stroke-width="26"
+        stroke-linecap="round"
+        opacity="0.55"
+        mask="url(#blue-edge-gap)"/>
 </svg>
