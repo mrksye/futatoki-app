@@ -248,6 +248,41 @@ export const palettes: Palette[] = [
       { bg: "#009E73", badge: "#10AE83", text: "#ffffff" }, // 23時 青緑(明るめ)
     ],
   },
+
+  // -------- ものとーん（真っ白・単色） --------
+  // AM/PM/merged すべて区切り線と同じ白。文字は黒でコントラスト確保。
+  // 盤面中央の色もこのパレット時だけ白に切り替えるので境目が消える。
+  {
+    id: "monotone",
+    am: [
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 0時(12)
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 1時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 2時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 3時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 4時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 5時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 6時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 7時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 8時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 9時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 10時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 11時
+    ],
+    pm: [
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 12時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 13時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 14時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 15時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 16時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 17時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 18時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 19時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 20時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 21時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 22時
+      { bg: "#ffffff", badge: "#ffffff", text: "#1a1a1a" }, // 23時
+    ],
+  },
 ];
 
 // ===== ルックアップ =====

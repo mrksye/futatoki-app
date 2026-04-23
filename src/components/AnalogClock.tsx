@@ -106,8 +106,15 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
           fill={props.period === "merged" ? "#3a3a3a" : props.period === "pm" ? "#E02068" : "#0080D8"}
         />
 
-        {/* 文字盤（ほんのり色付き） */}
-        <circle cx={CX} cy={CY} r={R()} fill={props.period === "merged" ? "#ececec" : props.period === "pm" ? "#f8d8e0" : "#d8e8f8"} />
+        {/* 文字盤（ほんのり色付き。ものとーん時だけ真っ白にして区切り線と同化させる） */}
+        <circle
+          cx={CX} cy={CY} r={R()}
+          fill={
+            settings.paletteId === "monotone"
+              ? "#ffffff"
+              : props.period === "merged" ? "#ececec" : props.period === "pm" ? "#f8d8e0" : "#d8e8f8"
+          }
+        />
 
         {/* 扇形モード */}
         <Show when={settings.colorMode === "sector"}>
@@ -221,7 +228,10 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
                   dominant-baseline="central"
                   font-size={
                     settings.colorMode === "badge"
-                      ? (num >= 10 ? "18" : "24")
+                      // ばっじ×すっきり×ものとーんはバッジの円が白で消えるので数字を少し大きく。
+                      ? (settings.paletteId === "monotone" && !isKuwashiku()
+                          ? (num >= 10 ? "24" : "30")
+                          : (num >= 10 ? "18" : "24"))
                       : isKuwashiku()
                         ? (num >= 10 ? "24" : "28")
                         : (num >= 10 ? "32" : "36")
