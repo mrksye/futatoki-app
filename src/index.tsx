@@ -12,6 +12,9 @@ if (!root) throw new Error("Root element not found");
 // - selectstart: 選択開始イベント
 // の両方を preventDefault し、さらに selectionchange で発生済みの選択を
 // 即 clear する。
+// 注: iPhone では以下の対策をすべて入れても「コピー/検索/翻訳」の callout
+// menu は残る(既知課題)。詳細と残された選択肢は src/index.css の
+// button[aria-label]::before のコメントを参照。
 document.addEventListener("contextmenu", (e) => e.preventDefault());
 document.addEventListener("selectstart", (e) => e.preventDefault());
 document.addEventListener("selectionchange", () => {

@@ -39,10 +39,30 @@ button, a, [role="button"] {
 }
 
 /* Flutter CanvasKit と同じ発想: DOM にテキストノードを置かず、pseudo-element
-   の content で「文字の絵」を描く。pseudo-element の内容は DOM に存在
-   しないので、iOS の単語検出・長押し callout が絶対に発火できない。
-   各ボタンは <button aria-label="xxx"></button> の形で使う(aria-label は
-   スクリーンリーダー対応も兼ねる)。*/
+   の content で「文字の絵」を描く。各ボタンは <button aria-label="xxx"></button>
+   の形で使う(aria-label はスクリーンリーダー対応も兼ねる)。
+
+   【既知の課題 / KNOWN ISSUE (iOS Safari)】
+   それでも iPhone (Safari / ホーム画面 PWA) では、ボタンを長押しすると
+   「コピー / 選択部分を検索 / 翻訳」の callout menu が依然として表示される。
+   原因: iOS の単語検出は DOM 構造や user-select に依存せず、画面に
+   ペイントされた「視覚的な文字」を検出しているため、pseudo-element の
+   content で描画された文字列も同じように検出されてしまう。
+
+   対策済みで効かなかったもの:
+   - *, *::before, *::after に user-select: none / -webkit-user-select: none /
+     -webkit-touch-callout: none / -webkit-user-drag: none /
+     -webkit-user-modify: read-only / -webkit-tap-highlight-color: transparent
+     を !important 付きで全部乗せ(本ファイル上部)
+   - button / a / [role=button] に touch-action: manipulation
+   - JS 側で contextmenu / selectstart の preventDefault + selectionchange で
+     発生済み選択を即 clear (src/index.tsx)
+   - ボタン文字を DOM から消して pseudo-element 描画に移行(このルール)
+
+   実際に「選択」は止まっており、コピーや検索メニューを押しても何も起きない
+   (対象テキストが空のため)ので実害は心理的なものだけ。完全に callout 自体
+   を抑止したい場合は <canvas> に ctx.fillText で描画する Flutter CanvasKit
+   相当の対応が必要(フォント待ち / DPR / i18n 文字幅計算など実装コスト大)。*/
 button[aria-label]::before {
   content: attr(aria-label);
 }
