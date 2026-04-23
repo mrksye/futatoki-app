@@ -52,7 +52,8 @@ const SettingsPanel: Component = () => {
   let rewindHoldTimer: ReturnType<typeof setTimeout> | undefined;
   let rewindInterval: ReturnType<typeof setInterval> | undefined;
 
-  const rewindTick = () => setRotateMinutes(rotate.minutes - 1);
+  // 小数値（自動回転・ドラッグ経由）でも整数の分目盛りに揃えて戻す
+  const rewindTick = () => setRotateMinutes(Math.ceil(rotate.minutes) - 1);
 
   const stopRewind = () => {
     if (rewindHoldTimer) { clearTimeout(rewindHoldTimer); rewindHoldTimer = undefined; }
