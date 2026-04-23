@@ -14,11 +14,13 @@ html, body, #root {
 /* iOS Safari では user-select: none を親に掛けても長押しで文字選択 / callout
    メニュー (コピー/共有) が出るケースがあるため、全要素に強制する。
    特に -webkit-touch-callout は user-select とは別系統で、これを none に
-   しないと iOS で画像リンクや任意要素に対し長押しで callout が開く。*/
+   しないと iOS で画像リンクや任意要素に対し長押しで callout が開く。
+   Tailwind preflight や UA style、コンポーネント側のスタイルに負けないよう
+   !important まで付けて確実に止める (入力欄のないアプリなので副作用なし)。*/
 *, *::before, *::after {
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 
 /* やわらかグラデーション背景 */
