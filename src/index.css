@@ -11,16 +11,31 @@ html, body, #root {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* iOS Safari では user-select: none を親に掛けても長押しで文字選択 / callout
-   メニュー (コピー/共有) が出るケースがあるため、全要素に強制する。
-   特に -webkit-touch-callout は user-select とは別系統で、これを none に
-   しないと iOS で画像リンクや任意要素に対し長押しで callout が開く。
-   Tailwind preflight や UA style、コンポーネント側のスタイルに負けないよう
-   !important まで付けて確実に止める (入力欄のないアプリなので副作用なし)。*/
+/* iOS Safari の長押し選択 / callout を全方位で封殺する。入力欄のない
+   アプリなので全要素に !important で強制してOK。以下、それぞれの役割:
+   - user-select / -webkit-user-select: 文字選択そのものを禁止
+   - -webkit-touch-callout: 長押しで出るコピー/共有メニューを禁止
+   - -webkit-user-drag: ドラッグ選択 / 画像ドラッグを禁止
+   - -webkit-user-modify: 「編集不可」を iOS に明示
+   - -webkit-tap-highlight-color: タップ時のハイライトも消す
+   さらに ::selection を透明化して、万が一選択が発生しても視覚的に
+   分からないようにフォールバックも仕込む。*/
 *, *::before, *::after {
   user-select: none !important;
   -webkit-user-select: none !important;
   -webkit-touch-callout: none !important;
+  -webkit-user-drag: none !important;
+  -webkit-user-modify: read-only !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+::selection {
+  background: transparent !important;
+  color: inherit !important;
+}
+::-moz-selection {
+  background: transparent !important;
+  color: inherit !important;
 }
 
 /* やわらかグラデーション背景 */
