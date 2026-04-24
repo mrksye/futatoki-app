@@ -24,7 +24,8 @@ type Interaction =
   | { type: "deleting"; minutes: number };
 
 const WARNING_AUTO_CANCEL_MS = 3000;
-const DELETE_ANIMATION_MS = 400;
+/** くるくる削除アニメの全体 duration と揃える (ScheduleLayer の POOF_DURATION_MS) */
+const DELETE_ANIMATION_MS = 900;
 
 // ===== Internal state =====
 const [interaction, setInteractionRaw] = createSignal<Interaction>({ type: "none" });

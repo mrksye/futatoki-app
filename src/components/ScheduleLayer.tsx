@@ -53,7 +53,8 @@ const TRI_HEIGHT = 2.5;
 /** インタラクション関連 */
 const LONG_PRESS_MS = 500;
 const POYON_DURATION_MS = 350;
-const POOF_DURATION_MS = 400;
+/** くるくる〜パッ: 0..65% は等速で 720° 回転 (見せ場)、65..100% で +360° 回転しながら縮小+フェード */
+const POOF_DURATION_MS = 900;
 
 /** 削除ボタン (✕ 印の赤い丸吹き出し) */
 const TRASH_OFFSET = 10;
@@ -261,14 +262,17 @@ const EventIcon: Component<EventIconProps> = (props) => {
   });
 
   // くるくる〜パッ (poof): deleting 開始で 1 回だけ走らせる
+  // 0..65%: 等速で 720° 回転 (2周分の見せ場、scale/opacity 変化なし)
+  // 65..100%: +360° (合計 1080°) しながら scale 1→0 + opacity 1→0
   createEffect(on(isDeleting, (deleting) => {
     if (!groupRef || !deleting) return;
     groupRef.animate(
       [
-        { transform: "rotate(0deg) scale(1)", opacity: 1 },
-        { transform: "rotate(720deg) scale(0)", opacity: 0 },
+        { transform: "rotate(0deg) scale(1)", opacity: 1, offset: 0 },
+        { transform: "rotate(720deg) scale(1)", opacity: 1, offset: 0.65 },
+        { transform: "rotate(1080deg) scale(0)", opacity: 0, offset: 1 },
       ],
-      { duration: POOF_DURATION_MS, easing: "ease-in", fill: "forwards" }
+      { duration: POOF_DURATION_MS, easing: "linear", fill: "forwards" }
     );
   }));
 
