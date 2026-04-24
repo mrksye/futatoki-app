@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, on, onCleanup, Show, untrack } from "solid-js";
+import { createMemo, createSignal, onCleanup, Show } from "solid-js";
 import type { Component } from "solid-js";
 import AnalogClock from "./AnalogClock";
 import SecondsBar from "./SecondsBar";
@@ -6,57 +6,42 @@ import SettingsPanel from "./SettingsPanel";
 import SkyBackground from "./SkyBackground";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { useOrientation } from "../hooks/useOrientation";
-import { useSettings } from "../store/settings";
+import { rotateActive, rotateMinutes, rotateMode, seekRotate } from "../features/free-rotation/state";
+import { useAutoRotateTick } from "../features/free-rotation/auto-rotate";
+import {
+  useMergeAnimation,
+  amTransform,
+  pmTransform,
+  mergedTransform,
+  splitShadow,
+} from "../features/free-rotation/merge-animation";
+import { useAmPmPreviewHold } from "../features/am-pm-preview";
 import { useI18n } from "../i18n";
+// ===== ドラッグ操作スタイル: drag (default) と crank (オプション) =====
+import { dragStart, dragAdvance, type DragDragState } from "../features/free-rotation/drag";
+import { rotateStyle, crankStart, crankAdvance, type CrankDragState } from "../features/free-rotation/crank";
 
 type DragState =
-  | {
-      style: "drag";
-      lastX: number;
-      lastY: number;
-      cumPixels: number;
-      startMinutes: number;
-      pointerId: number;
-    }
-  | {
-      style: "crank";
-      pivotX: number;
-      pivotY: number;
-      lastAngle: number;
-      cumulative: number;
-      maxAngle: number;
-      startMinutes: number;
-      pointerId: number;
-    };
-
-/** どらっぐ: 何ピクセルで1分進むか */
-const PX_PER_MINUTE = 6;
+  | ({ style: "drag" } & DragDragState)
+  | ({ style: "crank" } & CrankDragState);
 
 export const ClockLayout: Component = () => {
   const time = useCurrentTime();
   const isLandscape = useOrientation();
-  const { rotate, setRotateMinutes } = useSettings();
   const { t } = useI18n();
 
-  // 表示用の時刻（自由回転時は rotate.minutes、通常時はリアル時刻）
+  // 表示用の時刻 (自由回転時は rotateMinutes、通常時はリアル時刻)
   const displayed = createMemo(() => {
-    if (rotate.active) {
-      const m = rotate.minutes;
+    if (rotateActive()) {
+      const m = rotateMinutes();
       return { hours: Math.floor(m / 60), minutes: m % 60, seconds: 0 };
     }
     return time();
   });
 
-  // AM/PMバッジ押してる間だけ反対側をプレビュー
-  const [flipped, setFlipped] = createSignal(false);
-  const startHold = () => setFlipped(true);
-  const clearHold = () => setFlipped(false);
-  onCleanup(clearHold);
-
-  const isAm = createMemo(() => {
-    const actual = displayed().hours < 12;
-    return flipped() ? !actual : actual;
-  });
+  // AM/PM バッジ長押しで反対側プレビュー
+  const actualIsAm = createMemo(() => displayed().hours < 12);
+  const { isAm, startHold, clearHold } = useAmPmPreviewHold(actualIsAm);
 
   const amTime = createMemo(() => ({
     hours: displayed().hours % 12,
@@ -68,10 +53,10 @@ export const ClockLayout: Component = () => {
     minutes: displayed().minutes,
   }));
 
-  // ===== 自由回転ドラッグ（rAF throttle で低性能端末でも滑らかに） =====
+  // ===== 自由回転ドラッグ (requestAnimationFrame で間引きして低性能端末でも滑らかに) =====
   let amWrapperRef: HTMLDivElement | undefined;
   let pmWrapperRef: HTMLDivElement | undefined;
-  // dragRef は高頻度 pointermove で書き換わる。signal にせず直接 mutate して allocation 抑える
+  // dragRef は高頻度 pointermove で書き換わる。signal にせず直接 mutate して allocation を抑える。
   let dragRef: DragState | null = null;
   const [dragging, setDragging] = createSignal(false);
   let pendingMinutes: number | null = null;
@@ -80,7 +65,7 @@ export const ClockLayout: Component = () => {
   const commitPending = () => {
     rafId = null;
     if (pendingMinutes !== null) {
-      setRotateMinutes(pendingMinutes);
+      seekRotate(pendingMinutes);
       pendingMinutes = null;
     }
   };
@@ -105,31 +90,15 @@ export const ClockLayout: Component = () => {
   };
 
   const onDragStart = (e: PointerEvent) => {
-    if (!rotate.active || rotate.mode !== "manual") return;
+    if (!rotateActive() || rotateMode() !== "manual") return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    if (rotate.style === "crank") {
+    // ===== crank style 選択時のみ走る分岐 (crank feature を切るならこのブロックごと外す) =====
+    if (rotateStyle() === "crank") {
       const pivot = nearestClockCenter(e.clientX, e.clientY);
       if (!pivot) return;
-      const a = (Math.atan2(e.clientY - pivot.cy, e.clientX - pivot.cx) * 180) / Math.PI;
-      dragRef = {
-        style: "crank",
-        pivotX: pivot.cx,
-        pivotY: pivot.cy,
-        lastAngle: a,
-        cumulative: 0,
-        maxAngle: 0,
-        startMinutes: rotate.minutes,
-        pointerId: e.pointerId,
-      };
+      dragRef = { style: "crank", ...crankStart(e, pivot, rotateMinutes()) };
     } else {
-      dragRef = {
-        style: "drag",
-        lastX: e.clientX,
-        lastY: e.clientY,
-        cumPixels: 0,
-        startMinutes: rotate.minutes,
-        pointerId: e.pointerId,
-      };
+      dragRef = { style: "drag", ...dragStart(e, rotateMinutes()) };
     }
     setDragging(true);
   };
@@ -137,24 +106,12 @@ export const ClockLayout: Component = () => {
   const onDragMove = (e: PointerEvent) => {
     const s = dragRef;
     if (!s || e.pointerId !== s.pointerId) return;
+    // ===== crank style 選択時のみ走る分岐 (crank feature を切るならこのブロックごと外す) =====
     if (s.style === "crank") {
-      const a = (Math.atan2(e.clientY - s.pivotY, e.clientX - s.pivotX) * 180) / Math.PI;
-      let delta = a - s.lastAngle;
-      while (delta > 180) delta -= 360;
-      while (delta < -180) delta += 360;
-      s.cumulative += delta;
-      s.lastAngle = a;
-      if (s.cumulative > s.maxAngle) {
-        s.maxAngle = s.cumulative;
-        schedule(s.startMinutes + s.maxAngle / 6);
-      }
+      const next = crankAdvance(e, s);
+      if (next !== null) schedule(next);
     } else {
-      const dx = e.clientX - s.lastX;
-      const dy = e.clientY - s.lastY;
-      s.cumPixels += Math.hypot(dx, dy);
-      s.lastX = e.clientX;
-      s.lastY = e.clientY;
-      schedule(s.startMinutes + s.cumPixels / PX_PER_MINUTE);
+      schedule(dragAdvance(e, s));
     }
   };
 
@@ -171,7 +128,7 @@ export const ClockLayout: Component = () => {
       rafId = null;
     }
     if (pendingMinutes !== null) {
-      setRotateMinutes(pendingMinutes);
+      seekRotate(pendingMinutes);
       pendingMinutes = null;
     }
   };
@@ -180,80 +137,24 @@ export const ClockLayout: Component = () => {
     if (rafId !== null) cancelAnimationFrame(rafId);
   });
 
-  // ===== 重ね/分け アニメーション中フラグ =====
-  // merged の見た目切替時だけ drop-shadow で影→分身の雰囲気を出す。
-  // 通常モード(!rotate.active)では merged フラグに関係なく普通の時計表示にしたいので
-  // "見た目として重ねになっているか" を rotate.active && rotate.merged で判定する。
-  const mergedVisible = createMemo(() => rotate.active && rotate.merged);
-  const [transitioning, setTransitioning] = createSignal(false);
-  let transitionTimer: ReturnType<typeof setTimeout> | undefined;
-  createEffect(
-    on(
-      mergedVisible,
-      (_curr, prev) => {
-        if (prev === undefined) return;
-        setTransitioning(true);
-        if (transitionTimer) clearTimeout(transitionTimer);
-        transitionTimer = setTimeout(() => setTransitioning(false), 620);
-      },
-    ),
-  );
-  onCleanup(() => {
-    if (transitionTimer) clearTimeout(transitionTimer);
-  });
-
-  const amTransform = () => {
-    if (!mergedVisible()) return "translate(0, 0) scale(1)";
-    return isLandscape()
-      ? "translateX(50%) scale(0.96)"
-      : "translateY(50%) scale(0.96)";
-  };
-  const pmTransform = () => {
-    if (!mergedVisible()) return "translate(0, 0) scale(1)";
-    return isLandscape()
-      ? "translateX(-50%) scale(0.96)"
-      : "translateY(-50%) scale(0.96)";
-  };
-  const mergedTransform = () =>
-    mergedVisible() ? "scale(1)" : "scale(0.55)";
-  const splitShadow = () =>
-    transitioning() ? "drop-shadow(0 6px 26px rgba(40,28,90,0.35))" : "none";
-
-  // ===== 自動回転: 1日 ≒ 24 秒で進行 =====
-  const MIN_PER_MS = 1440 / 24000;
-  createEffect(
-    on(
-      () => rotate.active && rotate.mode === "auto",
-      (running) => {
-        if (!running) return;
-        let last = performance.now();
-        let id = 0;
-        const tick = (now: number) => {
-          const dt = now - last;
-          last = now;
-          setRotateMinutes(untrack(() => rotate.minutes) + dt * MIN_PER_MS);
-          id = requestAnimationFrame(tick);
-        };
-        id = requestAnimationFrame(tick);
-        onCleanup(() => cancelAnimationFrame(id));
-      },
-    ),
-  );
+  // ===== かさね/わけ アニメーションと自動回転 =====
+  const { mergedVisible, transitioning } = useMergeAnimation();
+  useAutoRotateTick();
 
   return (
     <div class="w-full h-full overflow-hidden relative">
-      {/* 空背景（自由回転時のみ） */}
-      <Show when={rotate.active}>
-        <SkyBackground totalMinutes={rotate.minutes} />
+      {/* 空背景 (自由回転時のみ) */}
+      <Show when={rotateActive()}>
+        <SkyBackground totalMinutes={rotateMinutes()} />
       </Show>
 
-      {/* 時計コンテナ（自由回転時はここがドラッグ領域） */}
+      {/* 時計コンテナ (自由回転時はここがドラッグ領域) */}
       <div
         class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}
         style={{
-          "touch-action": rotate.active && rotate.mode === "manual" ? "none" : "auto",
+          "touch-action": rotateActive() && rotateMode() === "manual" ? "none" : "auto",
           cursor:
-            rotate.active && rotate.mode === "manual"
+            rotateActive() && rotateMode() === "manual"
               ? (dragging() ? "grabbing" : "grab")
               : "default",
         }}
@@ -262,7 +163,7 @@ export const ClockLayout: Component = () => {
         onPointerUp={onDragEnd}
         onPointerCancel={onDragEnd}
       >
-        {/* AM（ドラッグ中は裏時計を描画しない=重い opacity レイヤーも消える）
+        {/* AM (ドラッグ中は裏時計を描画しない=重い opacity レイヤーも消える)
             負マージンで中央方向に少しオーバーラップ→盤面サイズは保ちつつ
             四隅にボタンスペースを確保 */}
         <div
@@ -272,11 +173,11 @@ export const ClockLayout: Component = () => {
             (isLandscape() ? "-mr-3" : "-mb-3")
           }
           style={{
-            transform: amTransform(),
+            transform: amTransform(mergedVisible(), isLandscape()),
             opacity: mergedVisible() ? 0 : 1,
             transition:
               "transform 560ms cubic-bezier(.34,1.56,.64,1), opacity 380ms ease, filter 380ms ease",
-            filter: splitShadow(),
+            filter: splitShadow(transitioning()),
             "will-change": transitioning() ? "transform, opacity" : "auto",
           }}
         >
@@ -298,11 +199,11 @@ export const ClockLayout: Component = () => {
             (isLandscape() ? "-ml-3" : "-mt-3")
           }
           style={{
-            transform: pmTransform(),
+            transform: pmTransform(mergedVisible(), isLandscape()),
             opacity: mergedVisible() ? 0 : 1,
             transition:
               "transform 560ms cubic-bezier(.34,1.56,.64,1), opacity 380ms ease, filter 380ms ease",
-            filter: splitShadow(),
+            filter: splitShadow(transitioning()),
             "will-change": transitioning() ? "transform, opacity" : "auto",
           }}
         >
@@ -317,9 +218,9 @@ export const ClockLayout: Component = () => {
         </div>
       </div>
 
-      {/* かさねモード: 中央に1つの時計（absolute レイヤ、ポインタ不干渉）
-          rotate.active のトグル時も opacity/transform で滑らかに消えるよう、
-          見えうる間(mergedVisible || transitioning)は DOM に保持する。 */}
+      {/* かさねモード: 中央に1つの時計 (absolute レイヤ、ポインタ不干渉)
+          rotateActive のトグル時も opacity/transform で滑らかに消えるよう、
+          見えうる間 (mergedVisible || transitioning) は DOM に保持する。 */}
       <Show when={mergedVisible() || transitioning()}>
         <div
           class={
@@ -328,11 +229,11 @@ export const ClockLayout: Component = () => {
           }
           style={{
             opacity: mergedVisible() ? 1 : 0,
-            transform: mergedTransform(),
+            transform: mergedTransform(mergedVisible()),
             "transform-origin": "center",
             transition:
               "opacity 380ms ease, transform 560ms cubic-bezier(.34,1.56,.64,1), filter 380ms ease",
-            filter: splitShadow(),
+            filter: splitShadow(transitioning()),
             "will-change": transitioning() ? "transform, opacity" : "auto",
           }}
         >
@@ -352,15 +253,15 @@ export const ClockLayout: Component = () => {
         </div>
       </Show>
 
-      {/* 秒バー（通常モードのみ） */}
-      <Show when={!rotate.active}>
+      {/* 秒バー (通常モードのみ) */}
+      <Show when={!rotateActive()}>
         <div class="absolute top-0 left-0 right-0 z-10 pointer-events-none">
           <SecondsBar seconds={displayed().seconds} hours={displayed().hours} />
         </div>
       </Show>
 
-      {/* 現在のAM/PM表示（通常モードのみ） */}
-      <Show when={!rotate.active}>
+      {/* 現在のAM/PM表示 (通常モードのみ) */}
+      <Show when={!rotateActive()}>
         <div
           class={
             "absolute z-20 px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-black shadow-md cursor-pointer " +

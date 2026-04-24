@@ -1,6 +1,9 @@
 import { For, Show, createMemo } from "solid-js";
 import type { Component } from "solid-js";
-import { useSettings } from "../store/settings";
+import { colorMode } from "../features/settings/color-mode";
+import { detailMode } from "../features/settings/detail-mode";
+import { timeFormat } from "../features/settings/time-format";
+import { paletteId } from "../features/settings/palette";
 import { getPalette, type HourColor } from "../colors";
 
 interface AnalogClockProps {
@@ -40,9 +43,7 @@ function annularSectorPath(
 }
 
 const AnalogClock: Component<AnalogClockProps> = (props) => {
-  const { settings } = useSettings();
-
-  const isKuwashiku = () => settings.detailMode === "kuwashiku";
+  const isKuwashiku = () => detailMode() === "kuwashiku";
 
   // くわしく: 時計を縮めて外に分数字スペースを確保
   // すっきり: 時計が画面いっぱい
@@ -57,7 +58,7 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
   const MINUTE_NUM_R = () => R() + 20;
 
   const colors = createMemo((): HourColor[] => {
-    const palette = getPalette(settings.paletteId);
+    const palette = getPalette(paletteId());
     if (props.period === "am") return palette.am;
     if (props.period === "pm") return palette.pm;
     // merged: 他パレットはAM=PMなので am を流用。
@@ -71,7 +72,7 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
     if (props.period === "am" || props.period === "merged") {
       return Array.from({ length: 12 }, (_, i) => i === 0 ? 12 : i);
     }
-    const is24h = settings.timeFormat === "24h";
+    const is24h = timeFormat() === "24h";
     return Array.from({ length: 12 }, (_, i) =>
       is24h ? (i === 0 ? 12 : i + 12) : (i === 0 ? 12 : i),
     );
@@ -110,14 +111,14 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
         <circle
           cx={CX} cy={CY} r={R()}
           fill={
-            settings.paletteId === "monotone"
+            paletteId() === "monotone"
               ? "#ffffff"
               : props.period === "merged" ? "#ececec" : props.period === "pm" ? "#f8d8e0" : "#d8e8f8"
           }
         />
 
         {/* 扇形モード */}
-        <Show when={settings.colorMode === "sector"}>
+        <Show when={colorMode() === "sector"}>
           <For each={colors()}>
             {(color, i) => (
               <path
@@ -154,7 +155,7 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
         </Show>
 
         {/* バッジモードの白背景 */}
-        <Show when={settings.colorMode === "badge"}>
+        <Show when={colorMode() === "badge"}>
           <circle cx={CX} cy={CY} r={R()} fill="#ffffff" />
         </Show>
 
@@ -218,7 +219,7 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
 
             return (
               <>
-                <Show when={settings.colorMode === "badge"}>
+                <Show when={colorMode() === "badge"}>
                   <circle cx={x()} cy={y()} r={18} fill={color()!.badge} />
                 </Show>
                 <text
@@ -227,9 +228,9 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
                   text-anchor="middle"
                   dominant-baseline="central"
                   font-size={
-                    settings.colorMode === "badge"
+                    colorMode() === "badge"
                       // ばっじ×すっきり×ものとーんはバッジの円が白で消えるので数字を少し大きく。
-                      ? (settings.paletteId === "monotone" && !isKuwashiku()
+                      ? (paletteId() === "monotone" && !isKuwashiku()
                           ? (num >= 10 ? "24" : "30")
                           : (num >= 10 ? "18" : "24"))
                       : isKuwashiku()
@@ -238,9 +239,9 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
                   }
                   font-weight="900"
                   font-family="Nunito, sans-serif"
-                  fill={settings.colorMode === "badge" ? color()!.text : "#111111"}
-                  stroke={settings.colorMode === "sector" ? "#ffffff" : "none"}
-                  stroke-width={settings.colorMode === "sector" ? (isKuwashiku() ? "4" : "5") : "0"}
+                  fill={colorMode() === "badge" ? color()!.text : "#111111"}
+                  stroke={colorMode() === "sector" ? "#ffffff" : "none"}
+                  stroke-width={colorMode() === "sector" ? (isKuwashiku() ? "4" : "5") : "0"}
                   paint-order="stroke"
                 >
                   {num}

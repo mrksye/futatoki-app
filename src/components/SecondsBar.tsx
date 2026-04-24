@@ -1,7 +1,7 @@
 import { For } from "solid-js";
 import type { Component } from "solid-js";
 import { getHourColor, getPalette } from "../colors";
-import { useSettings } from "../store/settings";
+import { paletteId } from "../features/settings/palette";
 
 interface SecondsBarProps {
   seconds: number;
@@ -9,8 +9,7 @@ interface SecondsBarProps {
 }
 
 const SecondsBar: Component<SecondsBarProps> = (props) => {
-  const { settings } = useSettings();
-  const color = () => getHourColor(getPalette(settings.paletteId), props.hours);
+  const color = () => getHourColor(getPalette(paletteId()), props.hours);
 
   return (
     <div class="flex w-full h-1.5 gap-[1px] px-1">
