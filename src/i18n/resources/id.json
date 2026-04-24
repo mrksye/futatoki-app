@@ -6,15 +6,15 @@
     "kuwashiku": "lengkap",
     "sector": "potongan",
     "badge": "lencana",
-    "rotateEnter": "putar bebas",
+    "rotateEnter": "putar",
     "rotateExit": "jam",
     "mergeToSingle": "tumpuk",
     "splitToTwo": "pisah",
     "rewindMinute": "mundur 1 menit",
     "styleToCrank": "engkol",
     "styleToDrag": "geser",
-    "autoStart": "putar otomatis",
-    "autoStop": "stop otomatis",
+    "autoStart": "otomatis",
+    "autoStop": "stop",
     "random": "acak"
   },
   "badge": {

@@ -6,15 +6,15 @@
     "kuwashiku": "detallado",
     "sector": "porciones",
     "badge": "placa",
-    "rotateEnter": "girar libre",
+    "rotateEnter": "girar",
     "rotateExit": "reloj",
     "mergeToSingle": "juntar",
     "splitToTwo": "separar",
     "rewindMinute": "1 min atrás",
     "styleToCrank": "manivela",
     "styleToDrag": "arrastrar",
-    "autoStart": "giro auto",
-    "autoStop": "parar giro",
+    "autoStart": "auto",
+    "autoStop": "parar",
     "random": "al azar"
   },
   "badge": {

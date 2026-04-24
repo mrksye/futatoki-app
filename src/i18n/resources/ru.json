@@ -13,8 +13,8 @@
     "rewindMinute": "-1 минута",
     "styleToCrank": "ручка",
     "styleToDrag": "тянуть",
-    "autoStart": "авто старт",
-    "autoStop": "авто стоп",
+    "autoStart": "авто",
+    "autoStop": "стоп",
     "random": "случайно"
   },
   "badge": {

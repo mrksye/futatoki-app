@@ -6,15 +6,15 @@
     "kuwashiku": "detailed",
     "sector": "slices",
     "badge": "badge",
-    "rotateEnter": "free spin",
+    "rotateEnter": "spin",
     "rotateExit": "clock",
     "mergeToSingle": "stack",
     "splitToTwo": "split",
     "rewindMinute": "back 1 min",
     "styleToCrank": "crank",
     "styleToDrag": "drag",
-    "autoStart": "auto spin",
-    "autoStop": "stop auto",
+    "autoStart": "auto",
+    "autoStop": "stop",
     "random": "random"
   },
   "badge": {

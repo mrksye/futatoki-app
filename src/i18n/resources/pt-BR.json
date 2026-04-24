@@ -13,7 +13,7 @@
     "rewindMinute": "voltar 1 min",
     "styleToCrank": "manivela",
     "styleToDrag": "arrastar",
-    "autoStart": "girar sozinho",
+    "autoStart": "auto",
     "autoStop": "parar",
     "random": "sorteio"
   },

@@ -6,15 +6,15 @@
     "kuwashiku": "بالتفصيل",
     "sector": "شرائح",
     "badge": "شارة",
-    "rotateEnter": "تدوير حر",
+    "rotateEnter": "تدوير",
     "rotateExit": "ساعة",
     "mergeToSingle": "دمج",
     "splitToTwo": "فصل",
     "rewindMinute": "رجوع 1 دقيقة",
     "styleToCrank": "مقبض",
     "styleToDrag": "سحب",
-    "autoStart": "تدوير تلقائي",
-    "autoStop": "إيقاف التلقائي",
+    "autoStart": "تلقائي",
+    "autoStop": "إيقاف",
     "random": "عشوائي"
   },
   "badge": {

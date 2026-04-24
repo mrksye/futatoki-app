@@ -14,7 +14,7 @@
     "styleToCrank": "manivelle",
     "styleToDrag": "glisser",
     "autoStart": "auto",
-    "autoStop": "stop auto",
+    "autoStop": "stop",
     "random": "au hasard"
   },
   "badge": {

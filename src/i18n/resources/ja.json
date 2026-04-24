@@ -6,15 +6,15 @@
     "kuwashiku": "くわしく",
     "sector": "くぎり",
     "badge": "ばっじ",
-    "rotateEnter": "じゆうかいてん",
+    "rotateEnter": "かいてん",
     "rotateExit": "とけい",
     "mergeToSingle": "かさねる",
     "splitToTwo": "わける",
     "rewindMinute": "１ふんもどす",
     "styleToCrank": "てまわし",
     "styleToDrag": "ぐりぐり",
-    "autoStart": "じどうかいてん",
-    "autoStop": "じどうをとめる",
+    "autoStart": "じどう",
+    "autoStop": "すとっぷ",
     "random": "らんだむ"
   },
   "badge": {

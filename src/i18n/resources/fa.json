@@ -6,15 +6,15 @@
     "kuwashiku": "کامل",
     "sector": "برش",
     "badge": "نشان",
-    "rotateEnter": "چرخش آزاد",
+    "rotateEnter": "چرخش",
     "rotateExit": "ساعت",
     "mergeToSingle": "روی هم",
     "splitToTwo": "جدا",
     "rewindMinute": "1 دقیقه عقب",
     "styleToCrank": "دسته‌ای",
     "styleToDrag": "کشیدنی",
-    "autoStart": "چرخش خودکار",
-    "autoStop": "توقف چرخش",
+    "autoStart": "خودکار",
+    "autoStop": "توقف",
     "random": "تصادفی"
   },
   "badge": {

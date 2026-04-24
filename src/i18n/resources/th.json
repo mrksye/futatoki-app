@@ -6,15 +6,15 @@
     "kuwashiku": "ละเอียด",
     "sector": "แบ่งสี",
     "badge": "ป้าย",
-    "rotateEnter": "หมุนอิสระ",
+    "rotateEnter": "หมุน",
     "rotateExit": "นาฬิกา",
     "mergeToSingle": "ซ้อนกัน",
     "splitToTwo": "แยกกัน",
     "rewindMinute": "ถอย 1 นาที",
     "styleToCrank": "หมุนมือ",
     "styleToDrag": "ลากเล่น",
-    "autoStart": "หมุนเอง",
-    "autoStop": "หยุดหมุน",
+    "autoStart": "ออโต้",
+    "autoStop": "หยุด",
     "random": "สุ่ม"
   },
   "badge": {

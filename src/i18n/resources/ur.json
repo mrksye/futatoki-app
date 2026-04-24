@@ -6,15 +6,15 @@
     "kuwashiku": "تفصیل",
     "sector": "ٹکڑے",
     "badge": "بَیج",
-    "rotateEnter": "آزاد گھماؤ",
+    "rotateEnter": "گھماؤ",
     "rotateExit": "گھڑی",
     "mergeToSingle": "ملا دو",
     "splitToTwo": "الگ کرو",
     "rewindMinute": "1 منٹ پیچھے",
     "styleToCrank": "ہتھ گھماؤ",
     "styleToDrag": "کھینچو",
-    "autoStart": "خودکار گھماؤ",
-    "autoStop": "خودکار بند",
+    "autoStart": "خودکار",
+    "autoStop": "بند",
     "random": "کوئی بھی"
   },
   "badge": {
