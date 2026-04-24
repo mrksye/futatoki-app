@@ -1,4 +1,4 @@
-import { For, Show, createMemo, onMount } from "solid-js";
+import { For, Show, createMemo, onCleanup, onMount } from "solid-js";
 import type { Component } from "solid-js";
 import { SCHEDULE_ICONS, type ScheduleIconDef } from "../features/schedule/icons";
 import {
@@ -43,6 +43,13 @@ const DRAG_DEG_PER_PX = 0.2;
 /** マウスホイール感度 (deltaY 1 単位 → リング n° 回転) */
 const WHEEL_DEG_PER_DELTA = 0.1;
 
+/** 慣性計算: 直近 N ms の速度サンプルから初速度を出す (touch flick 用) */
+const VELOCITY_WINDOW_MS = 80;
+/** 慣性減衰率 (exp 減衰、per ms)。大きいほど早く止まる。0.003 で約 1.5 秒で減速完了 */
+const INERTIA_DECAY_PER_MS = 0.003;
+/** 慣性停止閾値 (deg/ms)。これ未満になったら停止 */
+const INERTIA_VELOCITY_MIN = 0.015;
+
 const SchedulePicker: Component = () => {
   return (
     <Show when={pickerOpen() && pickerOrigin()}>
@@ -60,10 +67,46 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
   // ドラッグ状態 (= 「タップで閉じる」と「ドラッグで回転」の区別に使う)
   let dragStart: { x: number; y: number } | null = null;
   let dragHappened = false;
+  // 慣性 (touch flick で離した後に余韻で回し続ける) 用
+  let velocityHistory: { time: number; deltaDeg: number }[] = [];
+  let inertiaRaf: number | null = null;
+  // 慣性中のタップは「慣性キャンセル」のみで close しない (= ユーザーは止めたいだけ)
+  let inertiaCanceledByTap = false;
+
+  const cancelInertia = () => {
+    if (inertiaRaf !== null) {
+      cancelAnimationFrame(inertiaRaf);
+      inertiaRaf = null;
+    }
+  };
+
+  const startInertia = (initialVelocityDegPerMs: number) => {
+    cancelInertia();
+    let velocity = initialVelocityDegPerMs;
+    let lastTime = performance.now();
+    const tick = (now: number) => {
+      const dt = now - lastTime;
+      lastTime = now;
+      if (Math.abs(velocity) < INERTIA_VELOCITY_MIN) {
+        inertiaRaf = null;
+        return;
+      }
+      rotatePicker(velocity * dt);
+      velocity *= Math.exp(-INERTIA_DECAY_PER_MS * dt);
+      inertiaRaf = requestAnimationFrame(tick);
+    };
+    inertiaRaf = requestAnimationFrame(tick);
+  };
 
   const onPointerDown = (e: PointerEvent) => {
+    // 慣性中のタップ: 慣性キャンセル + close 抑制フラグを立てる
+    if (inertiaRaf !== null) {
+      cancelInertia();
+      inertiaCanceledByTap = true;
+    }
     dragStart = { x: e.clientX, y: e.clientY };
     dragHappened = false;
+    velocityHistory = [];
   };
 
   const onPointerMove = (e: PointerEvent) => {
@@ -78,18 +121,44 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     const sign = Math.abs(dx) > Math.abs(dy)
       ? (dx > 0 ? 1 : -1)
       : (dy > 0 ? 1 : -1);
-    rotatePicker(sign * dist * DRAG_DEG_PER_PX);
+    const deltaDeg = sign * dist * DRAG_DEG_PER_PX;
+    rotatePicker(deltaDeg);
+
+    // 速度履歴を記録 (直近 VELOCITY_WINDOW_MS のみ保持)
+    const now = performance.now();
+    velocityHistory.push({ time: now, deltaDeg });
+    const cutoff = now - VELOCITY_WINDOW_MS;
+    while (velocityHistory.length > 0 && velocityHistory[0]!.time < cutoff) {
+      velocityHistory.shift();
+    }
 
     // インクリメンタル化 (次の move で再計測)
     dragStart = { x: e.clientX, y: e.clientY };
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (e: PointerEvent) => {
     dragStart = null;
+    // touch flick で離した瞬間: 直近の平均速度から慣性ループ開始
+    // (mouse/pen は慣性なし。ホイールで操作する想定)
+    if (e.pointerType === "touch" && velocityHistory.length > 0) {
+      const totalDeg = velocityHistory.reduce((s, h) => s + h.deltaDeg, 0);
+      const oldest = velocityHistory[0]!.time;
+      const span = performance.now() - oldest || 1;
+      const velocity = totalDeg / span;
+      if (Math.abs(velocity) >= INERTIA_VELOCITY_MIN) {
+        startInertia(velocity);
+      }
+    }
+    velocityHistory = [];
   };
 
-  const onClick = (e: MouseEvent) => {
-    // ドラッグだった場合は close 抑制
+  const onClick = () => {
+    // 慣性キャンセルのためのタップは close しない
+    if (inertiaCanceledByTap) {
+      inertiaCanceledByTap = false;
+      return;
+    }
+    // ドラッグだった場合も close 抑制
     if (dragHappened) {
       dragHappened = false;
       return;
@@ -97,12 +166,16 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     closePicker();
   };
 
-  // マウスホイール: 下スクロール → CW、上スクロール → CCW (ドラッグの右/下と同じ方向)
+  // マウスホイール: 下スクロール → CW、上スクロール → CCW
+  // ホイール操作は慣性無し。慣性中のホイールはキャンセルしてから新規回転。
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
+    cancelInertia();
     const sign = e.deltaY > 0 ? 1 : -1;
     rotatePicker(sign * Math.abs(e.deltaY) * WHEEL_DEG_PER_DELTA);
   };
+
+  onCleanup(() => cancelInertia());
 
   return (
     <div
