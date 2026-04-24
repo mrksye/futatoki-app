@@ -1,6 +1,7 @@
 import { createMemo, createSignal, onCleanup, Show } from "solid-js";
 import type { Component } from "solid-js";
 import AnalogClock from "./AnalogClock";
+import ScheduleLayer from "./ScheduleLayer";
 import SecondsBar from "./SecondsBar";
 import SettingsPanel from "./SettingsPanel";
 import SkyBackground from "./SkyBackground";
@@ -139,7 +140,7 @@ export const ClockLayout: Component = () => {
         <div
           ref={amWrapperRef}
           class={
-            "flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
+            "relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
             (isLandscape() ? "-mr-3" : "-mb-3")
           }
           style={{
@@ -159,13 +160,16 @@ export const ClockLayout: Component = () => {
               dimmed={!isAm()}
             />
           </Show>
+          {/* AM 予定アイコン: 親 div の opacity を継承するので、AM が dimmed (PM プレビュー長押し中)
+              の時は予定アイコンも自動的に薄くなる */}
+          <ScheduleLayer period="am" />
         </div>
 
         {/* PM */}
         <div
           ref={pmWrapperRef}
           class={
-            "flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
+            "relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
             (isLandscape() ? "-ml-3" : "-mt-3")
           }
           style={{
@@ -185,6 +189,8 @@ export const ClockLayout: Component = () => {
               dimmed={isAm()}
             />
           </Show>
+          {/* PM 予定アイコン: AM 側と対称構造 */}
+          <ScheduleLayer period="pm" />
         </div>
       </div>
 
@@ -209,7 +215,7 @@ export const ClockLayout: Component = () => {
         >
           <div
             class={
-              "flex items-center justify-center " +
+              "relative flex items-center justify-center " +
               (isLandscape() ? "w-1/2 h-full" : "w-full h-1/2")
             }
           >
@@ -219,6 +225,19 @@ export const ClockLayout: Component = () => {
               minutes={displayed().minutes}
               dimmed={false}
             />
+            {/* 重ね表示中: AM/PM 両方のレイヤーをこの盤面に投影。
+                現在の period (displayed().hours < 12) を上 + 不透明、もう片方は強めに薄く後ろ。
+                Phase 5 で β レンダリングの opacity 値や z 順を調整予定。 */}
+            <Show
+              when={displayed().hours < 12}
+              fallback={<>
+                <ScheduleLayer period="am" opacity={0.15} zIndex={1} />
+                <ScheduleLayer period="pm" opacity={1} zIndex={2} />
+              </>}
+            >
+              <ScheduleLayer period="pm" opacity={0.15} zIndex={1} />
+              <ScheduleLayer period="am" opacity={1} zIndex={2} />
+            </Show>
           </div>
         </div>
       </Show>

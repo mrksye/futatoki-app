@@ -22,6 +22,12 @@ import type { ScheduleIconId } from "./icons";
 /** key = minutes (0..1439 の整数文字列), value = ScheduleIconId */
 export type Schedule = { [minutes: number]: ScheduleIconId };
 
+/** 1件の予定 (時刻 + アイコン)。schedule をループしたい時に scheduleEvents() で取得。 */
+export interface ScheduleEvent {
+  minutes: number;
+  iconId: ScheduleIconId;
+}
+
 // ===== Internal state (raw setter is intentionally not exported) =====
 const [schedule, setScheduleRaw] = persistedSignal<Schedule>("schedule", {});
 
@@ -31,6 +37,13 @@ export { schedule };
 /** 指定時刻 (分) のアイコン id を返す。無ければ undefined。 */
 export const scheduleAt = (minutes: number): ScheduleIconId | undefined =>
   schedule()[Math.round(minutes)];
+
+/** 全予定を {minutes, iconId} の配列で返す。順序は minutes 昇順ではない (insertion order)。 */
+export const scheduleEvents = (): ScheduleEvent[] =>
+  Object.entries(schedule()).map(([m, id]) => ({
+    minutes: Number(m),
+    iconId: id,
+  }));
 
 // ===== Public actions (only valid mutations live here) =====
 
