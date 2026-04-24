@@ -1,6 +1,7 @@
 import { createMemo, createSignal, onCleanup, Show } from "solid-js";
 import type { Component } from "solid-js";
-import AnalogClock from "./AnalogClock";
+import ClockFace from "./ClockFace";
+import HandsLayer from "./HandsLayer";
 import ScheduleLayer from "./ScheduleLayer";
 import SecondsBar from "./SecondsBar";
 import SettingsPanel from "./SettingsPanel";
@@ -145,7 +146,13 @@ export const ClockLayout: Component = () => {
           }
           style={{
             transform: amTransform(mergedVisible(), isLandscape()),
-            opacity: mergedVisible() ? 0 : 1,
+            // opacity は3つの状態を合成:
+            //   - merged 表示中 → 0 (split 時計は隠す)
+            //   - PM プレビュー長押し中 (= AM 非アクティブ) → 0.25 (薄く)
+            //   - 通常 → 1
+            // ここで一括にかけることで、ClockFace / ScheduleLayer / HandsLayer が
+            // すべて同じ opacity の影響を受ける。
+            opacity: mergedVisible() ? 0 : (isAm() ? 1 : 0.25),
             transition:
               "transform 560ms cubic-bezier(.34,1.56,.64,1), opacity 380ms ease, filter 380ms ease",
             filter: splitShadow(transitioning()),
@@ -153,16 +160,11 @@ export const ClockLayout: Component = () => {
           }}
         >
           <Show when={(!mergedVisible() || transitioning()) && (isAm() || !dragging())}>
-            <AnalogClock
-              period="am"
-              hours={amTime().hours}
-              minutes={amTime().minutes}
-              dimmed={!isAm()}
-            />
+            <ClockFace period="am" hours={amTime().hours} />
           </Show>
-          {/* AM 予定アイコン: 親 div の opacity を継承するので、AM が dimmed (PM プレビュー長押し中)
-              の時は予定アイコンも自動的に薄くなる */}
           <ScheduleLayer period="am" />
+          {/* 針は予定アイコンの上に乗せる */}
+          <HandsLayer hours={amTime().hours} minutes={amTime().minutes} />
         </div>
 
         {/* PM */}
@@ -174,7 +176,8 @@ export const ClockLayout: Component = () => {
           }
           style={{
             transform: pmTransform(mergedVisible(), isLandscape()),
-            opacity: mergedVisible() ? 0 : 1,
+            // AM と対称: PM 非アクティブ (= AM プレビュー長押し中) で 0.25 に薄く
+            opacity: mergedVisible() ? 0 : (isAm() ? 0.25 : 1),
             transition:
               "transform 560ms cubic-bezier(.34,1.56,.64,1), opacity 380ms ease, filter 380ms ease",
             filter: splitShadow(transitioning()),
@@ -182,15 +185,11 @@ export const ClockLayout: Component = () => {
           }}
         >
           <Show when={(!mergedVisible() || transitioning()) && (!isAm() || !dragging())}>
-            <AnalogClock
-              period="pm"
-              hours={pmTime().hours}
-              minutes={pmTime().minutes}
-              dimmed={isAm()}
-            />
+            <ClockFace period="pm" hours={pmTime().hours} />
           </Show>
-          {/* PM 予定アイコン: AM 側と対称構造 */}
           <ScheduleLayer period="pm" />
+          {/* 針は予定アイコンの上に乗せる */}
+          <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} />
         </div>
       </div>
 
@@ -219,12 +218,7 @@ export const ClockLayout: Component = () => {
               (isLandscape() ? "w-1/2 h-full" : "w-full h-1/2")
             }
           >
-            <AnalogClock
-              period="merged"
-              hours={displayed().hours}
-              minutes={displayed().minutes}
-              dimmed={false}
-            />
+            <ClockFace period="merged" hours={displayed().hours} />
             {/* 重ね表示中: AM/PM 両方のレイヤーをこの盤面に投影。
                 現在の period (displayed().hours < 12) を上 + 不透明、もう片方は強めに薄く後ろ。
                 Phase 5 で β レンダリングの opacity 値や z 順を調整予定。 */}
@@ -238,6 +232,8 @@ export const ClockLayout: Component = () => {
               <ScheduleLayer period="pm" opacity={0.15} zIndex={1} />
               <ScheduleLayer period="am" opacity={1} zIndex={2} />
             </Show>
+            {/* 針は予定アイコンの上に乗せる */}
+            <HandsLayer hours={displayed().hours} minutes={displayed().minutes} />
           </div>
         </div>
       </Show>

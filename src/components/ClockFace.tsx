@@ -6,11 +6,10 @@ import { timeFormat } from "../features/settings/time-format";
 import { paletteId } from "../features/settings/palette";
 import { getPalette, type HourColor } from "../colors";
 
-interface AnalogClockProps {
+interface ClockFaceProps {
   period: "am" | "pm" | "merged";
+  /** vivid パレット時の AM/PM 配色判別用 (merged 時のみ参照) */
   hours: number;
-  minutes: number;
-  dimmed: boolean;
 }
 
 function hourToAngle(hour: number): number {
@@ -42,7 +41,7 @@ function annularSectorPath(
   ].join(" ");
 }
 
-const AnalogClock: Component<AnalogClockProps> = (props) => {
+const ClockFace: Component<ClockFaceProps> = (props) => {
   const isKuwashiku = () => detailMode() === "kuwashiku";
 
   // くわしく: 時計を縮めて外に分数字スペースを確保
@@ -78,24 +77,8 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
     );
   });
 
-  const hourAngle = createMemo(() => {
-    const h = props.hours % 12;
-    return (h + props.minutes / 60) * 30 - 90;
-  });
-
-  const minuteAngle = createMemo(() => {
-    return props.minutes * 6 - 90;
-  });
-
-  // 分針の先端座標
-  const minuteHandX2 = () => CX + (R() * 0.78) * Math.cos((minuteAngle() * Math.PI) / 180);
-  const minuteHandY2 = () => CY + (R() * 0.78) * Math.sin((minuteAngle() * Math.PI) / 180);
-
   return (
-    <div
-      class="w-full h-full flex items-center justify-center"
-      style={{ opacity: props.dimmed ? 0.25 : 1, transition: "opacity 0.5s ease" }}
-    >
+    <div class="w-full h-full flex items-center justify-center">
       <svg viewBox={`0 0 ${VIEW} ${VIEW}`} class="w-full h-full" style="max-height: 100%; max-width: 100%;">
         {/* 外側リング（細め。SVGフィルターは重いのでシンプルな同心円で縁取り） */}
         <circle
@@ -251,41 +234,10 @@ const AnalogClock: Component<AnalogClockProps> = (props) => {
           }}
         </For>
 
-        {/*
-          時針・分針: g transform=rotate() で回す。
-          針自体は east(0°) を指す水平線として描画し、グループの transform 属性だけ更新する。
-          これでブラウザは針のジオメトリを再計算せず、合成層の変換として扱える。
-        */}
-
-        {/* 時針 */}
-        <g
-          transform={`rotate(${hourAngle() + 90} ${CX} ${CY})`}
-          style="will-change: transform"
-        >
-          <line x1={CX} y1={CY + 12} x2={CX} y2={CY - R() * 0.5}
-            stroke="#ffffff" stroke-width="10" stroke-linecap="round" />
-          <line x1={CX} y1={CY + 10} x2={CX} y2={CY - R() * 0.48}
-            stroke="#111111" stroke-width="7" stroke-linecap="round" />
-        </g>
-
-        {/* 分針 */}
-        <g
-          transform={`rotate(${minuteAngle() + 90} ${CX} ${CY})`}
-          style="will-change: transform"
-        >
-          <line x1={CX} y1={CY + 15} x2={CX} y2={CY - R() * 0.78}
-            stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
-          <line x1={CX} y1={CY + 13} x2={CX} y2={CY - R() * 0.76}
-            stroke="#111111" stroke-width="3.5" stroke-linecap="round" />
-        </g>
-
-        {/* 中心ネジ */}
-        <circle cx={CX} cy={CY} r="7" fill="white" />
-        <circle cx={CX} cy={CY} r="5" fill="#111111" />
-        <circle cx={CX} cy={CY} r="2" fill="white" />
+        {/* 時針・分針・中心ネジは HandsLayer に分離。ScheduleLayer の上に乗せたいため。 */}
       </svg>
     </div>
   );
 };
 
-export default AnalogClock;
+export default ClockFace;
