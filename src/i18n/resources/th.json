@@ -17,6 +17,22 @@
     "autoStop": "หยุด",
     "random": "สุ่ม"
   },
+  "schedule": {
+    "add": "แผน",
+    "icon": {
+      "breakfast": "อาหารเช้า",
+      "lunch": "อาหารกลางวัน",
+      "dinner": "อาหารเย็น",
+      "snack": "ขนม",
+      "nap": "งีบ",
+      "sleep": "นอน",
+      "wakeup": "ตื่น",
+      "depart": "ออกไป",
+      "bath": "อาบน้ำ",
+      "toothbrush": "แปรงฟัน",
+      "tidy": "เก็บของ"
+    }
+  },
   "badge": {
     "am": "☀️ AM",
     "pm": "🌙 PM"

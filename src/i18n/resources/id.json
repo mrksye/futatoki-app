@@ -17,6 +17,22 @@
     "autoStop": "stop",
     "random": "acak"
   },
+  "schedule": {
+    "add": "rencana",
+    "icon": {
+      "breakfast": "sarapan",
+      "lunch": "makan siang",
+      "dinner": "makan malam",
+      "snack": "cemilan",
+      "nap": "tidur siang",
+      "sleep": "tidur",
+      "wakeup": "bangun",
+      "depart": "berangkat",
+      "bath": "mandi",
+      "toothbrush": "sikat gigi",
+      "tidy": "beres-beres"
+    }
+  },
   "badge": {
     "am": "☀️ AM",
     "pm": "🌙 PM"

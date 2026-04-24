@@ -17,6 +17,22 @@
     "autoStop": "إيقاف",
     "random": "عشوائي"
   },
+  "schedule": {
+    "add": "خطة",
+    "icon": {
+      "breakfast": "فطور",
+      "lunch": "غداء",
+      "dinner": "عشاء",
+      "snack": "حلوى",
+      "nap": "قيلولة",
+      "sleep": "نوم",
+      "wakeup": "استيقاظ",
+      "depart": "ذهاب",
+      "bath": "حمام",
+      "toothbrush": "تنظيف الأسنان",
+      "tidy": "ترتيب"
+    }
+  },
   "badge": {
     "am": "☀️ AM",
     "pm": "🌙 PM"

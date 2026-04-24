@@ -17,6 +17,22 @@
     "autoStop": "стоп",
     "random": "случайно"
   },
+  "schedule": {
+    "add": "план",
+    "icon": {
+      "breakfast": "завтрак",
+      "lunch": "обед",
+      "dinner": "ужин",
+      "snack": "перекус",
+      "nap": "дрёма",
+      "sleep": "сон",
+      "wakeup": "подъём",
+      "depart": "уход",
+      "bath": "купание",
+      "toothbrush": "чистить зубы",
+      "tidy": "уборка"
+    }
+  },
   "badge": {
     "am": "☀️ AM",
     "pm": "🌙 PM"

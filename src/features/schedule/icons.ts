@@ -30,24 +30,26 @@ export type ScheduleIconId =
 
 export interface ScheduleIconDef {
   id: ScheduleIconId;
-  /** 表示用ラベル (将来 i18n 対象) */
-  label: string;
   /** picker / 時計上の絵文字グリフ */
   emoji: string;
 }
 
+/**
+ * ラベル文字列は i18n キー (`schedule.icon.<id>`) で参照する。
+ * このファイルは絵文字の見た目だけを持ち、ラベル翻訳は src/i18n/resources/*.json 側に集約。
+ */
 export const SCHEDULE_ICONS: readonly ScheduleIconDef[] = [
-  { id: "breakfast",  label: "あさごはん",   emoji: "🍳" },
-  { id: "lunch",      label: "おひるごはん", emoji: "🍙" },
-  { id: "dinner",     label: "ばんごはん",   emoji: "🍔" },
-  { id: "snack",      label: "おやつ",       emoji: "🍰" },
-  { id: "nap",        label: "おひるね",     emoji: "😴" },
-  { id: "sleep",      label: "ねる",         emoji: "🛌" },
-  { id: "wakeup",     label: "おきる",       emoji: "☀️" },
-  { id: "depart",     label: "しゅっぱつ",   emoji: "🚌" },
-  { id: "bath",       label: "おふろ",       emoji: "🛁" },
-  { id: "toothbrush", label: "はみがき",     emoji: "🪥" },
-  { id: "tidy",       label: "おかたづけ",   emoji: "🧺" },
+  { id: "breakfast",  emoji: "🍳" },
+  { id: "lunch",      emoji: "🍙" },
+  { id: "dinner",     emoji: "🍔" },
+  { id: "snack",      emoji: "🍰" },
+  { id: "nap",        emoji: "😴" },
+  { id: "sleep",      emoji: "🛌" },
+  { id: "wakeup",     emoji: "☀️" },
+  { id: "depart",     emoji: "🚌" },
+  { id: "bath",       emoji: "🛁" },
+  { id: "toothbrush", emoji: "🪥" },
+  { id: "tidy",       emoji: "🧺" },
 ];
 
 const ICON_BY_ID: Record<ScheduleIconId, ScheduleIconDef> = Object.fromEntries(

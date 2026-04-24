@@ -111,7 +111,7 @@ const SettingsPanel: Component = () => {
                 y: rect.top + rect.height / 2,
               });
             }}
-            aria-label={t("settings.scheduleAdd")}
+            aria-label={t("schedule.add")}
           />
 
           {/* 1ふんもどす (自由回転 manual のみ)

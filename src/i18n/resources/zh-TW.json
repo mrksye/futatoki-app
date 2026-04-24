@@ -17,6 +17,22 @@
     "autoStop": "停下來",
     "random": "隨機"
   },
+  "schedule": {
+    "add": "計劃",
+    "icon": {
+      "breakfast": "早餐",
+      "lunch": "午餐",
+      "dinner": "晚餐",
+      "snack": "點心",
+      "nap": "午睡",
+      "sleep": "睡覺",
+      "wakeup": "起床",
+      "depart": "出發",
+      "bath": "洗澡",
+      "toothbrush": "刷牙",
+      "tidy": "收拾"
+    }
+  },
   "badge": {
     "am": "☀️ AM",
     "pm": "🌙 PM"

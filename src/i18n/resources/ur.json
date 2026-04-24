@@ -17,6 +17,22 @@
     "autoStop": "بند",
     "random": "کوئی بھی"
   },
+  "schedule": {
+    "add": "منصوبہ",
+    "icon": {
+      "breakfast": "ناشتہ",
+      "lunch": "لنچ",
+      "dinner": "رات کا کھانا",
+      "snack": "سنیک",
+      "nap": "قیلولہ",
+      "sleep": "سونا",
+      "wakeup": "جاگنا",
+      "depart": "جانا",
+      "bath": "غسل",
+      "toothbrush": "برش",
+      "tidy": "صفائی"
+    }
+  },
   "badge": {
     "am": "☀️ AM",
     "pm": "🌙 PM"

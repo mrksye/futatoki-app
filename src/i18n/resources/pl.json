@@ -17,6 +17,22 @@
     "autoStop": "stop",
     "random": "losowo"
   },
+  "schedule": {
+    "add": "plan",
+    "icon": {
+      "breakfast": "śniadanie",
+      "lunch": "obiad",
+      "dinner": "kolacja",
+      "snack": "przekąska",
+      "nap": "drzemka",
+      "sleep": "spanie",
+      "wakeup": "pobudka",
+      "depart": "wyjście",
+      "bath": "kąpiel",
+      "toothbrush": "mycie zębów",
+      "tidy": "sprzątanie"
+    }
+  },
   "badge": {
     "am": "☀️ AM",
     "pm": "🌙 PM"

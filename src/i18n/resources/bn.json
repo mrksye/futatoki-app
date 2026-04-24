@@ -17,6 +17,22 @@
     "autoStop": "থামাও",
     "random": "এলোমেলো"
   },
+  "schedule": {
+    "add": "প্ল্যান",
+    "icon": {
+      "breakfast": "নাশতা",
+      "lunch": "দুপুরের খাবার",
+      "dinner": "রাতের খাবার",
+      "snack": "জলখাবার",
+      "nap": "দিবানিদ্রা",
+      "sleep": "ঘুম",
+      "wakeup": "ওঠা",
+      "depart": "যাওয়া",
+      "bath": "গোসল",
+      "toothbrush": "দাঁত মাজা",
+      "tidy": "গোছানো"
+    }
+  },
   "badge": {
     "am": "☀️ AM",
     "pm": "🌙 PM"

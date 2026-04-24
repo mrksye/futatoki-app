@@ -17,6 +17,22 @@
     "autoStop": "توقف",
     "random": "تصادفی"
   },
+  "schedule": {
+    "add": "برنامه",
+    "icon": {
+      "breakfast": "صبحانه",
+      "lunch": "ناهار",
+      "dinner": "شام",
+      "snack": "میان‌وعده",
+      "nap": "چرت",
+      "sleep": "خواب",
+      "wakeup": "بیدار شدن",
+      "depart": "رفتن",
+      "bath": "حمام",
+      "toothbrush": "مسواک",
+      "tidy": "مرتب کردن"
+    }
+  },
   "badge": {
     "am": "☀️ AM",
     "pm": "🌙 PM"

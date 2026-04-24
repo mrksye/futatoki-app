@@ -17,6 +17,22 @@
     "autoStop": "durdur",
     "random": "rastgele"
   },
+  "schedule": {
+    "add": "plan",
+    "icon": {
+      "breakfast": "kahvaltı",
+      "lunch": "öğle",
+      "dinner": "akşam",
+      "snack": "atıştırma",
+      "nap": "uyku",
+      "sleep": "uyumak",
+      "wakeup": "uyanma",
+      "depart": "çıkış",
+      "bath": "banyo",
+      "toothbrush": "diş fırçala",
+      "tidy": "toplama"
+    }
+  },
   "badge": {
     "am": "☀️ AM",
     "pm": "🌙 PM"

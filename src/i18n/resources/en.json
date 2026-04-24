@@ -15,8 +15,23 @@
     "styleToDrag": "drag",
     "autoStart": "auto",
     "autoStop": "stop",
-    "random": "random",
-    "scheduleAdd": "plan"
+    "random": "random"
+  },
+  "schedule": {
+    "add": "plan",
+    "icon": {
+      "breakfast": "breakfast",
+      "lunch": "lunch",
+      "dinner": "dinner",
+      "snack": "snack",
+      "nap": "nap",
+      "sleep": "sleep",
+      "wakeup": "wake up",
+      "depart": "leaving",
+      "bath": "bath",
+      "toothbrush": "brush teeth",
+      "tidy": "tidy up"
+    }
   },
   "badge": {
     "am": "☀️ AM",

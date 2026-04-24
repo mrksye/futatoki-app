@@ -15,8 +15,23 @@
     "styleToDrag": "ぐりぐり",
     "autoStart": "じどう",
     "autoStop": "すとっぷ",
-    "random": "らんだむ",
-    "scheduleAdd": "よてい"
+    "random": "らんだむ"
+  },
+  "schedule": {
+    "add": "よてい",
+    "icon": {
+      "breakfast": "あさごはん",
+      "lunch": "おひるごはん",
+      "dinner": "ばんごはん",
+      "snack": "おやつ",
+      "nap": "おひるね",
+      "sleep": "ねる",
+      "wakeup": "おきる",
+      "depart": "しゅっぱつ",
+      "bath": "おふろ",
+      "toothbrush": "はみがき",
+      "tidy": "おかたづけ"
+    }
   },
   "badge": {
     "am": "☀️ AM",

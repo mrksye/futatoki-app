@@ -17,6 +17,22 @@
     "autoStop": "멈춤",
     "random": "랜덤"
   },
+  "schedule": {
+    "add": "일정",
+    "icon": {
+      "breakfast": "아침",
+      "lunch": "점심",
+      "dinner": "저녁",
+      "snack": "간식",
+      "nap": "낮잠",
+      "sleep": "자기",
+      "wakeup": "일어나기",
+      "depart": "외출",
+      "bath": "목욕",
+      "toothbrush": "양치",
+      "tidy": "정리"
+    }
+  },
   "badge": {
     "am": "☀️ AM",
     "pm": "🌙 PM"

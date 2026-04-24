@@ -12,6 +12,7 @@ import {
 import { setScheduleAt } from "../features/schedule/state";
 import { rotateMinutes } from "../features/free-rotation/state";
 import { useIsTablet } from "../hooks/useIsTablet";
+import { useI18n, type TKey } from "../i18n";
 
 /**
  * 予定アイコン選択用リングメニュー。
@@ -216,6 +217,7 @@ const RingIcon: Component<{
   iconFont: number;
 }> = (props) => {
   let buttonRef: HTMLButtonElement | undefined;
+  const { t } = useI18n();
 
   // i=0 を 12時 (-90deg) からスタート、CW に並ぶ
   const angleDeg = createMemo(() =>
@@ -274,7 +276,7 @@ const RingIcon: Component<{
         transform: transform(),
       }}
       onClick={onClick}
-      aria-label={props.icon.label}
+      aria-label={t(`schedule.icon.${props.icon.id}` as TKey)}
     >
       {props.icon.emoji}
     </button>
