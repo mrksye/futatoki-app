@@ -2,8 +2,10 @@
 @import "tailwindcss";
 
 /* 「タブレット以上」の判定。横幅だけでなく高さも見ることで、
-   スマホのランドスケープ(幅 >= 768px でも高さが低い)を除外する。 */
-@custom-variant tablet (@media (min-width: 48rem) and (min-height: 30rem));
+   スマホのランドスケープ(幅 >= 768px でも高さが低い)を除外する。
+   min-height は iPhone 14 Pro Max ランドスケープ(430px)から十分に
+   離すため 32rem (512px) に設定。 */
+@custom-variant tablet (@media (min-width: 48rem) and (min-height: 32rem));
 
 html, body, #root {
   margin: 0;
