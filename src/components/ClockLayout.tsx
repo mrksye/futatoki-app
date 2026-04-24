@@ -17,13 +17,9 @@ import {
 } from "../features/free-rotation/merge-animation";
 import { useAmPmPreviewHold } from "../features/am-pm-preview";
 import { useI18n } from "../i18n";
-// ===== ドラッグ操作スタイル: drag (default) と crank (オプション) =====
 import { dragStart, dragAdvance, type DragDragState } from "../features/free-rotation/drag";
-import { rotateStyle, crankStart, crankAdvance, type CrankDragState } from "../features/free-rotation/crank";
 
-type DragState =
-  | ({ style: "drag" } & DragDragState)
-  | ({ style: "crank" } & CrankDragState);
+type DragState = DragDragState;
 
 export const ClockLayout: Component = () => {
   const time = useCurrentTime();
@@ -75,44 +71,17 @@ export const ClockLayout: Component = () => {
     if (rafId === null) rafId = requestAnimationFrame(commitPending);
   };
 
-  const nearestClockCenter = (clientX: number, clientY: number): { cx: number; cy: number } | null => {
-    const refs = [amWrapperRef, pmWrapperRef].filter(Boolean) as HTMLDivElement[];
-    if (refs.length === 0) return null;
-    let best: { cx: number; cy: number; dist: number } | null = null;
-    for (const ref of refs) {
-      const r = ref.getBoundingClientRect();
-      const cx = r.left + r.width / 2;
-      const cy = r.top + r.height / 2;
-      const dist = Math.hypot(clientX - cx, clientY - cy);
-      if (!best || dist < best.dist) best = { cx, cy, dist };
-    }
-    return best ? { cx: best.cx, cy: best.cy } : null;
-  };
-
   const onDragStart = (e: PointerEvent) => {
     if (!rotateActive() || rotateMode() !== "manual") return;
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    // ===== crank style 選択時のみ走る分岐 (crank feature を切るならこのブロックごと外す) =====
-    if (rotateStyle() === "crank") {
-      const pivot = nearestClockCenter(e.clientX, e.clientY);
-      if (!pivot) return;
-      dragRef = { style: "crank", ...crankStart(e, pivot, rotateMinutes()) };
-    } else {
-      dragRef = { style: "drag", ...dragStart(e, rotateMinutes()) };
-    }
+    dragRef = dragStart(e, rotateMinutes());
     setDragging(true);
   };
 
   const onDragMove = (e: PointerEvent) => {
     const s = dragRef;
     if (!s || e.pointerId !== s.pointerId) return;
-    // ===== crank style 選択時のみ走る分岐 (crank feature を切るならこのブロックごと外す) =====
-    if (s.style === "crank") {
-      const next = crankAdvance(e, s);
-      if (next !== null) schedule(next);
-    } else {
-      schedule(dragAdvance(e, s));
-    }
+    schedule(dragAdvance(e, s));
   };
 
   const onDragEnd = (e: PointerEvent) => {
