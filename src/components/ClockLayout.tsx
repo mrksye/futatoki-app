@@ -173,12 +173,19 @@ export const ClockLayout: Component = () => {
             "will-change": transitioning() ? "transform, opacity" : "auto",
           }}
         >
+          {/* AM 側を描画する条件:
+                - merged 中 (transitioning 以外) は隠す → AM/PM split は表示しない
+                - 自由回転 manual のドラッグ中は反対側 (= !isAm) を隠して合成負荷軽減
+              ClockFace / ScheduleLayer / HandsLayer 全部にこの条件を適用する。 */}
           <Show when={(!mergedVisible() || transitioning()) && (isAm() || !dragging())}>
             <ClockFace period="am" hours={amTime().hours} />
+            {/* 予定アイコンは更に merge transition 中も外す (620ms の窓) */}
+            <Show when={!transitioning()}>
+              <ScheduleLayer period="am" displayedMinutes={displayedMinutesTotal()} />
+            </Show>
+            {/* 針は予定アイコンの上に乗せる */}
+            <HandsLayer hours={amTime().hours} minutes={amTime().minutes} />
           </Show>
-          <ScheduleLayer period="am" displayedMinutes={displayedMinutesTotal()} />
-          {/* 針は予定アイコンの上に乗せる */}
-          <HandsLayer hours={amTime().hours} minutes={amTime().minutes} />
         </div>
 
         {/* PM */}
@@ -198,12 +205,14 @@ export const ClockLayout: Component = () => {
             "will-change": transitioning() ? "transform, opacity" : "auto",
           }}
         >
+          {/* PM 側 (AM 側と対称) */}
           <Show when={(!mergedVisible() || transitioning()) && (!isAm() || !dragging())}>
             <ClockFace period="pm" hours={pmTime().hours} />
+            <Show when={!transitioning()}>
+              <ScheduleLayer period="pm" displayedMinutes={displayedMinutesTotal()} />
+            </Show>
+            <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} />
           </Show>
-          <ScheduleLayer period="pm" displayedMinutes={displayedMinutesTotal()} />
-          {/* 針は予定アイコンの上に乗せる */}
-          <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} />
         </div>
       </div>
 
@@ -235,20 +244,22 @@ export const ClockLayout: Component = () => {
             <ClockFace period="merged" hours={displayed().hours} />
             {/* 重ね表示中: AM/PM 両方のレイヤーをこの盤面に投影。
                 現在の period (displayed().hours < 12) を上 + 不透明、もう片方は強めに薄く後ろ。
-                Phase 5 で β レンダリングの opacity 値や z 順を調整予定。 */}
-            <Show
-              when={displayed().hours < 12}
-              fallback={<>
-                <ScheduleLayer period="am" opacity={0.15} scale={0.85} zIndex={1}
+                merge transition 中は AM/PM 二重描画 + 合成負荷を避けるため一時的に外す。 */}
+            <Show when={!transitioning()}>
+              <Show
+                when={displayed().hours < 12}
+                fallback={<>
+                  <ScheduleLayer period="am" opacity={0.15} scale={0.85} zIndex={1}
+                    displayedMinutes={displayedMinutesTotal()} />
+                  <ScheduleLayer period="pm" opacity={1} zIndex={2}
+                    displayedMinutes={displayedMinutesTotal()} />
+                </>}
+              >
+                <ScheduleLayer period="pm" opacity={0.15} scale={0.85} zIndex={1}
                   displayedMinutes={displayedMinutesTotal()} />
-                <ScheduleLayer period="pm" opacity={1} zIndex={2}
+                <ScheduleLayer period="am" opacity={1} zIndex={2}
                   displayedMinutes={displayedMinutesTotal()} />
-              </>}
-            >
-              <ScheduleLayer period="pm" opacity={0.15} scale={0.85} zIndex={1}
-                displayedMinutes={displayedMinutesTotal()} />
-              <ScheduleLayer period="am" opacity={1} zIndex={2}
-                displayedMinutes={displayedMinutesTotal()} />
+              </Show>
             </Show>
             {/* 針は予定アイコンの上に乗せる */}
             <HandsLayer hours={displayed().hours} minutes={displayed().minutes} />
