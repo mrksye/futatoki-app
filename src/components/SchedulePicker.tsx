@@ -106,7 +106,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
 
   return (
     <div
-      class="fixed inset-0 z-[100]"
+      class="fixed inset-0 z-[100] backdrop-blur-[2px]"
       style={{
         background: "rgba(0,0,0,0.4)",
         "touch-action": "none",
