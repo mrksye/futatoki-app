@@ -21,6 +21,8 @@ import { useRewindHold } from "../features/free-rotation/rewind";
 import { randomizeRotate } from "../features/free-rotation/random-time";
 import { useButtonsDimmedDuringMergeFlip } from "../features/free-rotation/merge-animation";
 import { withViewTransition } from "../features/view-transition";
+// ===== ドラッグ操作スタイル切替 (crank feature を切るならこの import と下のボタンブロックを外す) =====
+import { rotateStyle, toggleRotateStyle } from "../features/free-rotation/crank";
 
 const SettingsPanel: Component = () => {
   const { t } = useI18n();
@@ -73,8 +75,31 @@ const SettingsPanel: Component = () => {
             aria-label={rotateMerged() ? t("settings.splitToTwo") : t("settings.mergeToSingle")}
           />
 
-          {/* TODO: このスロット (横長分け=上センター, 横長重ね=右上 / 縦長分け=左センター, 縦長重ね=左下寄り)
-              に「よてい」ボタンを追加予定 */}
+          {/* ===== ドラッグ操作スタイル切替 (crank feature を切るならこのブロックごと外す) =====
+              横長分け=上センター, 横長重ね=右上 (1ふんもどすと同じ縦ライン)
+              縦長分け=左センター, 縦長重ね=左下寄り */}
+          <button
+            class={
+              "fixed z-50 " +
+              (isLandscape()
+                ? (rotateMerged()
+                    ? "left-[82%] top-2 -translate-x-1/2"
+                    : "left-1/2 top-2 -translate-x-1/2")
+                : (rotateMerged()
+                    ? "left-2 top-[80%] -translate-y-1/2"
+                    : "left-2 top-1/2 -translate-y-1/2")) +
+              " " + btnClass
+            }
+            style={{
+              transition: moveTransition + ", " + dimTransition,
+              opacity: buttonsDimmed() ? 0.08 : 1,
+              "view-transition-name": "clock-left-slot",
+            }}
+            onClick={toggleRotateStyle}
+            aria-label={rotateStyle() === "crank"
+              ? t("settings.styleToDrag")
+              : t("settings.styleToCrank")}
+          />
 
           {/* 1ふんもどす
               横長分け=下センター, 横長重ね=右下寄り (てまわしと同じ縦ライン)
