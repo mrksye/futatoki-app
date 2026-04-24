@@ -45,7 +45,7 @@ export const palettes: Palette[] = [
       { bg: "#9020B0", badge: "#A030C0", text: "#ffffff" }, // 3時  紫
       { bg: "#F08020", badge: "#FA9030", text: "#ffffff" }, // 4時  橙
       { bg: "#2060C8", badge: "#3070D8", text: "#ffffff" }, // 5時  青
-      { bg: "#F880A8", badge: "#FF90B8", text: "#4a1820" }, // 6時  ピンク
+      { bg: "#F8A0B0", badge: "#FFB0C0", text: "#4a1820" }, // 6時  ピンク
       { bg: "#30A048", badge: "#40B058", text: "#ffffff" }, // 7時  緑
       { bg: "#A0602A", badge: "#B0703A", text: "#ffffff" }, // 8時  茶
       { bg: "#60B0E0", badge: "#70C0F0", text: "#1a2040" }, // 9時  水色
@@ -59,7 +59,7 @@ export const palettes: Palette[] = [
       { bg: "#9020B0", badge: "#A030C0", text: "#ffffff" }, // 15時 紫
       { bg: "#F08020", badge: "#FA9030", text: "#ffffff" }, // 16時 橙
       { bg: "#2060C8", badge: "#3070D8", text: "#ffffff" }, // 17時 青
-      { bg: "#F880A8", badge: "#FF90B8", text: "#4a1820" }, // 18時 ピンク
+      { bg: "#F8A0B0", badge: "#FFB0C0", text: "#4a1820" }, // 18時 ピンク
       { bg: "#30A048", badge: "#40B058", text: "#ffffff" }, // 19時 緑
       { bg: "#A0602A", badge: "#B0703A", text: "#ffffff" }, // 20時 茶
       { bg: "#60B0E0", badge: "#70C0F0", text: "#1a2040" }, // 21時 水色
