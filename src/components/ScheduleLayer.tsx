@@ -9,7 +9,6 @@ import {
   triggerDelete,
 } from "../features/schedule/interaction";
 import { detailMode } from "../features/settings/detail-mode";
-import { withNoonPairing } from "../features/schedule/noon-pair";
 import { animateMotion } from "../lib/motion";
 
 /**
@@ -102,21 +101,13 @@ const POOF_DURATION_MS = 900;
  * 別途 one-shot ポヨン3 をトリガーして可視性を担保する (continuous loop だけだと描画が間に合わない)。
  */
 const MATCH_WINDOW_MINUTES_BEFORE = 2;
-
-/** 素の match window 判定。displayed と eventM の分単位差が [-2, 0] に入るか。
- *  0/1440 を跨ぐラップアラウンドを正規化してから比較する。 */
-const isWithinMatchWindowExact = (displayed: number, eventM: number): boolean => {
+const isWithinMatchWindow = (displayed: number, eventM: number): boolean => {
+  // 0/1440 を跨ぐラップアラウンドを正規化
   let diff = displayed - eventM;
   while (diff > 720) diff -= 1440;
   while (diff < -720) diff += 1440;
   return diff >= -MATCH_WINDOW_MINUTES_BEFORE && diff <= 0;
 };
-
-/** 天頂等価ルール (noon-pair.ts) を被せた最終判定。
- *  AM 0:00 / PM 12:00 が時計天頂を共有するので、片方 window 内なら相方も match 扱い。
- *  撤去時は noon-pair の import と withNoonPairing の wrap を外して
- *  `const isWithinMatchWindow = isWithinMatchWindowExact` に戻すだけ。 */
-const isWithinMatchWindow = withNoonPairing(isWithinMatchWindowExact);
 
 /** 削除ボタン (✕ 印の赤い丸吹き出し) */
 const TRASH_OFFSET = 10;
@@ -370,6 +361,9 @@ const EventIcon: Component<EventIconProps> = (props) => {
   // window 抜けて continuous が cancel されると one-shot の transform が再び見えるので可視。
   // 注: この effect を continuous loop effect より「先に定義」しておくこと。
   //     後発 (continuous) の方が WAAPI composite で勝ち、stopped 状態で continuous の方が見える。
+  // defer なし: mount 直後に既に isMatched=true の場合 (= window 内で表示開始) も
+  // ポヨン3 を発火させたいため。matched=false で start しても matched 内の早期 return で
+  // 何も起きないので副作用は無い。
   createEffect(on(
     () => props.isMatched,
     (matched) => {
@@ -377,7 +371,6 @@ const EventIcon: Component<EventIconProps> = (props) => {
       if (isWarning() || isDeleting()) return;
       triggerPoyon3();
     },
-    { defer: true },
   ));
 
   // マッチ中の continuous: 1 周期 = 躍動感バウンス (前半 42%) + rest (後半 58%)。延々ループ。
