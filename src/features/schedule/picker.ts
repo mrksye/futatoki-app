@@ -40,6 +40,12 @@ export const openPicker = (origin: PickerOrigin) => {
   setOpenRaw(true);
 };
 
+/** 要素中心を origin にして開く糖衣。call site の rect 計算を不要にする。 */
+export const openPickerAtElement = (el: HTMLElement) => {
+  const rect = el.getBoundingClientRect();
+  openPicker({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+};
+
 export const closePicker = () => {
   setOpenRaw(false);
 };

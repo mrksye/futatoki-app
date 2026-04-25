@@ -74,6 +74,10 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
   let inertiaRaf: number | null = null;
   // 慣性中のタップは「慣性キャンセル」のみで close しない (= ユーザーは止めたいだけ)
   let inertiaCanceledByTap = false;
+  // よていボタンの pointerdown で picker が開いた直後、release 時の合成 click が
+  // overlay に飛んできて即 closePicker されるのを防ぐ。
+  // = 「pointerdown を overlay 自身が受け取った場合だけ click を有効に扱う」
+  let pointerDownOnOverlay = false;
 
   const cancelInertia = () => {
     if (inertiaRaf !== null) {
@@ -101,6 +105,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
   };
 
   const onPointerDown = (e: PointerEvent) => {
+    pointerDownOnOverlay = true;
     // 慣性中のタップ: 慣性キャンセル + close 抑制フラグを立てる
     if (inertiaRaf !== null) {
       cancelInertia();
@@ -155,6 +160,9 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
   };
 
   const onClick = () => {
+    // pointerdown を overlay 自身が見ていない (= よていボタンから開いた直後の合成 click) なら無視
+    if (!pointerDownOnOverlay) return;
+    pointerDownOnOverlay = false;
     // 慣性キャンセルのためのタップは close しない
     if (inertiaCanceledByTap) {
       inertiaCanceledByTap = false;

@@ -22,7 +22,7 @@ import { randomizeRotate } from "../features/free-rotation/random-time";
 import { useButtonsDimmedDuringMergeFlip } from "../features/free-rotation/merge-animation";
 import { withViewTransition, MORPHING_SLOT } from "../features/view-transition";
 // ===== 予定モード ピッカー =====
-import { pickerOpen, openPicker, closePicker } from "../features/schedule/picker";
+import { openPickerAtElement } from "../features/schedule/picker";
 
 const SettingsPanel: Component = () => {
   const { t } = useI18n();
@@ -95,21 +95,7 @@ const SettingsPanel: Component = () => {
               opacity: buttonsDimmed() ? 0.08 : 1,
               "view-transition-name": MORPHING_SLOT.LEFT,
             }}
-            onPointerDown={(e) => {
-              // pointerdown で即開く + preventDefault で synthesized click を抑止
-              // (overlay 上で click が発火すると closePicker race を起こすため)
-              e.preventDefault();
-              if (pickerOpen()) {
-                closePicker();
-                return;
-              }
-              if (!yoteiBtnRef) return;
-              const rect = yoteiBtnRef.getBoundingClientRect();
-              openPicker({
-                x: rect.left + rect.width / 2,
-                y: rect.top + rect.height / 2,
-              });
-            }}
+            onPointerDown={() => yoteiBtnRef && openPickerAtElement(yoteiBtnRef)}
             aria-label={t("schedule.add")}
           />
 
