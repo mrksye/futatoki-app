@@ -133,20 +133,17 @@ const isWithinMatchWindow = (displayed: number, eventM: number): boolean => {
 /** 「dim 側でもハッキリ見せる」用 window (= eventOpacity の判定)。
  *  ポヨポヨ window と分離してあるのは、目的が違うため:
  *    - ポヨポヨ = 発生直前の "アニメで気を引く" → 短く狭い (数分)
- *    - 見える   = "もうすぐ来る" の予告 / "起きたばかり" の余韻 → ポヨポヨより広く取れる
- *  特例: お昼休み相当の 12:00〜12:59 (= 720..779 分、正午台 1 時間) の予定だけは
- *  前 5 時間 59 分 (朝のうちから予告) + 後 5 時間 59 分 (夕方まで余韻) の合計約 12 時間 window。
- *  撤去はこの三項演算子を消して固定値 (BEFORE は 2、AFTER は 0) に戻すだけ。 */
+ *    - 見える   = "もうすぐ来る" の予告 → ポヨポヨより広く取れる
+ *  特例: お昼休み相当の 12:00〜12:59 (= 720..779 分、正午台 1 時間) の予定だけは 59 分前から
+ *  表示し、「もうすぐお昼」を分かりやすく予告する。撤去はこの三項演算子を消して固定値に戻すだけ。 */
 const VISIBILITY_WINDOW_MINUTES_BEFORE = 2;
-const VISIBILITY_WINDOW_MINUTES_AFTER = 0;
-const VISIBILITY_WINDOW_MINUTES_BEFORE_LUNCH_BAND = 359;
-const VISIBILITY_WINDOW_MINUTES_AFTER_LUNCH_BAND = 359;
+const VISIBILITY_WINDOW_MINUTES_BEFORE_LUNCH_BAND = 59;
 const isWithinVisibilityWindow = (displayed: number, eventM: number): boolean => {
   const diff = wrapMinuteDiff(displayed - eventM);
-  const isLunchBand = eventM >= 720 && eventM <= 779;
-  const before = isLunchBand ? VISIBILITY_WINDOW_MINUTES_BEFORE_LUNCH_BAND : VISIBILITY_WINDOW_MINUTES_BEFORE;
-  const after = isLunchBand ? VISIBILITY_WINDOW_MINUTES_AFTER_LUNCH_BAND : VISIBILITY_WINDOW_MINUTES_AFTER;
-  return diff >= -before && diff <= after;
+  const before = (eventM >= 720 && eventM <= 779)
+    ? VISIBILITY_WINDOW_MINUTES_BEFORE_LUNCH_BAND
+    : VISIBILITY_WINDOW_MINUTES_BEFORE;
+  return diff >= -before && diff <= 0;
 };
 
 /** 削除ボタン (✕ 印の赤い丸吹き出し) */
