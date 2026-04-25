@@ -23,7 +23,9 @@ import { animateMotion, motionAllowed } from "../lib/motion";
  *   - リング: 11 個のアイコンが半径 RING_RADIUS で円周上に配置
  *   - 開閉アニメ: タップ位置 → 各アイコンの最終位置に放射状にニュッと出る
  *                 stagger 30ms で右回り順 (12時から CW)
- *   - ドラッグ回転: 右/下 → CW、左/上 → CCW
+ *   - ドラッグ回転: origin 中心の角度差をそのまま回転に渡す (画面のどこでも全域 angular)。
+ *                   一周なぞれば 360° 回る、ハンドルを回すような感触
+ *   - マウスホイール: 別枠で deltaY を回転に渡す (慣性なし)
  *   - アイコンタップ → 現在の rotateMinutes() に予定追加 + 閉じる
  *   - Overlay 空タップ → 閉じる
  */
@@ -40,8 +42,6 @@ const APPEAR_DURATION_MS = 280;
 
 /** 「ドラッグ」と「タップ」を区別する閾値 (px) */
 const DRAG_THRESHOLD_PX = 5;
-/** ドラッグ感度 (画面 1px 移動 → リング n° 回転) */
-const DRAG_DEG_PER_PX = 0.2;
 /** マウスホイール感度 (deltaY 1 単位 → リング n° 回転) */
 const WHEEL_DEG_PER_DELTA = 0.1;
 
@@ -67,8 +67,10 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
   const iconFont = () => isTablet() ? ICON_FONT_TABLET : ICON_FONT_MOBILE;
 
   // ドラッグ状態 (= 「タップで閉じる」と「ドラッグで回転」の区別に使う)
+  // dragStart は tap/drag 閾値判定用、lastAngularRad は origin 基準の前回角度 (rad)
   let dragStart: { x: number; y: number } | null = null;
   let dragHappened = false;
+  let lastAngularRad = 0;
   // 慣性 (touch flick で離した後に余韻で回し続ける) 用
   let velocityHistory: { time: number; deltaDeg: number }[] = [];
   let inertiaRaf: number | null = null;
@@ -114,21 +116,26 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     dragStart = { x: e.clientX, y: e.clientY };
     dragHappened = false;
     velocityHistory = [];
+    lastAngularRad = Math.atan2(e.clientY - props.origin.y, e.clientX - props.origin.x);
   };
 
   const onPointerMove = (e: PointerEvent) => {
     if (!dragStart) return;
-    const dx = e.clientX - dragStart.x;
-    const dy = e.clientY - dragStart.y;
-    const dist = Math.hypot(dx, dy);
-    if (!dragHappened && dist < DRAG_THRESHOLD_PX) return;
-    dragHappened = true;
+    if (!dragHappened) {
+      const dist = Math.hypot(e.clientX - dragStart.x, e.clientY - dragStart.y);
+      if (dist < DRAG_THRESHOLD_PX) return;
+      dragHappened = true;
+    }
 
-    // 主要方向で回転方向を決定: 右/下 → CW (+), 左/上 → CCW (-)
-    const sign = Math.abs(dx) > Math.abs(dy)
-      ? (dx > 0 ? 1 : -1)
-      : (dy > 0 ? 1 : -1);
-    const deltaDeg = sign * dist * DRAG_DEG_PER_PX;
+    // origin 中心の角度差をそのまま回転に渡す。
+    // 画面座標は y が下向き正なので atan2 は CW で増加し、CW 回転 (+) と一致する
+    const currentRad = Math.atan2(e.clientY - props.origin.y, e.clientX - props.origin.x);
+    let deltaRad = currentRad - lastAngularRad;
+    // ±π 跨ぎを最短経路に正規化
+    if (deltaRad > Math.PI) deltaRad -= 2 * Math.PI;
+    else if (deltaRad < -Math.PI) deltaRad += 2 * Math.PI;
+    const deltaDeg = (deltaRad * 180) / Math.PI;
+    lastAngularRad = currentRad;
     rotatePicker(deltaDeg);
 
     // 速度履歴を記録 (直近 VELOCITY_WINDOW_MS のみ保持)
@@ -138,9 +145,6 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     while (velocityHistory.length > 0 && velocityHistory[0]!.time < cutoff) {
       velocityHistory.shift();
     }
-
-    // インクリメンタル化 (次の move で再計測)
-    dragStart = { x: e.clientX, y: e.clientY };
   };
 
   const onPointerUp = (e: PointerEvent) => {
