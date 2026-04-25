@@ -1,5 +1,5 @@
 import { createMemo, createSignal, onCleanup, Show } from "solid-js";
-import type { Component } from "solid-js";
+import type { Component, ParentComponent } from "solid-js";
 import ClockFace from "./ClockFace";
 import HandsLayer from "./HandsLayer";
 import ScheduleLayer from "./ScheduleLayer";
@@ -24,6 +24,24 @@ import { useI18n } from "../i18n";
 import { dragStart, dragAdvance, type DragDragState } from "../features/free-rotation/drag";
 
 type DragState = DragDragState;
+
+/**
+ * dim 用 absolute オーバーレイ。ClockFace / HandsLayer を opacity transition で薄くするための
+ * 包み div を 1 箇所に閉じ込めた component。
+ *
+ * pointer-events-none は構造的に必須 (= ここに閉じ込めている本来の理由):
+ *   この div は ScheduleLayer の上に absolute inset-0 で乗るため、デフォルトの pointer-events: auto
+ *   のままだと予定アイコンへの pointer が全部この空 box で止まってしまう (= タップが効かない)。
+ *   過去にこのバグを踏んだので、call site で class を組み立てる方式から component に移行した。
+ */
+const DimOverlay: ParentComponent<{ opacity: number }> = (props) => (
+  <div
+    class="absolute inset-0 fade-on-dim pointer-events-none"
+    style={{ opacity: props.opacity }}
+  >
+    {props.children}
+  </div>
+);
 
 export const ClockLayout: Component = () => {
   const time = useCurrentTime();
@@ -185,10 +203,9 @@ export const ClockLayout: Component = () => {
                 - 自由回転 manual のドラッグ中は反対側 (= !isAm) を隠して合成負荷軽減
               ClockFace / ScheduleLayer / HandsLayer 全部にこの条件を適用する。 */}
           <Show when={(!mergedVisible() || transitioning()) && (isAm() || !dragging())}>
-            {/* dim 対象 (= ClockFace) を 1 つの div で包んで個別 opacity transition */}
-            <div class="absolute inset-0 fade-on-dim" style={{ opacity: amDimOpacity() }}>
+            <DimOverlay opacity={amDimOpacity()}>
               <ClockFace period="am" hours={amTime().hours} />
-            </div>
+            </DimOverlay>
             {/* 予定アイコンは dim 階層の外。merge transition 中は外す (620ms の窓) */}
             <Show when={!transitioning()}>
               <ScheduleLayer
@@ -199,9 +216,9 @@ export const ClockLayout: Component = () => {
               />
             </Show>
             {/* 針は予定アイコンの上に乗せる (DOM order が後ろ = z 上) */}
-            <div class="absolute inset-0 fade-on-dim" style={{ opacity: amDimOpacity() }}>
+            <DimOverlay opacity={amDimOpacity()}>
               <HandsLayer hours={amTime().hours} minutes={amTime().minutes} />
-            </div>
+            </DimOverlay>
           </Show>
         </div>
 
@@ -223,9 +240,9 @@ export const ClockLayout: Component = () => {
         >
           {/* PM 側 (AM 側と対称) */}
           <Show when={(!mergedVisible() || transitioning()) && (!isAm() || !dragging())}>
-            <div class="absolute inset-0 fade-on-dim" style={{ opacity: pmDimOpacity() }}>
+            <DimOverlay opacity={pmDimOpacity()}>
               <ClockFace period="pm" hours={pmTime().hours} />
-            </div>
+            </DimOverlay>
             <Show when={!transitioning()}>
               <ScheduleLayer
                 period="pm"
@@ -234,9 +251,9 @@ export const ClockLayout: Component = () => {
                 displayedMinutes={displayedMinutesTotal()}
               />
             </Show>
-            <div class="absolute inset-0 fade-on-dim" style={{ opacity: pmDimOpacity() }}>
+            <DimOverlay opacity={pmDimOpacity()}>
               <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} />
-            </div>
+            </DimOverlay>
           </Show>
         </div>
       </div>
