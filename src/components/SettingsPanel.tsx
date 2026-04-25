@@ -53,7 +53,7 @@ const SettingsPanel: Component = () => {
           label は aria-label 経由で ::before が描画する (iOS 長押し callout 対策) */}
       <button
         class={`fixed top-2 right-2 z-50 ${btnClass}`}
-        onClick={toggleRotate}
+        onPointerDown={toggleRotate}
         aria-label={rotateActive() ? t("settings.rotateExit") : t("settings.rotateEnter")}
       />
 
@@ -62,7 +62,7 @@ const SettingsPanel: Component = () => {
         {/* 左下: じどうかいてん 開始/停止 (auto/manual問わず常時表示) */}
         <button
           class={`fixed bottom-2 left-2 z-50 ${btnClass}`}
-          onClick={() => setRotateMode(rotateMode() === "auto" ? "manual" : "auto")}
+          onPointerDown={() => setRotateMode(rotateMode() === "auto" ? "manual" : "auto")}
           aria-label={rotateMode() === "auto" ? t("settings.autoStop") : t("settings.autoStart")}
         />
 
@@ -71,7 +71,7 @@ const SettingsPanel: Component = () => {
           {/* 左上: かさねる/わける (表示は切替先) */}
           <button
             class={`fixed top-2 left-2 z-50 ${btnClass}`}
-            onClick={toggleMerged}
+            onPointerDown={toggleMerged}
             aria-label={mergedVisible() ? t("settings.splitToTwo") : t("settings.mergeToSingle")}
           />
 
@@ -143,7 +143,7 @@ const SettingsPanel: Component = () => {
           {/* 右下: らんだむ (押すたびに15分刻みの別時刻へ) */}
           <button
             class={`fixed bottom-2 right-2 z-50 ${btnClass}`}
-            onClick={randomizeRotate}
+            onPointerDown={randomizeRotate}
             aria-label={t("settings.random")}
           />
         </Show>
@@ -154,21 +154,21 @@ const SettingsPanel: Component = () => {
         {/* 左上: 24h / 12h */}
         <button
           class={`fixed top-2 left-2 z-50 ${btnClass}`}
-          onClick={toggleTimeFormat}
+          onPointerDown={toggleTimeFormat}
           aria-label={timeFormat() === "24h" ? t("settings.hour12") : t("settings.hour24")}
         />
 
         {/* 左下: くわしく / すっきり */}
         <button
           class={`fixed bottom-2 left-2 z-50 ${btnClass}`}
-          onClick={toggleDetailMode}
+          onPointerDown={toggleDetailMode}
           aria-label={detailMode() === "kuwashiku" ? t("settings.sukkiri") : t("settings.kuwashiku")}
         />
 
         {/* 右下: くぎり / ばっじ */}
         <button
           class={`fixed bottom-2 right-2 z-50 ${btnClass}`}
-          onClick={toggleColorMode}
+          onPointerDown={toggleColorMode}
           aria-label={colorMode() === "sector" ? t("settings.badge") : t("settings.sector")}
         />
 
@@ -182,7 +182,7 @@ const SettingsPanel: Component = () => {
             " " + btnClass
           }
           style={{ "view-transition-name": "clock-right-slot" }}
-          onClick={cyclePalette}
+          onPointerDown={cyclePalette}
           aria-label={t(`palette.${getNextPalette(paletteId()).id}` as never)}
         />
       </Show>
