@@ -193,9 +193,11 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
 
   return (
     <div
-      class="fixed inset-0 z-[100] backdrop-blur-[2px]"
+      class="fixed inset-0 z-[100]"
       style={{
-        background: "rgba(0,0,0,0.4)",
+        // origin 中心の radial gradient で「タップ位置にスポットライト」風のフォーカス感。
+        // backdrop-filter: blur を使わないので毎フレーム合成負荷ゼロ (回転中も再 paint 不要)
+        background: `radial-gradient(circle at ${props.origin.x}px ${props.origin.y}px, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.65) 60%)`,
         "touch-action": "none",
       }}
       onPointerDown={onPointerDown}
