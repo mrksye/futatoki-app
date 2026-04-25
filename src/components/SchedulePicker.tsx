@@ -12,6 +12,7 @@ import {
 import { setScheduleAt } from "../features/schedule/state";
 import { rotateMinutes } from "../features/free-rotation/state";
 import { useIsTablet } from "../hooks/useIsTablet";
+import { useOrientation } from "../hooks/useOrientation";
 import { useI18n, type TKey } from "../i18n";
 import { animateMotion, motionAllowed } from "../lib/motion";
 
@@ -62,9 +63,19 @@ const SchedulePicker: Component = () => {
 
 const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
   const isTablet = useIsTablet();
+  const isLandscape = useOrientation();
   const ringRadius = () => isTablet() ? RING_RADIUS_TABLET : RING_RADIUS_MOBILE;
   const iconSize = () => isTablet() ? ICON_SIZE_TABLET : ICON_SIZE_MOBILE;
   const iconFont = () => isTablet() ? ICON_FONT_TABLET : ICON_FONT_MOBILE;
+
+  // Stagger 起点 index。常に CW 順で並ぶが、最初に出現する icon の位置だけずらす。
+  //   portrait → 0 (12 時方向、よていボタン真上の位置)
+  //   landscape → 3 (3 時方向に最も近い index)
+  // landscape では よていボタンが画面上部にあり、リングの上半分が画面外にはみ出す。
+  // 12 時から stagger すると最初の数 frame が見えない場所で動いていて「出るのが遅い」と感じる。
+  // 画面内で確実に見える 3 時方向から始めることで、見える範囲で stagger が即始まる。
+  // (11 個を 360° 等間隔配置: index 3 が angle 8.18° で 3 時に最も近い) */
+  const staggerStartIndex = () => isLandscape() ? 3 : 0;
 
   // ドラッグ状態 (= 「タップで閉じる」と「ドラッグで回転」の区別に使う)
   // dragStart は tap/drag 閾値判定用、lastAngularRad は origin 基準の前回角度 (rad)
@@ -272,6 +283,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
             <RingIcon
               icon={icon}
               index={i()}
+              staggerStartIndex={staggerStartIndex()}
               ringRadius={ringRadius()}
               iconSize={iconSize()}
               iconFont={iconFont()}
@@ -286,6 +298,8 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
 const RingIcon: Component<{
   icon: ScheduleIconDef;
   index: number;
+  /** Stagger 起点 index。この index の icon が delay 0 で最初に出現し、CW 順に続く。 */
+  staggerStartIndex: number;
   ringRadius: number;
   iconSize: number;
   iconFont: number;
@@ -309,7 +323,7 @@ const RingIcon: Component<{
     `translate(${offsetX}px, ${offsetY}px) rotate(calc(-1 * var(--ring-rot, 0deg)))`;
 
   // 開始時アニメ: 親 origin (= translate(-size/2)) → 角度位置 + scale 0 → 1 + opacity 0 → 1。
-  // stagger は index * STAGGER_MS で 12 時から CW 順次出現。
+  // stagger は staggerStartIndex を 0 として CW 順に index * STAGGER_MS で順次出現。
   // appearance 中は WAAPI が transform を上書きするので counter-rotate は一時的に効かない
   // (= 開いた直後の数百 ms に高速回転すると emoji がわずかに傾く)。実用上は picker open 直後に
   // 高速回転は起きないので許容する。アニメ終了後は inline style の restingTransform に戻り、
@@ -317,6 +331,9 @@ const RingIcon: Component<{
   // (reduce-motion 中は animateMotion が null を返してアニメスキップ → 即最終位置に出現)
   onMount(() => {
     if (!buttonRef) return;
+    const N = SCHEDULE_ICONS.length;
+    // 起点 index から CW でいくつ目か (起点自身が 0)。% で wrap する。
+    const staggerOffset = (props.index - props.staggerStartIndex + N) % N;
     const startTransform =
       `translate(${-props.iconSize / 2}px, ${-props.iconSize / 2}px) scale(0)`;
     const endTransform = `translate(${offsetX}px, ${offsetY}px) scale(1)`;
@@ -328,7 +345,7 @@ const RingIcon: Component<{
       ],
       {
         duration: APPEAR_DURATION_MS,
-        delay: props.index * STAGGER_MS,
+        delay: staggerOffset * STAGGER_MS,
         easing: "cubic-bezier(.34,1.56,.64,1)",
         fill: "backwards",
       },
