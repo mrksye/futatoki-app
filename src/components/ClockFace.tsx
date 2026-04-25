@@ -1,10 +1,23 @@
-import { For, Show, createMemo } from "solid-js";
+import { For, Index, Show, createEffect, createMemo, on } from "solid-js";
 import type { Component } from "solid-js";
 import { colorMode } from "../features/settings/color-mode";
 import { detailMode } from "../features/settings/detail-mode";
-import { timeFormat } from "../features/settings/time-format";
+import { displayedFormatAt } from "../features/settings/time-format-animation";
 import { paletteId } from "../features/settings/palette";
 import { getPalette, type HourColor } from "../colors";
+import { animateMotion } from "../lib/motion";
+
+/** 12h ⇄ 24h トグル時の 1 ポジションあたりのバウンス。
+ *  各ポジションが時計回りに stagger 50ms 遅れで個別に発火するので、
+ *  全体としては「ポポポポポッ」と右回りに伝播する。 */
+const NUMBER_BOUNCE_DURATION_MS = 280;
+const NUMBER_BOUNCE_KEYFRAMES: Keyframe[] = [
+  { transform: "scale(1)",    offset: 0 },
+  { transform: "scale(1.35)", offset: 0.30 },
+  { transform: "scale(0.88)", offset: 0.60 },
+  { transform: "scale(1.08)", offset: 0.82 },
+  { transform: "scale(1)",    offset: 1 },
+];
 
 interface ClockFaceProps {
   period: "am" | "pm" | "merged";
@@ -66,16 +79,20 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
     return props.hours < 12 ? palette.am : palette.pm;
   });
 
-  const numbers = createMemo(() => {
-    // mergedとAMは普通のアナログ時計と同じ1〜12表記
-    if (props.period === "am" || props.period === "merged") {
-      return Array.from({ length: 12 }, (_, i) => i === 0 ? 12 : i);
-    }
-    const is24h = timeFormat() === "24h";
-    return Array.from({ length: 12 }, (_, i) =>
-      is24h ? (i === 0 ? 12 : i + 12) : (i === 0 ? 12 : i),
-    );
-  });
+  /** ポジション (0..11) における表示数値。
+   *  - position 0 (12 時の位置) は常に 12。
+   *  - AM / merged は 1..11 固定。
+   *  - PM は displayedFormatAt(position) に応じて 1..11 / 13..23。
+   *    各ポジション独立に reactive。time-format-animation がポジションごとに
+   *    時間差で format を更新することで、時計回りの stagger が実現する。 */
+  const numberAt = (position: number): number => {
+    if (position === 0) return 12;
+    if (props.period === "am" || props.period === "merged") return position;
+    return displayedFormatAt(position) === "24h" ? position + 12 : position;
+  };
+
+  // <Index> 用の固定配列。値は使わず position (= 第 2 引数) だけ使う。
+  const POSITIONS = Array.from({ length: 12 }, (_, i) => i);
 
   return (
     <div class="w-full h-full flex items-center justify-center">
@@ -192,16 +209,40 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
           </For>
         </Show>
 
-        {/* 時間の数字 */}
-        <For each={numbers()}>
-          {(num, i) => {
-            const angle = () => (i() * 30 * Math.PI) / 180 - Math.PI / 2;
+        {/* 時間の数字。<Index> でポジション固定の DOM を維持し、値変化 (12h ⇄ 24h)
+            のみで <g> をバウンスさせる。<For> だと値変化で DOM 入れ替えが起きて
+            アニメ対象が消えてしまうため Index を使う。 */}
+        <Index each={POSITIONS}>
+          {(_pos, position) => {
+            const angle = () => (position * 30 * Math.PI) / 180 - Math.PI / 2;
             const x = () => CX + NUM_R() * Math.cos(angle());
             const y = () => CY + NUM_R() * Math.sin(angle());
-            const color = () => colors()[i()];
+            const color = () => colors()[position];
+            const num = createMemo(() => numberAt(position));
+
+            let groupRef: SVGGElement | undefined;
+            let bounceAnim: Animation | null = null;
+
+            // 値が変わった瞬間にバウンス (defer で初期マウントは skip)。
+            // PM 盤面のみ実質発火する: AM/merged は num が常に固定なので no-op。
+            // 連打時に前のバウンスが残らないよう cancel してから start する。
+            createEffect(on(num, () => {
+              if (!groupRef) return;
+              bounceAnim?.cancel();
+              bounceAnim = animateMotion(groupRef, NUMBER_BOUNCE_KEYFRAMES, {
+                duration: NUMBER_BOUNCE_DURATION_MS,
+                easing: "ease-out",
+              });
+            }, { defer: true }));
 
             return (
-              <>
+              <g
+                ref={groupRef}
+                style={{
+                  "transform-box": "fill-box",
+                  "transform-origin": "center",
+                }}
+              >
                 <Show when={colorMode() === "badge"}>
                   <circle cx={x()} cy={y()} r={18} fill={color()!.badge} />
                 </Show>
@@ -214,11 +255,11 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                     colorMode() === "badge"
                       // ばっじ×すっきり×ものとーんはバッジの円が白で消えるので数字を少し大きく。
                       ? (paletteId() === "monotone" && !isKuwashiku()
-                          ? (num >= 10 ? "24" : "30")
-                          : (num >= 10 ? "18" : "24"))
+                          ? (num() >= 10 ? "24" : "30")
+                          : (num() >= 10 ? "18" : "24"))
                       : isKuwashiku()
-                        ? (num >= 10 ? "24" : "28")
-                        : (num >= 10 ? "32" : "36")
+                        ? (num() >= 10 ? "24" : "28")
+                        : (num() >= 10 ? "32" : "36")
                   }
                   font-weight="900"
                   font-family="Nunito, sans-serif"
@@ -227,12 +268,12 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   stroke-width={colorMode() === "sector" ? (isKuwashiku() ? "4" : "5") : "0"}
                   paint-order="stroke"
                 >
-                  {num}
+                  {num()}
                 </text>
-              </>
+              </g>
             );
           }}
-        </For>
+        </Index>
 
         {/* 時針・分針・中心ネジは HandsLayer に分離。ScheduleLayer の上に乗せたいため。 */}
       </svg>
