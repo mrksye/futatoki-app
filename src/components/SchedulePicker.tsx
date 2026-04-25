@@ -195,9 +195,11 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     <div
       class="fixed inset-0 z-[100]"
       style={{
-        // origin 中心の radial gradient で「タップ位置にスポットライト」風のフォーカス感。
-        // backdrop-filter: blur を使わないので毎フレーム合成負荷ゼロ (回転中も再 paint 不要)
-        background: `radial-gradient(circle at ${props.origin.x}px ${props.origin.y}px, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.65) 60%)`,
+        // ringRadius 付近だけが明るくて中も外も暗いドーナツ型スポットライト。
+        // 内側を暗くするのは「中央の時計が透けて見えて視覚干渉でカクついて見える」
+        // 問題への対策、外側を暗くするのは普通のフォーカス。リングが浮き上がる演出。
+        // backdrop-filter: blur を使わないので合成負荷ゼロ (回転中も静的、再 paint なし)
+        background: `radial-gradient(circle at ${props.origin.x}px ${props.origin.y}px, rgba(0,0,0,0.78) 0px, rgba(0,0,0,0.78) ${Math.max(0, ringRadius() - iconSize())}px, rgba(0,0,0,0.18) ${ringRadius()}px, rgba(0,0,0,0.78) ${ringRadius() + iconSize()}px, rgba(0,0,0,0.88) 2000px)`,
         "touch-action": "none",
       }}
       onPointerDown={onPointerDown}
