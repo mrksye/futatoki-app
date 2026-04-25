@@ -1,4 +1,4 @@
-import { For, Show, createMemo, onCleanup, onMount } from "solid-js";
+import { For, Show, onCleanup, onMount } from "solid-js";
 import type { Component } from "solid-js";
 import { SCHEDULE_ICONS, type ScheduleIconDef } from "../features/schedule/icons";
 import {
@@ -81,6 +81,41 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
   // = 「pointerdown を overlay 自身が受け取った場合だけ click を有効に扱う」
   let pointerDownOnOverlay = false;
 
+  // === rAF 間引き ===
+  // 120Hz 端末では 1 frame に pointermove が複数発火することがあり、毎回 rotatePicker を
+  // 呼ぶとリング親要素の inline style が 1 frame 内で重複書込みされる。pendingDelta に貯めて
+  // 次の rAF で 1 回だけ commit することで、書込みを必ず 1 frame 1 回に固定する。
+  let pendingDelta = 0;
+  let rotateRaf: number | null = null;
+  const flushRotation = () => {
+    rotateRaf = null;
+    if (pendingDelta !== 0) {
+      rotatePicker(pendingDelta);
+      pendingDelta = 0;
+    }
+  };
+  const scheduleRotation = (delta: number) => {
+    pendingDelta += delta;
+    if (rotateRaf === null) rotateRaf = requestAnimationFrame(flushRotation);
+  };
+  const flushPendingNow = () => {
+    if (rotateRaf !== null) {
+      cancelAnimationFrame(rotateRaf);
+      rotateRaf = null;
+    }
+    if (pendingDelta !== 0) {
+      rotatePicker(pendingDelta);
+      pendingDelta = 0;
+    }
+  };
+  const cancelPendingRotation = () => {
+    if (rotateRaf !== null) {
+      cancelAnimationFrame(rotateRaf);
+      rotateRaf = null;
+    }
+    pendingDelta = 0;
+  };
+
   const cancelInertia = () => {
     if (inertiaRaf !== null) {
       cancelAnimationFrame(inertiaRaf);
@@ -136,7 +171,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     else if (deltaRad < -Math.PI) deltaRad += 2 * Math.PI;
     const deltaDeg = (deltaRad * 180) / Math.PI;
     lastAngularRad = currentRad;
-    rotatePicker(deltaDeg);
+    scheduleRotation(deltaDeg);
 
     // 速度履歴を記録 (直近 VELOCITY_WINDOW_MS のみ保持)
     const now = performance.now();
@@ -149,6 +184,8 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
 
   const onPointerUp = (e: PointerEvent) => {
     dragStart = null;
+    // 慣性 / 静止状態に入る前に rAF 保留分を取りこぼさず即時反映
+    flushPendingNow();
     // touch flick で離した瞬間: 直近の平均速度から慣性ループ開始
     // (mouse/pen は慣性なし。ホイールで操作する想定。reduce-motion 中もスキップ)
     if (e.pointerType === "touch" && motionAllowed() && velocityHistory.length > 0) {
@@ -182,14 +219,18 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
 
   // マウスホイール: 下スクロール → CW、上スクロール → CCW
   // ホイール操作は慣性無し。慣性中のホイールはキャンセルしてから新規回転。
+  // (smooth-scroll のホイール event も rAF 間引きで 1 frame 1 commit に揃える)
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
     cancelInertia();
     const sign = e.deltaY > 0 ? 1 : -1;
-    rotatePicker(sign * Math.abs(e.deltaY) * WHEEL_DEG_PER_DELTA);
+    scheduleRotation(sign * Math.abs(e.deltaY) * WHEEL_DEG_PER_DELTA);
   };
 
-  onCleanup(() => cancelInertia());
+  onCleanup(() => {
+    cancelInertia();
+    cancelPendingRotation();
+  });
 
   // 暗幕背景は backdrop-filter: blur(2px) + 半透明黒の overlay。
   // open 中は features/freeze の clockFrozen() で時計画面の動的要素 (秒バー / hands /
@@ -209,18 +250,35 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
       onClick={onClick}
       onWheel={onWheel}
     >
-      <For each={SCHEDULE_ICONS}>
-        {(icon, i) => (
-          <RingIcon
-            icon={icon}
-            index={i()}
-            origin={props.origin}
-            ringRadius={ringRadius()}
-            iconSize={iconSize()}
-            iconFont={iconFont()}
-          />
-        )}
-      </For>
+      {/* リング container: origin 中心の 0×0 要素。
+          pickerRotation 変化時の inline style 書込みは ここの --ring-rot 1 個だけになる。
+          子アイコンは container 内の固定座標で配置され、CSS 変数経由で counter-rotate して
+          emoji を upright に保つ (ブラウザの cascade で 1 回の var 更新が全子に伝播)。 */}
+      <div
+        class="fixed"
+        style={{
+          left: `${props.origin.x}px`,
+          top: `${props.origin.y}px`,
+          width: 0,
+          height: 0,
+          // var() を使うことで JS が触るのは --ring-rot のみ。transform 文字列自体は静的。
+          transform: "rotate(var(--ring-rot, 0deg))",
+          "--ring-rot": `${pickerRotation()}deg`,
+          "will-change": "transform",
+        }}
+      >
+        <For each={SCHEDULE_ICONS}>
+          {(icon, i) => (
+            <RingIcon
+              icon={icon}
+              index={i()}
+              ringRadius={ringRadius()}
+              iconSize={iconSize()}
+              iconFont={iconFont()}
+            />
+          )}
+        </For>
+      </div>
     </div>
   );
 };
@@ -228,7 +286,6 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
 const RingIcon: Component<{
   icon: ScheduleIconDef;
   index: number;
-  origin: PickerOrigin;
   ringRadius: number;
   iconSize: number;
   iconFont: number;
@@ -236,33 +293,33 @@ const RingIcon: Component<{
   let buttonRef: HTMLButtonElement | undefined;
   const { t } = useI18n();
 
-  // i=0 を 12時 (-90deg) からスタート、CW に並ぶ
-  const angleDeg = createMemo(() =>
-    (props.index / SCHEDULE_ICONS.length) * 360 + pickerRotation() - 90
-  );
-  const finalPos = createMemo(() => {
-    const a = angleDeg();
-    const rad = (a * Math.PI) / 180;
-    return {
-      x: props.origin.x + props.ringRadius * Math.cos(rad),
-      y: props.origin.y + props.ringRadius * Math.sin(rad),
-    };
-  });
+  // 角度位置は static (mount 時に 1 回計算)。
+  // i=0 を 12 時 (-90°) からスタート、CW に並ぶ。
+  // リング全体の回転は親の transform: rotate(var(--ring-rot)) で行うので、
+  // 子はここで決まった座標から動かない。
+  const angleRad = (props.index / SCHEDULE_ICONS.length) * 2 * Math.PI - Math.PI / 2;
+  const x = props.ringRadius * Math.cos(angleRad);
+  const y = props.ringRadius * Math.sin(angleRad);
+  const offsetX = x - props.iconSize / 2;
+  const offsetY = y - props.iconSize / 2;
+  // 親の rotate を打ち消して emoji を upright に保つ (CSS 変数 --ring-rot は親が供給)。
+  // この transform 文字列自体は static で JS は触らない。--ring-rot 変化時は CSS の cascade で
+  // 自動的に再計算される (= 子の inline style 書込み 0 回 / frame)。
+  const restingTransform =
+    `translate(${offsetX}px, ${offsetY}px) rotate(calc(-1 * var(--ring-rot, 0deg)))`;
 
-  // 各アイコンは fixed で left:0/top:0、translate で目標位置へ。
-  // rotation 変化は Solid のリアクティブ更新で transform が再計算される (CSS animation 不要)。
-  const transform = () =>
-    `translate(${finalPos().x - props.iconSize / 2}px, ${finalPos().y - props.iconSize / 2}px)`;
-
-  // 開始時アニメ: タップ位置 (origin) → 最終位置 + scale 0 → 1 + opacity 0 → 1
-  // stagger は index * STAGGER_MS で、12時から CW に順次出現する
-  // (reduce-motion 中は animateMotion が null を返してアニメスキップ → アイコンは最終位置に即出現)
+  // 開始時アニメ: 親 origin (= translate(-size/2)) → 角度位置 + scale 0 → 1 + opacity 0 → 1。
+  // stagger は index * STAGGER_MS で 12 時から CW 順次出現。
+  // appearance 中は WAAPI が transform を上書きするので counter-rotate は一時的に効かない
+  // (= 開いた直後の数百 ms に高速回転すると emoji がわずかに傾く)。実用上は picker open 直後に
+  // 高速回転は起きないので許容する。アニメ終了後は inline style の restingTransform に戻り、
+  // 以降は --ring-rot 変化に追従する。
+  // (reduce-motion 中は animateMotion が null を返してアニメスキップ → 即最終位置に出現)
   onMount(() => {
     if (!buttonRef) return;
     const startTransform =
-      `translate(${props.origin.x - props.iconSize / 2}px, ${props.origin.y - props.iconSize / 2}px) scale(0)`;
-    const endTransform =
-      `translate(${finalPos().x - props.iconSize / 2}px, ${finalPos().y - props.iconSize / 2}px) scale(1)`;
+      `translate(${-props.iconSize / 2}px, ${-props.iconSize / 2}px) scale(0)`;
+    const endTransform = `translate(${offsetX}px, ${offsetY}px) scale(1)`;
     animateMotion(
       buttonRef,
       [
@@ -287,14 +344,14 @@ const RingIcon: Component<{
   return (
     <button
       ref={buttonRef}
-      class="fixed top-0 left-0 rounded-full bg-white shadow-lg flex items-center justify-center before:hidden"
+      class="absolute top-0 left-0 rounded-full bg-white shadow-lg flex items-center justify-center before:hidden"
       style={{
         width: `${props.iconSize}px`,
         height: `${props.iconSize}px`,
         "font-size": `${props.iconFont}px`,
-        transform: transform(),
-        // 各アイコンを compositing layer に固定 (mount 時から確保)。回転中の transform 更新は
-        // composite のみで完結し、初回 promote によるカクつきも消える
+        transform: restingTransform,
+        // 各アイコンを GPU layer に固定。親 rotate と自分の counter-rotate が
+        // composite-only で完結するため、毎 frame 再ラスタライズなしで動く。
         "will-change": "transform",
       }}
       onClick={onClick}
