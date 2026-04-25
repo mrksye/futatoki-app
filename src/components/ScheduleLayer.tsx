@@ -59,9 +59,9 @@ const TRI_HEIGHT = 2.5;
 const LONG_PRESS_MS = 500;
 /** タップ判定領域: 視認可能な白円の外側に追加するバッファ (viewBox 単位)。
    子どもの指でも押しやすくするため、透明の円で touch 範囲を拡げる。 */
-const ICON_TOUCH_BUFFER = 10;
+const ICON_TOUCH_BUFFER = 16;
 /** ✕ボタンのタップ判定半径 (viewBox 単位)。視認可能な赤円 (TRASH_RADIUS=7) より大きめ。 */
-const TRASH_TOUCH_RADIUS = 18;
+const TRASH_TOUCH_RADIUS = 26;
 
 /** ポヨン3 (3 段の高速バウンス): クリック時 + マッチ window 入り口の one-shot で共通 */
 const POYON3_DURATION_MS = 400;
