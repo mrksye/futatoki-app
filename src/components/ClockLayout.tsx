@@ -49,6 +49,9 @@ export const ClockLayout: Component = () => {
   // AM/PM バッジ長押しで反対側プレビュー
   const actualIsAm = createMemo(() => displayed().hours < 12);
   const { isAm, startHold, clearHold } = useAmPmPreviewHold(actualIsAm);
+  // 押下中だけ opacity 切替を即時に (戻すときは通常の 380ms フェード)。
+  // .opacity-instant 修飾クラス経由で実現 (index.css 参照)。
+  const previewFlipped = createMemo(() => isAm() !== actualIsAm());
 
   const amTime = createMemo(() => ({
     hours: displayed().hours % 12,
@@ -158,6 +161,7 @@ export const ClockLayout: Component = () => {
             "clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
             (isLandscape() ? "-mr-3" : "-mb-3")
           }
+          classList={{ "opacity-instant": previewFlipped() }}
           style={{
             transform: amTransform(mergedVisible(), isLandscape()),
             // opacity は3つの状態を合成:
@@ -194,6 +198,7 @@ export const ClockLayout: Component = () => {
             "clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
             (isLandscape() ? "-ml-3" : "-mt-3")
           }
+          classList={{ "opacity-instant": previewFlipped() }}
           style={{
             transform: pmTransform(mergedVisible(), isLandscape()),
             // AM と対称: PM 非アクティブ (= AM プレビュー長押し中) で 0.25 に薄く

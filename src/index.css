@@ -99,6 +99,13 @@ button[aria-label]::before {
               opacity 380ms ease,
               filter 380ms ease;
 }
+/* AM/PM プレビュー押下中だけ opacity を即時切替 (戻すときは通常の 380ms フェード)。
+   ClockLayout 側で flipped 時に classList で付与する。 */
+.clock-wrapper-transition.opacity-instant {
+  transition: transform 560ms cubic-bezier(.34, 1.56, .64, 1),
+              opacity 0ms,
+              filter 380ms ease;
+}
 .clock-merged-container-transition {
   transition: opacity 380ms ease,
               transform 560ms cubic-bezier(.34, 1.56, .64, 1),
@@ -118,6 +125,7 @@ button[aria-label]::before {
    そのコードを index.tsx で import している 1 行を消せばこのブロック全体が dormant になる
    (= class が付かないので何も上書きしない)。 */
 body.motion-reduce .clock-wrapper-transition,
+body.motion-reduce .clock-wrapper-transition.opacity-instant,
 body.motion-reduce .clock-merged-container-transition,
 body.motion-reduce .settings-button-transition {
   transition: none;
