@@ -284,7 +284,13 @@ export const ClockLayout: Component = () => {
             "clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
             (isLandscape() ? "-mr-3" : "-mb-3")
           }
-          classList={{ "opacity-instant": previewFlipped() }}
+          // .opacity-instant の発動条件は 2 つ:
+          //   (1) AM/PM プレビュー長押し中 (押下=即時, 離す=380ms フェード)
+          //   (2) 自由回転 split 中で merge transition 中ではない時
+          //       → 自動回転や drag/wheel で 12:00 を跨いだ瞬間の AM/PM dim 切替が
+          //         ふわっと (380ms) ではなくパッと (0ms) 切替わる。
+          //         merge↔split transition 中 (transitioning()) は smooth fade を維持。
+          classList={{ "opacity-instant": previewFlipped() || (rotateActive() && !transitioning()) }}
           style={{
             transform: amTransform(mergedVisible(), isLandscape()),
             // wrapper 自身の opacity は外した: ClockFace / HandsLayer は内側 dim div で個別に薄く、
@@ -326,7 +332,8 @@ export const ClockLayout: Component = () => {
             "clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
             (isLandscape() ? "-ml-3" : "-mt-3")
           }
-          classList={{ "opacity-instant": previewFlipped() }}
+          // 発動条件は AM 側と同じ (上のコメント参照)。
+          classList={{ "opacity-instant": previewFlipped() || (rotateActive() && !transitioning()) }}
           style={{
             transform: pmTransform(mergedVisible(), isLandscape()),
             // AM と対称。wrapper 自身の opacity は外し、ClockFace/HandsLayer は内側 dim div で薄く、
