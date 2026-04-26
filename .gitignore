@@ -33,6 +33,5 @@ coverage/
 # Misc
 *.local
 
-#
+# Claude Code per-user local state
 .claude/
-.github/
