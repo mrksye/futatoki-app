@@ -134,6 +134,25 @@ button[aria-label]::before {
   font-family: 'Nunito', 'Noto Sans Arabic', 'SF Arabic', 'Geeza Pro', 'Segoe UI', 'Tahoma', sans-serif;
 }
 
+/* タイ / インド系スクリプトも Nunito に glyph が無いので OS 標準を指定。
+   未指定だと system-ui fallback 任せになり Linux 素 user で tofu のリスク。
+   順序は OS 標準優先 → Noto 保険 → sans-serif (CJK / Arabic と同方針)。 */
+[lang="th"] {
+  font-family: 'Nunito', 'Thonburi', 'Sukhumvit Set', 'Leelawadee UI', 'Noto Sans Thai', sans-serif;
+}
+
+[lang="hi"] {
+  font-family: 'Nunito', 'Kohinoor Devanagari', 'Devanagari Sangam MN', 'Nirmala UI', 'Mangal', 'Noto Sans Devanagari', sans-serif;
+}
+
+[lang="bn"] {
+  font-family: 'Nunito', 'Kohinoor Bangla', 'Bangla Sangam MN', 'Nirmala UI', 'Vrinda', 'Noto Sans Bengali', sans-serif;
+}
+
+[lang="ta"] {
+  font-family: 'Nunito', 'Kohinoor Tamil', 'Tamil Sangam MN', 'Nirmala UI', 'Latha', 'Noto Sans Tamil', sans-serif;
+}
+
 /* 手回しモードの星のまたたき */
 @keyframes twinkle {
   0%, 100% { opacity: 0.4; }
