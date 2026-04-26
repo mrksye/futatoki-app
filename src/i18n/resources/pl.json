@@ -45,5 +45,10 @@
     "wheel": "koło barw",
     "cud12": "dla każdego",
     "monotone": "monochromia"
+  },
+  "a11y": {
+    "clockFaceAm": "Zegar analogowy rano",
+    "clockFacePm": "Zegar analogowy po południu",
+    "clockFace": "Zegar analogowy"
   }
 }

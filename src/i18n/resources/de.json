@@ -45,5 +45,10 @@
     "wheel": "farbkreis",
     "cud12": "für alle",
     "monotone": "monoton"
+  },
+  "a11y": {
+    "clockFaceAm": "Analoge Uhr am Vormittag",
+    "clockFacePm": "Analoge Uhr am Nachmittag",
+    "clockFace": "Analoge Uhr"
   }
 }

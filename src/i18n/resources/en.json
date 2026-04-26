@@ -45,5 +45,10 @@
     "wheel": "color wheel",
     "cud12": "colors for all",
     "monotone": "monotone"
+  },
+  "a11y": {
+    "clockFaceAm": "AM analog clock",
+    "clockFacePm": "PM analog clock",
+    "clockFace": "Analog clock"
   }
 }

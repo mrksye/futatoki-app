@@ -7,6 +7,7 @@ import { paletteId } from "../features/settings/palette";
 import { getPalette, type HourColor } from "../colors";
 import { animateMotion } from "../lib/motion";
 import { prerollKey, PULSE_MS } from "../features/settings/time-format-preroll";
+import { useI18n } from "../i18n";
 import TimeFormatPrerollFx from "./TimeFormatPrerollFx";
 
 /** 12h ⇄ 24h トグル時の 1 ポジションあたりのバウンス。
@@ -57,6 +58,7 @@ function annularSectorPath(
 }
 
 const ClockFace: Component<ClockFaceProps> = (props) => {
+  const { t } = useI18n();
   const isKuwashiku = () => detailMode() === "kuwashiku";
 
   // くわしく: 時計を縮めて外に分数字スペースを確保
@@ -98,7 +100,21 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
 
   return (
     <div class="w-full h-full flex items-center justify-center">
-      <svg viewBox={`0 0 ${VIEW} ${VIEW}`} class="w-full h-full" style="max-height: 100%; max-width: 100%;">
+      {/* role="img" + aria-label で SVG をひとつの画像として扱わせる。
+          そうしないと Googlebot や screen reader が中の <text> (1〜12,
+          1〜60) を本文テキストとして拾ってしまい、検索スニペットが
+          「1 2 3 4 5 ...」になる事故が起きる。 */}
+      <svg
+        viewBox={`0 0 ${VIEW} ${VIEW}`}
+        class="w-full h-full"
+        style="max-height: 100%; max-width: 100%;"
+        role="img"
+        aria-label={
+          props.period === "am" ? t("a11y.clockFaceAm")
+          : props.period === "pm" ? t("a11y.clockFacePm")
+          : t("a11y.clockFace")
+        }
+      >
         {/* 外側リング（細め。SVGフィルターは重いのでシンプルな同心円で縁取り） */}
         <circle
           cx={CX} cy={CY} r={OUTER_RING() + 2}

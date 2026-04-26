@@ -45,5 +45,10 @@
     "wheel": "色环",
     "cud12": "大家的色",
     "monotone": "单色"
+  },
+  "a11y": {
+    "clockFaceAm": "上午的指针时钟",
+    "clockFacePm": "下午的指针时钟",
+    "clockFace": "指针时钟"
   }
 }

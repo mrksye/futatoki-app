@@ -45,5 +45,10 @@
     "wheel": "색동고리",
     "cud12": "모두의 색",
     "monotone": "단색"
+  },
+  "a11y": {
+    "clockFaceAm": "오전 아날로그 시계",
+    "clockFacePm": "오후 아날로그 시계",
+    "clockFace": "아날로그 시계"
   }
 }

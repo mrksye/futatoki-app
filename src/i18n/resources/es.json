@@ -45,5 +45,10 @@
     "wheel": "rueda de colores",
     "cud12": "para todos",
     "monotone": "monótono"
+  },
+  "a11y": {
+    "clockFaceAm": "Reloj analógico de la mañana",
+    "clockFacePm": "Reloj analógico de la tarde",
+    "clockFace": "Reloj analógico"
   }
 }

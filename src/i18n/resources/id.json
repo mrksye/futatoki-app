@@ -45,5 +45,10 @@
     "wheel": "roda warna",
     "cud12": "warna semua",
     "monotone": "satu warna"
+  },
+  "a11y": {
+    "clockFaceAm": "Jam analog pagi",
+    "clockFacePm": "Jam analog sore",
+    "clockFace": "Jam analog"
   }
 }

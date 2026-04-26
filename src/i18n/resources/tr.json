@@ -45,5 +45,10 @@
     "wheel": "renk çemberi",
     "cud12": "herkese renk",
     "monotone": "tek renk"
+  },
+  "a11y": {
+    "clockFaceAm": "Sabah analog saat",
+    "clockFacePm": "Öğleden sonra analog saat",
+    "clockFace": "Analog saat"
   }
 }

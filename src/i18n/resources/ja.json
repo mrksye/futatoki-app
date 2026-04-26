@@ -45,5 +45,10 @@
     "wheel": "いろのわ",
     "cud12": "みんなのいろ",
     "monotone": "ものとーん"
+  },
+  "a11y": {
+    "clockFaceAm": "午前のアナログ時計",
+    "clockFacePm": "午後のアナログ時計",
+    "clockFace": "アナログ時計"
   }
 }
