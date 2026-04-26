@@ -227,3 +227,4 @@ body.motion-reduce ::view-transition-old(*),
 body.motion-reduce ::view-transition-new(*) {
   animation: none;
 }
+

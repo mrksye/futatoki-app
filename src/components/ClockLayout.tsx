@@ -1,4 +1,4 @@
-import { createMemo, createSignal, onCleanup, Show } from "solid-js";
+import { createMemo, createSignal, onCleanup, onMount, Show } from "solid-js";
 import type { Component, ParentComponent } from "solid-js";
 import ClockFace from "./ClockFace";
 import HandsLayer from "./HandsLayer";
@@ -22,6 +22,8 @@ import { useAmPmPreviewHold } from "../features/debug/am-pm-preview-lock";
 import { MORPHING_SLOT } from "../features/view-transition";
 import { useI18n } from "../i18n";
 import { dragStart, dragAdvance, type DragDragState } from "../features/free-rotation/drag";
+import { wheelAdvance } from "../features/free-rotation/wheel";
+import { resistTrigger, notifyResistance } from "../features/free-rotation/resistance";
 
 type DragState = DragDragState;
 
@@ -82,6 +84,7 @@ export const ClockLayout: Component = () => {
   }));
 
   // ===== 自由回転ドラッグ (requestAnimationFrame で間引きして低性能端末でも滑らかに) =====
+  let containerRef: HTMLDivElement | undefined;
   let amWrapperRef: HTMLDivElement | undefined;
   let pmWrapperRef: HTMLDivElement | undefined;
   // dragRef は高頻度 pointermove で書き換わる。signal にせず直接 mutate して allocation を抑える。
@@ -144,6 +147,97 @@ export const ClockLayout: Component = () => {
     if (rafId !== null) cancelAnimationFrame(rafId);
   });
 
+  // ===== マウスホイール操作 =====
+  // 下スクロール = 進める (clockwise)、上スクロール = 進めず resist 通知のみ。
+  // SolidJS の onWheel JSX は passive listener として登録される実装があり、
+  // preventDefault が効かない (browser の既定 page scroll が走る) ため、
+  // 自前で addEventListener("wheel", ..., { passive: false }) で attach する。
+  //
+  // 「リアルに動くように、止まる位置は 1 分単位に」:
+  //   - 各 wheel event の delta は wheelTargetFloat に小数で累積する
+  //     (微小 wheel も無視せず溜める)
+  //   - tween の target はその float を Math.round で整数 minute に snap
+  //     → 針が「止まる位置」は常に整数分になる
+  //   - snap 結果 (= wheelTarget) が変わった時だけ tween を再起動。微小 wheel
+  //     中は target 不変で既存 tween が続行する
+  //   - tween 中の rotateMinutes は中間値を取るので途中の動きは滑らか
+  //   - WHEEL_SESSION_IDLE_MS の無入力で session を終了し float 累積を reset
+  //     (次 session は現在の表示 minutes から再開)
+  let wheelTarget: number | null = null;       // 整数 minute (tween 目標)
+  let wheelTargetFloat: number | null = null;  // session 内の累積 float (snap 前)
+  let wheelTweenStartTime = 0;
+  let wheelTweenStartMinutes = 0;
+  let wheelTweenRaf: number | null = null;
+  let wheelSessionIdleTimer: ReturnType<typeof setTimeout> | undefined;
+  const WHEEL_TWEEN_DURATION_MS = 220;
+  const WHEEL_SESSION_IDLE_MS = 600;
+
+  const tickWheelTween = () => {
+    if (wheelTarget === null) {
+      wheelTweenRaf = null;
+      return;
+    }
+    const now = performance.now();
+    const t = Math.min(1, (now - wheelTweenStartTime) / WHEEL_TWEEN_DURATION_MS);
+    const eased = 1 - (1 - t) * (1 - t); // ease-out quad
+    const m = wheelTweenStartMinutes + (wheelTarget - wheelTweenStartMinutes) * eased;
+    seekRotate(m);
+    if (t >= 1) {
+      // wheelTarget だけ null に。wheelTargetFloat は session idle timer が
+      // 起こすまで保持して、続けて wheel が来た時に小数の続きを溜める。
+      wheelTarget = null;
+      wheelTweenRaf = null;
+      return;
+    }
+    wheelTweenRaf = requestAnimationFrame(tickWheelTween);
+  };
+
+  const startWheelTween = (target: number) => {
+    wheelTarget = target;
+    wheelTweenStartTime = performance.now();
+    wheelTweenStartMinutes = rotateMinutes();
+    if (wheelTweenRaf === null) {
+      wheelTweenRaf = requestAnimationFrame(tickWheelTween);
+    }
+  };
+
+  const onWheel = (e: WheelEvent) => {
+    if (!rotateActive() || rotateMode() !== "manual") return;
+    if (dragging()) return;
+    e.preventDefault();
+    const result = wheelAdvance(e);
+    if (result.kind === "ignore") return;
+    if (result.kind === "resist") {
+      notifyResistance();
+      return;
+    }
+    if (wheelTargetFloat === null) {
+      wheelTargetFloat = rotateMinutes();
+    }
+    wheelTargetFloat += result.minutesDelta;
+    const snapped = Math.round(wheelTargetFloat);
+    if (snapped !== wheelTarget) {
+      startWheelTween(snapped);
+    }
+    if (wheelSessionIdleTimer) clearTimeout(wheelSessionIdleTimer);
+    wheelSessionIdleTimer = setTimeout(() => {
+      wheelTargetFloat = null;
+    }, WHEEL_SESSION_IDLE_MS);
+  };
+
+  onMount(() => {
+    if (containerRef) {
+      containerRef.addEventListener("wheel", onWheel, { passive: false });
+    }
+  });
+  onCleanup(() => {
+    if (containerRef) {
+      containerRef.removeEventListener("wheel", onWheel);
+    }
+    if (wheelTweenRaf !== null) cancelAnimationFrame(wheelTweenRaf);
+    if (wheelSessionIdleTimer) clearTimeout(wheelSessionIdleTimer);
+  });
+
   // ===== かさね/わけ アニメーションと自動回転 =====
   const { mergedVisible, transitioning } = useMergeAnimation();
   useAutoRotateTick();
@@ -163,8 +257,9 @@ export const ClockLayout: Component = () => {
         <SkyBackground totalMinutes={rotateMinutes()} />
       </Show>
 
-      {/* 時計コンテナ (自由回転時はここがドラッグ領域) */}
+      {/* 時計コンテナ (自由回転時はここがドラッグ領域 + マウスホイール領域) */}
       <div
+        ref={containerRef}
         class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}
         style={{
           "touch-action": rotateActive() && rotateMode() === "manual" ? "none" : "auto",
@@ -217,7 +312,7 @@ export const ClockLayout: Component = () => {
             </Show>
             {/* 針は予定アイコンの上に乗せる (DOM order が後ろ = z 上) */}
             <DimOverlay opacity={amDimOpacity()}>
-              <HandsLayer hours={amTime().hours} minutes={amTime().minutes} />
+              <HandsLayer hours={amTime().hours} minutes={amTime().minutes} shakeKey={resistTrigger} />
             </DimOverlay>
           </Show>
         </div>
@@ -252,7 +347,7 @@ export const ClockLayout: Component = () => {
               />
             </Show>
             <DimOverlay opacity={pmDimOpacity()}>
-              <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} />
+              <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} shakeKey={resistTrigger} />
             </DimOverlay>
           </Show>
         </div>
@@ -307,7 +402,7 @@ export const ClockLayout: Component = () => {
               </Show>
             </Show>
             {/* 針は document order が最後 → z-auto の中で最前面 → 予定アイコンの上に乗る */}
-            <HandsLayer hours={displayed().hours} minutes={displayed().minutes} />
+            <HandsLayer hours={displayed().hours} minutes={displayed().minutes} shakeKey={resistTrigger} />
           </div>
         </div>
       </Show>
