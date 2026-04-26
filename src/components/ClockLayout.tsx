@@ -18,7 +18,7 @@ import {
   mergedTransform,
   splitShadow,
 } from "../features/free-rotation/merge-animation";
-import { useAmPmPreviewHold } from "../features/am-pm-preview";
+import { useAmPmPreviewHold } from "../features/debug/am-pm-preview-lock";
 import { MORPHING_SLOT } from "../features/view-transition";
 import { useI18n } from "../i18n";
 import { dragStart, dragAdvance, type DragDragState } from "../features/free-rotation/drag";
