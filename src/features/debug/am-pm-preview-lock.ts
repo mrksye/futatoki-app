@@ -2,34 +2,21 @@ import { createEffect, createSignal, onCleanup, type Accessor } from "solid-js";
 import { useAmPmPreviewHold as useBaseAmPmPreviewHold } from "../am-pm-preview";
 
 /**
- * 【デバッグ専用】 AM/PM プレビューバッジを素早く 2 連タップすると flip 状態をロックする
- * (押し続けなくても反転表示が固定)。もう 1 度ダブルタップで解除。ロック中はアプリ全体の
- * 背景が濃い青になり、いま反転固定中であることが一目で分かる。さらに付けっぱなし防止に
- * AUTO_RELEASE_MS 経過で勝手に解除される。
+ * 【デバッグ専用】 AM/PM プレビューバッジを 2 連タップすると flip 状態をロック (押し続けなくても
+ * 反転表示が固定)。再度ダブルタップで解除。ロック中は #root 背景を濃い青に上書きして識別可能にし、
+ * 付けっぱなし防止のため AUTO_RELEASE_MS で自動解除する。
  *
- * 内部実装:
- *   本体 useAmPmPreviewHold をラップし、startHold で pointerdown 間隔を計測。
- *   DOUBLE_TAP_MS 以内なら locked を toggle。clearHold は locked 中だけ no-op に差し替え。
- *   ロック中だけ document.body に LOCKED_BODY_CLASS を付与し、style タグ (1 度だけ注入) で
- *   #root の背景を濃い青に上書きする。注入は import されないと走らないので、本ファイルを
- *   使わなくなれば style も class も完全に dormant。
- *   ロック獲得時に AUTO_RELEASE_MS の setTimeout を仕込み、手動解除や再ロックで cancel。
+ * ダブル判定は pointerdown 同士の間隔のみで行う (1 回目の up を待たず 2 回目の down で確定)。
  *
- * pointerup → pointerdown が高速で並ぶ pointer イベント特性に合わせ、ダブル判定は
- * pointerdown 同士の間隔だけで行う (= 1 回目の up を待たず、2 回目の down が来た瞬間に確定)。
- *
- * 【削除方法】 (1 行レベル)
- *   ClockLayout.tsx の import を `from "../features/debug/am-pm-preview-lock"` から
- *   `from "../features/am-pm-preview"` に戻す。本ファイルは以後どこからも import されないので、
- *   そのまま削除して完了。
+ * 【削除方法】ClockLayout.tsx の import を本ファイルから "../features/am-pm-preview" へ戻すと、
+ * 本ファイルはどこからも参照されなくなるのでそのまま削除可能。
  */
 
 const DOUBLE_TAP_MS = 320;
 const LOCKED_BODY_CLASS = "ampm-preview-locked";
-// ロック中だと一目で分かりつつ「怖くない」濃いめの青。元の暖色パステルグラデと
-// 色相が大きく違うので普通モードと取り違えない。
+/** ロック中の背景。元の暖色パステルグラデと色相が違うので普通モードと取り違えない濃い青。 */
 const LOCKED_BG_COLOR = "#1e3a8a";
-// デバッグ中の付けっぱなしを避けるため、ロックは 1 分で自動解除。
+/** 付けっぱなし防止の自動解除時間。 */
 const AUTO_RELEASE_MS = 60 * 1000;
 
 let styleInjected = false;
@@ -76,17 +63,14 @@ export const useAmPmPreviewHold = (actualIsAm: Accessor<boolean>) => {
     if (now - lastDownAt <= DOUBLE_TAP_MS) {
       const willLock = !locked();
       setLocked(willLock);
-      // ロック切替が起きた時点で進行中の auto-release は必ず破棄する。
-      // 解除方向への切替なら以後 timer 不要、再ロック方向なら新しい 1 分を測り直す。
+      // 解除/再ロック どちらでも進行中の auto-release は破棄。再ロックなら新しい 1 分を測り直す。
       cancelAutoRelease();
       if (willLock) {
         autoReleaseTimer = setTimeout(() => {
           autoReleaseTimer = null;
           setLocked(false);
-          // 手動解除は pointerup → 本 component の clearHold (locked=false なので
-          // base.clearHold が走る) で flip も戻るが、auto-release は pointer イベントなしに
-          // 発火するため、ここで明示的に base.clearHold を呼んで flip をリセットする。
-          // これがないと背景だけ戻って flip だけ残る。
+          // auto-release は pointer イベントなしで発火するので、明示的に base.clearHold を呼ばないと
+          // 背景だけ戻って flip だけ残る。
           base.clearHold();
         }, AUTO_RELEASE_MS);
       }

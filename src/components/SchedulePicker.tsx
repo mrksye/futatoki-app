@@ -17,21 +17,13 @@ import { useI18n, type TKey } from "../i18n";
 import { animateMotion, motionAllowed } from "../lib/motion";
 
 /**
- * 予定アイコン選択用リングメニュー。
- *
- * 構造:
- *   - Overlay: 画面全体の半透明レイヤー
- *   - リング: 11 個のアイコンが半径 RING_RADIUS で円周上に配置
- *   - 開閉アニメ: タップ位置 → 各アイコンの最終位置に放射状にニュッと出る
- *                 stagger 30ms で右回り順 (12時から CW)
- *   - ドラッグ回転: origin 中心の角度差をそのまま回転に渡す (画面のどこでも全域 angular)。
- *                   一周なぞれば 360° 回る、ハンドルを回すような感触
- *   - マウスホイール: 別枠で deltaY を回転に渡す (慣性なし)
- *   - アイコンタップ → 現在の rotateMinutes() に予定追加 + 閉じる
- *   - Overlay 空タップ → 閉じる
+ * 予定アイコン選択用リングメニュー。Overlay + 11 個のアイコンが半径 RING_RADIUS で円周配置。
+ * 開閉アニメは origin → 各アイコン位置に放射状にニュッと出る (stagger 30ms, CW 順)。
+ * ドラッグは origin 中心の角度差をそのまま回転に渡す全域 angular 操作、ホイールは別枠で deltaY を回転に。
+ * アイコンタップで rotateMinutes() に予定追加 + 閉じる、Overlay 空タップで閉じる。
  */
 
-// SettingsPanel の四隅ボタンと同じ tablet ブレイクポイントで大きくする
+// SettingsPanel の四隅ボタンと同じ tablet ブレイクポイントで大きくする。
 const RING_RADIUS_MOBILE = 110;
 const RING_RADIUS_TABLET = 160;
 const ICON_SIZE_MOBILE = 44;
@@ -41,16 +33,16 @@ const ICON_FONT_TABLET = 38;
 const STAGGER_MS = 30;
 const APPEAR_DURATION_MS = 280;
 
-/** 「ドラッグ」と「タップ」を区別する閾値 (px) */
+/** 「ドラッグ」と「タップ」を区別する閾値 (px)。 */
 const DRAG_THRESHOLD_PX = 5;
-/** マウスホイール感度 (deltaY 1 単位 → リング n° 回転) */
+/** マウスホイール感度 (deltaY 1 単位 → リング n° 回転)。 */
 const WHEEL_DEG_PER_DELTA = 0.1;
 
-/** 慣性計算: 直近 N ms の速度サンプルから初速度を出す (touch flick 用) */
+/** 慣性: 直近 N ms の速度サンプルから初速度を出す (touch flick 用)。 */
 const VELOCITY_WINDOW_MS = 80;
-/** 慣性減衰率 (exp 減衰、per ms)。大きいほど早く止まる。0.003 で約 1.5 秒で減速完了 */
+/** 慣性減衰率 (exp 減衰 / ms)。0.003 で約 1.5 秒で減速完了。 */
 const INERTIA_DECAY_PER_MS = 0.003;
-/** 慣性停止閾値 (deg/ms)。これ未満になったら停止 */
+/** 慣性停止閾値 (deg/ms)。これ未満で停止。 */
 const INERTIA_VELOCITY_MIN = 0.015;
 
 const SchedulePicker: Component = () => {
@@ -68,34 +60,25 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
   const iconSize = () => isTablet() ? ICON_SIZE_TABLET : ICON_SIZE_MOBILE;
   const iconFont = () => isTablet() ? ICON_FONT_TABLET : ICON_FONT_MOBILE;
 
-  // Stagger 起点 index。常に CW 順で並ぶが、最初に出現する icon の位置だけずらす。
-  //   portrait → 0 (12 時方向、よていボタン真上の位置)
-  //   landscape → 3 (3 時方向に最も近い index)
-  // landscape では よていボタンが画面上部にあり、リングの上半分が画面外にはみ出す。
-  // 12 時から stagger すると最初の数 frame が見えない場所で動いていて「出るのが遅い」と感じる。
-  // 画面内で確実に見える 3 時方向から始めることで、見える範囲で stagger が即始まる。
-  // (11 個を 360° 等間隔配置: index 3 が angle 8.18° で 3 時に最も近い) */
+  // Stagger 起点: portrait は 12 時 (index 0)、landscape は 3 時 (index 3)。
+  // landscape ではよていボタンが画面上にありリングの上半分が画面外にはみ出るので、12 時から
+  // stagger すると最初の数 frame が見えない場所で動く。3 時方向から始めて画面内で stagger を即見せる。
   const staggerStartIndex = () => isLandscape() ? 3 : 0;
 
-  // ドラッグ状態 (= 「タップで閉じる」と「ドラッグで回転」の区別に使う)
-  // dragStart は tap/drag 閾値判定用、lastAngularRad は origin 基準の前回角度 (rad)
   let dragStart: { x: number; y: number } | null = null;
   let dragHappened = false;
   let lastAngularRad = 0;
-  // 慣性 (touch flick で離した後に余韻で回し続ける) 用
   let velocityHistory: { time: number; deltaDeg: number }[] = [];
   let inertiaRaf: number | null = null;
-  // 慣性中のタップは「慣性キャンセル」のみで close しない (= ユーザーは止めたいだけ)
+  // 慣性中のタップは「慣性キャンセル」のみで close しない (ユーザーは止めたいだけ)。
   let inertiaCanceledByTap = false;
-  // よていボタンの pointerdown で picker が開いた直後、release 時の合成 click が
-  // overlay に飛んできて即 closePicker されるのを防ぐ。
-  // = 「pointerdown を overlay 自身が受け取った場合だけ click を有効に扱う」
+  // よていボタンの pointerdown で picker が開いた直後、release 時の合成 click が overlay に
+  // 飛んできて即 closePicker されるのを防ぐ (= overlay 自身が pointerdown を見た場合のみ click 有効)。
   let pointerDownOnOverlay = false;
 
   // === rAF 間引き ===
-  // 120Hz 端末では 1 frame に pointermove が複数発火することがあり、毎回 rotatePicker を
-  // 呼ぶとリング親要素の inline style が 1 frame 内で重複書込みされる。pendingDelta に貯めて
-  // 次の rAF で 1 回だけ commit することで、書込みを必ず 1 frame 1 回に固定する。
+  // 120Hz 端末では 1 frame に pointermove が複数発火し、毎回 rotatePicker を呼ぶと親要素の inline style が
+  // 1 frame 内で重複書込みされる。pendingDelta に貯めて次の rAF で 1 回だけ commit。
   let pendingDelta = 0;
   let rotateRaf: number | null = null;
   const flushRotation = () => {
@@ -154,7 +137,6 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
 
   const onPointerDown = (e: PointerEvent) => {
     pointerDownOnOverlay = true;
-    // 慣性中のタップ: 慣性キャンセル + close 抑制フラグを立てる
     if (inertiaRaf !== null) {
       cancelInertia();
       inertiaCanceledByTap = true;
@@ -173,8 +155,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
       dragHappened = true;
     }
 
-    // origin 中心の角度差をそのまま回転に渡す。
-    // 画面座標は y が下向き正なので atan2 は CW で増加し、CW 回転 (+) と一致する
+    // 画面座標は y が下向き正なので atan2 は CW で増加 → CW 回転 (+) と一致。
     const currentRad = Math.atan2(e.clientY - props.origin.y, e.clientX - props.origin.x);
     let deltaRad = currentRad - lastAngularRad;
     // ±π 跨ぎを最短経路に正規化
@@ -184,7 +165,6 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     lastAngularRad = currentRad;
     scheduleRotation(deltaDeg);
 
-    // 速度履歴を記録 (直近 VELOCITY_WINDOW_MS のみ保持)
     const now = performance.now();
     velocityHistory.push({ time: now, deltaDeg });
     const cutoff = now - VELOCITY_WINDOW_MS;
@@ -195,10 +175,10 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
 
   const onPointerUp = (e: PointerEvent) => {
     dragStart = null;
-    // 慣性 / 静止状態に入る前に rAF 保留分を取りこぼさず即時反映
+    // 慣性開始 / 停止前に rAF 保留分を取りこぼさず即時反映。
     flushPendingNow();
-    // touch flick で離した瞬間: 直近の平均速度から慣性ループ開始
-    // (mouse/pen は慣性なし。ホイールで操作する想定。reduce-motion 中もスキップ)
+    // touch flick 離した瞬間: 直近の平均速度から慣性ループ開始。
+    // mouse/pen は慣性なし (ホイールで操作する想定)。reduce-motion 中もスキップ。
     if (e.pointerType === "touch" && motionAllowed() && velocityHistory.length > 0) {
       const totalDeg = velocityHistory.reduce((s, h) => s + h.deltaDeg, 0);
       const oldest = velocityHistory[0]!.time;
@@ -212,15 +192,13 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
   };
 
   const onClick = () => {
-    // pointerdown を overlay 自身が見ていない (= よていボタンから開いた直後の合成 click) なら無視
+    // よていボタンから開いた直後の合成 click は overlay 自身が pointerdown を見ていない。
     if (!pointerDownOnOverlay) return;
     pointerDownOnOverlay = false;
-    // 慣性キャンセルのためのタップは close しない
     if (inertiaCanceledByTap) {
       inertiaCanceledByTap = false;
       return;
     }
-    // ドラッグだった場合も close 抑制
     if (dragHappened) {
       dragHappened = false;
       return;
@@ -228,9 +206,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     closePicker();
   };
 
-  // マウスホイール: 下スクロール → CW、上スクロール → CCW
   // ホイール操作は慣性無し。慣性中のホイールはキャンセルしてから新規回転。
-  // (smooth-scroll のホイール event も rAF 間引きで 1 frame 1 commit に揃える)
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
     cancelInertia();
@@ -243,10 +219,8 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     cancelPendingRotation();
   });
 
-  // 暗幕背景は backdrop-filter: blur(2px) + 半透明黒の overlay。
-  // open 中は features/freeze の clockFrozen() で時計画面の動的要素 (秒バー / hands /
-  // 太陽月 / 自動回転 / 星 twinkle) が全て止まるので、blur は 1 回 paint されたら以降は
-  // ブラウザの compositing layer cache に乗って合成負荷ゼロ → 古い端末でも実用負荷で動く。
+  // 暗幕背景は backdrop-filter: blur(2px) + 半透明黒。open 中は chronostasis で時計画面の動的要素が
+  // 全停止するため、blur は 1 回 paint されたら以降は compositing layer cache に乗って合成負荷ゼロ。
   return (
     <div
       class="fixed inset-0 z-[100] backdrop-blur-[2px]"
@@ -261,10 +235,8 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
       onClick={onClick}
       onWheel={onWheel}
     >
-      {/* リング container: origin 中心の 0×0 要素。
-          pickerRotation 変化時の inline style 書込みは ここの --ring-rot 1 個だけになる。
-          子アイコンは container 内の固定座標で配置され、CSS 変数経由で counter-rotate して
-          emoji を upright に保つ (ブラウザの cascade で 1 回の var 更新が全子に伝播)。 */}
+      {/* リング container: origin 中心の 0×0 要素。pickerRotation 変化時の inline style 書込みは
+          ここの --ring-rot 1 個だけ。子は CSS 変数経由で counter-rotate して emoji を upright に保つ。 */}
       <div
         class="fixed"
         style={{
@@ -307,32 +279,24 @@ const RingIcon: Component<{
   let buttonRef: HTMLButtonElement | undefined;
   const { t } = useI18n();
 
-  // 角度位置は static (mount 時に 1 回計算)。
-  // i=0 を 12 時 (-90°) からスタート、CW に並ぶ。
-  // リング全体の回転は親の transform: rotate(var(--ring-rot)) で行うので、
-  // 子はここで決まった座標から動かない。
+  // 角度位置は static (mount 時 1 回計算)。i=0 を 12 時 (-90°) からスタート、CW 並び。
   const angleRad = (props.index / SCHEDULE_ICONS.length) * 2 * Math.PI - Math.PI / 2;
   const x = props.ringRadius * Math.cos(angleRad);
   const y = props.ringRadius * Math.sin(angleRad);
   const offsetX = x - props.iconSize / 2;
   const offsetY = y - props.iconSize / 2;
-  // 親の rotate を打ち消して emoji を upright に保つ (CSS 変数 --ring-rot は親が供給)。
-  // この transform 文字列自体は static で JS は触らない。--ring-rot 変化時は CSS の cascade で
-  // 自動的に再計算される (= 子の inline style 書込み 0 回 / frame)。
+  // 親の rotate を打ち消して emoji を upright に保つ。--ring-rot 変化は CSS cascade で自動再計算
+  // されるので子の inline style 書込みはゼロ / frame。
   const restingTransform =
     `translate(${offsetX}px, ${offsetY}px) rotate(calc(-1 * var(--ring-rot, 0deg)))`;
 
-  // 開始時アニメ: 親 origin (= translate(-size/2)) → 角度位置 + scale 0 → 1 + opacity 0 → 1。
-  // stagger は staggerStartIndex を 0 として CW 順に index * STAGGER_MS で順次出現。
-  // appearance 中は WAAPI が transform を上書きするので counter-rotate は一時的に効かない
-  // (= 開いた直後の数百 ms に高速回転すると emoji がわずかに傾く)。実用上は picker open 直後に
-  // 高速回転は起きないので許容する。アニメ終了後は inline style の restingTransform に戻り、
-  // 以降は --ring-rot 変化に追従する。
-  // (reduce-motion 中は animateMotion が null を返してアニメスキップ → 即最終位置に出現)
+  // 開始時アニメ: origin → 角度位置 + scale 0→1 + opacity 0→1。staggerStartIndex を 0 として CW 順に出現。
+  // appearance 中は WAAPI が transform を上書きするので counter-rotate が一時的に効かない (= 開直後に
+  // 高速回転すると emoji がわずかに傾く)。実用上 picker open 直後に高速回転は起きないので許容。
+  // reduce-motion 中は animateMotion が null を返してアニメスキップ → 即最終位置に出現。
   onMount(() => {
     if (!buttonRef) return;
     const N = SCHEDULE_ICONS.length;
-    // 起点 index から CW でいくつ目か (起点自身が 0)。% で wrap する。
     const staggerOffset = (props.index - props.staggerStartIndex + N) % N;
     const startTransform =
       `translate(${-props.iconSize / 2}px, ${-props.iconSize / 2}px) scale(0)`;
@@ -367,8 +331,8 @@ const RingIcon: Component<{
         height: `${props.iconSize}px`,
         "font-size": `${props.iconFont}px`,
         transform: restingTransform,
-        // 各アイコンを GPU layer に固定。親 rotate と自分の counter-rotate が
-        // composite-only で完結するため、毎 frame 再ラスタライズなしで動く。
+        // 各アイコンを GPU layer に固定 → 親 rotate と自分の counter-rotate が composite-only で
+        // 完結し、毎 frame 再ラスタライズなしで動く。
         "will-change": "transform",
       }}
       onClick={onClick}

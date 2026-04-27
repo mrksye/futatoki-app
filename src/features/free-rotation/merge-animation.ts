@@ -6,37 +6,27 @@ import { requestChronostasis } from "../../lib/chronostasis";
  * かさね (merged) / わける (split) 切替時のトランジション支援。
  *
  * Public API:
- *   - hook:        useMergeAnimation ({ mergedVisible, transitioning, mergedRevealed } を返す)
- *   - hook:        useButtonsDimmedDuringMergeFlip (SettingsPanel 専用)
- *   - 計算ヘルパー: amTransform, pmTransform, mergedTransform, splitShadow
+ *   - useMergeAnimation: { mergedVisible, transitioning, mergedRevealed } を返す
+ *   - useButtonsDimmedDuringMergeFlip: SettingsPanel 専用 (周辺ボタン dim 用)
+ *   - 純関数: amTransform, pmTransform, mergedTransform, splitShadow
  *
- * mergedVisible 自体は state.ts が公開する accessor (rotateActive との AND ガード済み)。
- * このモジュールはそれを観測して transitioning フラグを 620ms 立ち下げる + 「fresh mount された
- * merged container を CSS transition できちんとふわっと現すための reveal 信号」を作る。
+ * mergedVisible は state.ts 側 (rotateActive との AND ガード済み accessor)。本モジュールはそれを
+ * 観測して transitioning フラグを 620ms 立ち下げ + mergedRevealed (rising edge だけ double rAF
+ * 遅延) を作る。
  *
- * mergedRevealed は mergedVisible に追従するが、false → true の rising edge だけ double
- * requestAnimationFrame 分遅延して true になる。ClockLayout 側で opacity / mergedTransform は
- * こちらを参照する。
- *
- * なぜ double rAF が要るか:
- *   merged container は <Show when={mergedVisible() || transitioning()}> で mount / unmount
- *   される。「わけ」状態で 620ms 以上経つと transitioning が false に戻って container が DOM
- *   から完全に消える。そこから「かさねる」を押すと container が fresh mount され、いきなり
- *   opacity=1 / scale=1 (最終状態) で生まれる。CSS transition は「前の computed style から
- *   新しい style への差分」で発火するため、前の style を持たない fresh mount 要素では
- *   transition が走らない (= ふわっとならず瞬時に出る)。
- *
- *   そこで一旦 opacity=0 / scale=0.55 で mount → 1 frame paint させて initial state を
- *   browser に認識させる → 次フレームで reveal に切り替え → CSS が値変化を拾って transition
- *   起動、という流れにする。double rAF は「mount したフレームを必ず 1 回 paint させてから
- *   切替える」ための保険 (single rAF だと paint 前に値変更を踏んでしまう browser 実装がある)。
+ * mergedRevealed が要る理由: merged container は <Show when={mergedVisible() || transitioning()}> で
+ * mount/unmount され、「わけ」が 620ms 以上続くと unmount される。そこから「かさねる」を押すと
+ * fresh mount され opacity=1/scale=1 (最終状態) で生まれる。CSS transition は「前の computed style
+ * との差分」で発火するので、前の style を持たない fresh mount では transition が走らない。
+ * 一旦 opacity=0/scale=0.55 で mount → 1 frame paint → reveal に切替の流れにすることで
+ * browser に initial state を認識させてから transition を起こす。double rAF は paint を 1 回確実に
+ * 挟むための保険 (single rAF だと paint 前に値変更を踏む browser 実装がある)。
  */
 
 const TRANSITION_DURATION_MS = 620;
 
 export const useMergeAnimation = () => {
   const [transitioning, setTransitioning] = createSignal(false);
-  // mergedVisible 初期値で同期。以降は createEffect 内で更新する。
   const [mergedRevealed, setMergedRevealed] = createSignal(mergedVisible());
   let timer: ReturnType<typeof setTimeout> | undefined;
   let revealRaf1: number | null = null;
@@ -73,20 +63,18 @@ export const useMergeAnimation = () => {
             });
           });
         } else {
-          // falling edge: 即座に reveal=false。CSS が前のフレーム (opacity=1) から
-          // 新しい opacity=0 への差分を拾って transition 起動。
+          // falling edge: 即座 false。CSS が前フレーム (opacity=1) との差分を拾って transition 起動。
           setMergedRevealed(false);
         }
       },
     ),
   );
 
-  // transition 中は chronostasis を要求して下層 tick を凍結 → wrapper opacity 380ms フェードと
-  // merged container の transform/opacity 同時アニメに合成資源を全振りさせる。
-  // useCurrentTime の setInterval / auto-rotate の rAF / Star twinkle の CSS animation が一斉停止。
+  // transition 中は chronostasis を要求して下層 tick (useCurrentTime / auto-rotate / Star twinkle) を
+  // 一斉停止し、wrapper opacity フェードと merged container アニメに合成資源を全振りさせる。
   createEffect(
-    on(transitioning, (active) => {
-      if (!active) return;
+    on(transitioning, (held) => {
+      if (!held) return;
       const release = requestChronostasis();
       onCleanup(release);
     }),
@@ -99,8 +87,6 @@ export const useMergeAnimation = () => {
 
   return { mergedVisible, transitioning, mergedRevealed };
 };
-
-// ===== transform / filter 計算ヘルパー (純関数) =====
 
 export const amTransform = (mergedVisible: boolean, isLandscape: boolean): string => {
   if (!mergedVisible) return "translate(0, 0) scale(1)";
@@ -123,11 +109,9 @@ export const splitShadow = (transitioning: boolean): string =>
   transitioning ? "drop-shadow(0 6px 26px rgba(40,28,90,0.35))" : "none";
 
 /**
- * かさね/わけ切替時に他のボタンを薄く退避させたいケース用の hook。
- * mergedVisible の遷移を観測。ただし rotateActive 自体の出入りで mergedVisible が
- * 動いた時 (= モード遷移そのもの) は無視し、純粋に「manual 中の merged トグル」だけで dim 起動。
- *
- * SettingsPanel 専用ヘルパー。
+ * かさね/わけ切替時に周辺ボタンを薄く退避させる SettingsPanel 専用 hook。
+ * rotateActive 自体の出入りで mergedVisible が動いた時 (= モード遷移) は無視し、
+ * manual 中の merged トグルだけで dim 起動する。
  */
 export const useButtonsDimmedDuringMergeFlip = (): Accessor<boolean> => {
   const [dimmed, setDimmed] = createSignal(false);

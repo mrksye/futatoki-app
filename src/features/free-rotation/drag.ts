@@ -1,16 +1,10 @@
 /**
- * ぐりぐり (drag) 操作スタイル。
- * 自由回転モードの manual サブモードのドラッグ操作スタイル2種のうちの一つ。
- * ポインタ移動の累積ピクセル数を分に変換して時刻を進める。
- *
- * Public API:
- *   - 操作: DragDragState, dragStart, dragAdvance, PX_PER_MINUTE
- *
- * このモジュールは状態を持たない (state は呼び出し側 = ClockLayout が dragRef に保持)。
- * crank.ts と相互排他で、drag が default。
+ * ぐりぐり (drag) 操作スタイル。manual サブモードのドラッグ操作スタイル 2 種の一つで、ポインタ移動の
+ * 累積ピクセル数を分に変換して時刻を進める。状態は呼び出し側 (ClockLayout の dragRef) が保持し、
+ * このモジュールは純関数のみ。crank.ts と相互排他で drag が default。
  */
 
-/** 何ピクセル動かしたら1分進むか */
+/** 何ピクセル動かしたら 1 分進むか。 */
 export const PX_PER_MINUTE = 6;
 
 export type DragDragState = {
@@ -33,10 +27,7 @@ export const dragStart = (
   pointerId: e.pointerId,
 });
 
-/**
- * ポインタ移動時に呼ぶ。state を破壊的に更新し、
- * rotateMinutes に反映すべき新しい値を返す。
- */
+/** ポインタ移動時に呼ぶ。state を破壊的に更新し、rotateMinutes に反映すべき新しい値を返す。 */
 export const dragAdvance = (
   e: PointerEvent,
   s: DragDragState,

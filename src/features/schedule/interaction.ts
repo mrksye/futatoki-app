@@ -5,18 +5,11 @@ import { motionAllowed } from "../../lib/motion";
 /**
  * 予定アイコンの削除 UX 状態。
  *
- * モード遷移:
- *   none ──(長押し 500ms)──> warning ──(ゴミ箱タップ)──> deleting ──(アニメ完了)──> none
- *                                ├──(外タップ)─> none
- *                                └──(3秒タイムアウト)─> none
+ *   none ──長押し 500ms──> warning ──✕ボタンタップ──> deleting ──アニメ完了──> none
+ *                              ├──外タップ──> none
+ *                              └──3 秒タイムアウト──> none
  *
- * 同時に warning にできるイベントは1つだけ (グローバル単一状態)。
- *
- * Public API:
- *   - accessor: interaction
- *   - action:   enterWarning, cancelWarning, triggerDelete
- *
- * 内部の生 setter (setInteractionRaw) と timer は意図的に export していない。
+ * グローバル単一状態 (同時に warning にできるイベントは 1 つだけ)。生 setter は未 export。
  */
 
 type Interaction =
@@ -25,19 +18,15 @@ type Interaction =
   | { type: "deleting"; minutes: number };
 
 const WARNING_AUTO_CANCEL_MS = 3000;
-/** くるくる削除アニメの全体 duration と揃える (ScheduleLayer の POOF_DURATION_MS) */
+/** くるくる削除アニメの全体 duration と揃える (ScheduleLayer の POOF_DURATION_MS)。 */
 const DELETE_ANIMATION_MS = 900;
 
-// ===== Internal state =====
 const [interaction, setInteractionRaw] = createSignal<Interaction>({ type: "none" });
 let warningTimer: ReturnType<typeof setTimeout> | undefined;
 
-// ===== Public accessor =====
 export { interaction };
 
-// ===== Public actions =====
-
-/** 長押し検出時に呼ぶ。warning 状態に入って 3 秒の自動キャンセルタイマを仕込む。 */
+/** 長押し検出時に呼ぶ。warning に入って 3 秒の自動キャンセルタイマを仕込む。 */
 export const enterWarning = (minutes: number) => {
   if (warningTimer) clearTimeout(warningTimer);
   setInteractionRaw({ type: "warning", minutes });
@@ -58,13 +47,9 @@ export const cancelWarning = () => {
   }
 };
 
-/**
- * ゴミ箱タップ時に呼ぶ。deleting 状態に遷移、アニメ後にデータ削除して none に戻す。
- * 削除アニメ中は別のイベントの操作を受け付けない (interaction が "none" でない間は新規操作を弾く)。
- *
- * reduce-motion 中はアニメ自体が走らないので待ち時間を 0 にして即削除する
- * (アイコンが何も起きずに 900ms 居続けるのを避けるため)。
- */
+/** ✕ボタンタップ時に呼ぶ。deleting に遷移、アニメ後にデータ削除して none に戻す。
+ *  reduce-motion 中はアニメが走らないので待ち時間を 0 にする (アイコンが何も起きずに 900ms 居続け
+ *  るのを避けるため)。 */
 export const triggerDelete = (minutes: number) => {
   if (warningTimer) clearTimeout(warningTimer);
   warningTimer = undefined;

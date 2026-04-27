@@ -2,23 +2,12 @@ import { createEffect, type Accessor, type Component } from "solid-js";
 import { detailMode } from "../features/settings/detail-mode";
 
 /**
- * 時計の針 (時針・分針・中心ネジ) を描画するレイヤー。
+ * 時計の針 (時針・分針・中心ネジ) を描画するレイヤー。ClockFace を包む div の中に絶対配置で重ね、
+ * ScheduleLayer の上に乗せて予定アイコンの上から針が指す形にする (z 順を独立に制御するため別レイヤー)。
  *
- * AnalogClock や ScheduleLayer とは独立した SVG として、AnalogClock を包む div の中に
- * 絶対配置で重ねる。レイヤースタックでは ScheduleLayer の上に乗せて、予定アイコンの
- * 上から針が指す形にする。
- *
- * (「分離できるものは常に分離する」原則: 針を別レイヤーにしておくと、その上下に
- *  どんな描画が来ても z 順を簡単に制御できる)
- *
- * 同じ viewBox (340x340) を使うので、AnalogClock の盤面と座標系が完全に一致する。
- *
- * Props:
- *   - hours, minutes: 表示する時刻 (時針角度は分も加味して滑らかに進める)
- *   - shakeKey?: 「逆回転を試みた」イベントの incrementing counter (resistance.ts)。
- *     値が増えるたびに minute hand (= 長針) を Web Animations API で短時間 wobble。
- *     hour hand (= 短針) と中心ネジは shake しない (「抵抗するのは長針のみ」)。
- *     連射時は新しい animate() が直前の animation を上書きする = 都度フレッシュに発火。
+ * shakeKey は「逆回転を試みた」イベントの incrementing counter (resistance.ts)。値が増えるたびに
+ * minute hand を WAAPI で短時間 wobble させる (= hour hand と中心ネジは shake しない / 抵抗するのは
+ * 長針のみ)。連射時は新しい animate() が直前の animation を上書きするので毎回フレッシュに発火する。
  */
 
 interface HandsLayerProps {
@@ -53,11 +42,9 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
   };
   const minuteAngle = () => props.minutes * 6 - 90;
 
-  // shakeKey の値変化で minute hand wrapper に Web Animations API で wobble。
-  // 内側 <g> は SVG transform で固有角度に rotate しているのでそちらは触らず、
-  // 外側 wrapper <g> の CSS transform を独立に動かして compose させる。
-  // SVG <g> の CSS transform-origin は transform-box: view-box を効かせて
-  // viewBox 中央 (= clock 中心) で pivot させる。
+  // shake は外側 wrapper <g> の CSS transform で発動。内側 <g> は SVG transform で角度を持つので、
+  // そちらと compose させるため別レイヤーに分けてある。transform-box: view-box で viewBox 中央
+  // (= clock 中心) を pivot にする。
   let minuteHandWrapperRef: SVGGElement | undefined;
   createEffect(() => {
     const key = props.shakeKey?.() ?? 0;
@@ -72,9 +59,8 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
         class="w-full h-full"
         style="max-height: 100%; max-width: 100%;"
       >
-        {/* 時針
-            白縁取りは黒と同じ line 端点で描くことで stroke 幅の差ぶんだけが outline になり、
-            側面/先端/根元の padding が全周で均一 ((white_stroke - black_stroke) / 2 = 1.5) になる。 */}
+        {/* 時針: 白と黒で同じ line 端点を引くことで stroke 幅の差ぶんだけが outline になる
+            (側面/先端/根元の padding 全周均一 = (10-7)/2 = 1.5)。 */}
         <g
           transform={`rotate(${hourAngle() + 90} ${CENTER} ${CENTER})`}
           style="will-change: transform"
@@ -85,9 +71,7 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
             stroke="#111111" stroke-width="7" stroke-linecap="round" />
         </g>
 
-        {/* 分針 (時針と同じ思想: 白と黒で同じ line 端点、padding 全周均一 = 1.25)。
-            shake 用の外側 wrapper <g> で囲んで、内側 <g> の rotation と独立に
-            CSS transform を当てられるようにしてある。 */}
+        {/* 分針 (同じ outline 思想で padding 1.25)。shake 用の外側 wrapper <g> で囲む。 */}
         <g
           ref={minuteHandWrapperRef}
           style={{ "transform-box": "view-box", "transform-origin": "50% 50%" }}

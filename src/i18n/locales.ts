@@ -33,11 +33,9 @@ export const SUPPORTED_LOCALES: readonly LocaleMeta[] = [
   { code: "id",    name: "Indonesian",           endonym: "Bahasa Indonesia",   dir: "ltr" },
 ] as const;
 
-/** 端末も URL も指定が無い / 未対応言語のときのデフォルト。
- *  source (ja) ではなく en にしているのは、未対応言語 browser の user に
- *  日本語を見せるより英語の方が圧倒的に通じるため。
- *  この時だけ en chunk が dynamic fetch される（その user だけのコスト）。 */
+/** 未対応言語フォールバック。source (ja) より en の方が世界的に通じやすい。en chunk は
+ *  この時だけ dynamic fetch されるのでフォールバックに当たった user 限定のコスト。 */
 export const DEFAULT_LOCALE = "en";
 
-/** 翻訳の source of truth。この言語の JSON がマスター */
+/** 翻訳の source of truth (= マスター JSON)。 */
 export const SOURCE_LOCALE = "ja";

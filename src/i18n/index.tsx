@@ -35,7 +35,6 @@ const LOCALE_MODULES = import.meta.glob<Dict>(
 
 const LOADERS: Record<string, () => Promise<Dict>> = Object.fromEntries(
   Object.entries(LOCALE_MODULES).map(([path, loader]) => {
-    // "./resources/xx.json" → "xx"
     const code = path.replace(/^.*\/([^/]+)\.json$/, "$1");
     return [code, loader];
   }),
@@ -67,7 +66,7 @@ export function I18nProvider(props: { children: JSX.Element }) {
     return i18n.flatten(resource) as unknown as Record<string, string>;
   });
 
-  // ICU MessageFormat の実体生成はコストがあるのでキャッシュ
+  // ICU MessageFormat の実体生成は重いのでテンプレ毎にキャッシュ。
   const mfCache = new Map<string, IntlMessageFormat>();
   const getFormatter = (template: string): IntlMessageFormat => {
     let mf = mfCache.get(template);

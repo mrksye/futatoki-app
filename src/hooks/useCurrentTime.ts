@@ -13,9 +13,8 @@ const snapshot = (): CurrentTime => {
 };
 
 /**
- * 1 秒間隔で現在時刻を更新する signal を返す hook。
- * chronostasis 中 (= ピッカー open 等で下層を凍結している間) は setInterval を停止し、
- * 解除した瞬間に最新時刻にスナップして再開する (止まっていた間の経過分を吸収)。
+ * 1 秒間隔で現在時刻を更新する signal。chronostasis 中 (ピッカー open / merge transition 等で下層
+ * 凍結中) は setInterval を停止し、解除時に最新時刻にスナップして再開する (止まっていた間の経過分を吸収)。
  */
 export function useCurrentTime() {
   const [time, setTime] = createSignal<CurrentTime>(snapshot());
@@ -23,8 +22,7 @@ export function useCurrentTime() {
 
   createEffect(
     on(inChronostasis, (held) => {
-      if (held) return; // chronostasis 中は interval 止めたまま
-      // 解除時 (= 初回 mount 含む): 即座に最新時刻に揃えて interval 再開
+      if (held) return;
       setTime(snapshot());
       const timer = setInterval(() => setTime(snapshot()), 1000);
       onCleanup(() => clearInterval(timer));

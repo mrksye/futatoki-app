@@ -2,15 +2,8 @@ import { onCleanup } from "solid-js";
 import { rotateMinutes, seekRotate } from "./state";
 
 /**
- * 1ふんもどす: タップで -1 分、長押しで連続。
- *
- * Public API:
- *   - hook: useRewindHold (コンポーネント内で1回呼ぶ。{ start, stop } を返す)
- *
- * onCleanup を持つので呼び出し側は reactive owner (= component setup) の中で呼ぶこと。
- *
- * 仕様: 250ms 押し続けると 40ms 間隔で連続発火。指離し / pointercancel で停止。
- *       小数値 (自動回転やドラッグ経由) でも整数の分目盛りに揃えてから -1 する。
+ * 1 ふんもどす: タップで -1 分、長押しで連続。HOLD_DELAY_MS 押し続けると REPEAT_INTERVAL_MS 間隔で
+ * 連続発火、指離し / pointercancel で停止。小数値 (自動回転や drag 経由) でも整数分目盛りに揃えて -1 する。
  */
 
 const HOLD_DELAY_MS = 250;

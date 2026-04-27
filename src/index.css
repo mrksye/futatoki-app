@@ -1,11 +1,8 @@
 @import "tailwindcss";
 
-/* Nunito を self-host。Google Fonts CDN から直接 import すると訪問者の
-   IP が Google に渡る (privacy 配慮) ので woff2 を public/fonts/ に
-   bundle する形に変更。Nunito は variable font なので 1 subset file が
-   font-weight 400-900 全部を内包する。bundle 量は 3 subset で計 ~95KB。
-   CJK / Arabic 等は Nunito に glyph 無いので OS 標準にフォールバック
-   (CJK font stack は下の lang 別 rule を参照)。 */
+/* Nunito self-host。Google Fonts CDN から直接 import すると訪問者の IP が Google に渡るので
+   privacy 配慮で woff2 を public/fonts/ に bundle (3 subset 合計 ~95KB)。
+   CJK / Arabic / Thai 等は Nunito に glyph が無いので下の lang 別 rule で OS 標準にフォールバック。 */
 @font-face {
   font-family: 'Nunito';
   font-style: normal;
@@ -31,10 +28,8 @@
   unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
 }
 
-/* 「タブレット以上」の判定。横幅だけでなく高さも見ることで、
-   スマホのランドスケープ(幅 >= 768px でも高さが低い)を除外する。
-   min-height は iPhone 14 Pro Max ランドスケープ(430px)から十分に
-   離すため 32rem (512px) に設定。 */
+/* tablet variant: 横幅と高さ両方を見て、スマホのランドスケープ (幅 >= 768px でも高さが低い) を除外。
+   min-height は iPhone 14 Pro Max ランドスケープ (430px) から十分離れる 32rem (512px) に設定。 */
 @custom-variant tablet (@media (min-width: 48rem) and (min-height: 32rem));
 
 html, body, #root {
@@ -47,16 +42,9 @@ html, body, #root {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* iOS Safari の長押し選択 / callout を全方位で封殺する。入力欄のない
-   アプリなので全要素に !important で強制してOK。以下、それぞれの役割:
-   - user-select / -webkit-user-select: 文字選択そのものを禁止
-   - -webkit-touch-callout: 長押しで出るコピー/共有メニューを禁止
-   - -webkit-user-drag: ドラッグ選択 / 画像ドラッグを禁止
-   - -webkit-user-modify: 「編集不可」を iOS に明示
-   - -webkit-tap-highlight-color: タップ時のハイライトも消す
-   ::selection で背景を透明化するフォールバックは入れない — 見た目上
-   選択が見えないだけで実体としては選択されており、iOS の「Webで検索」
-   等の callout メニューは出てしまうため、解決したふりになるだけで悪手。*/
+/* iOS Safari の長押し選択 / callout を全方位で封殺 (入力欄が無いので !important で全要素強制 OK)。
+   ::selection 透明化フォールバックは入れない: 見た目上選択が見えないだけで実体は選択されており、
+   iOS の「Web で検索」等の callout は出てしまう (= 解決したふりになるだけで悪手)。 */
 *, *::before, *::after {
   user-select: none !important;
   -webkit-user-select: none !important;
@@ -66,58 +54,34 @@ html, body, #root {
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* touch-action: manipulation は「パン/ピンチズーム以外の標準ジェスチャ
-   (ダブルタップズーム、長押し callout 等)を抑制」する指定。iOS で
-   -webkit-touch-callout: none が効かない環境でも、こちらで callout が
-   抑止できることがある。*/
+/* touch-action: manipulation はパン/ピンチズーム以外の標準ジェスチャ (ダブルタップズーム / 長押し
+   callout 等) を抑制。-webkit-touch-callout: none が効かない iOS でもこれで callout が抑止される
+   ことがある。 */
 button, a, [role="button"] {
   touch-action: manipulation;
 }
 
-/* Flutter CanvasKit と同じ発想: DOM にテキストノードを置かず、pseudo-element
-   の content で「文字の絵」を描く。各ボタンは <button aria-label="xxx"></button>
-   の形で使う(aria-label はスクリーンリーダー対応も兼ねる)。
+/* Flutter CanvasKit と同じ発想で DOM にテキストノードを置かず、pseudo-element の content で
+   「文字の絵」を描く (各ボタンは <button aria-label="xxx"></button> で aria-label 兼 SR 対応)。
 
-   【既知の課題 / KNOWN ISSUE (iOS Safari)】
-   それでも iPhone (Safari / ホーム画面 PWA) では、ボタンを長押しすると
-   「コピー / 選択部分を検索 / 翻訳」の callout menu が依然として表示される。
-   原因: iOS の単語検出は DOM 構造や user-select に依存せず、画面に
-   ペイントされた「視覚的な文字」を検出しているため、pseudo-element の
-   content で描画された文字列も同じように検出されてしまう。
-
-   対策済みで効かなかったもの:
-   - *, *::before, *::after に user-select: none / -webkit-user-select: none /
-     -webkit-touch-callout: none / -webkit-user-drag: none /
-     -webkit-user-modify: read-only / -webkit-tap-highlight-color: transparent
-     を !important 付きで全部乗せ(本ファイル上部)
-   - button / a / [role=button] に touch-action: manipulation
-   - JS 側で contextmenu / selectstart の preventDefault + selectionchange で
-     発生済み選択を即 clear (src/index.tsx)
-   - ボタン文字を DOM から消して pseudo-element 描画に移行(このルール)
-
-   実際に「選択」は止まっており、コピーや検索メニューを押しても何も起きない
-   (対象テキストが空のため)ので実害は心理的なものだけ。完全に callout 自体
-   を抑止したい場合は <canvas> に ctx.fillText で描画する Flutter CanvasKit
-   相当の対応が必要(フォント待ち / DPR / i18n 文字幅計算など実装コスト大)。*/
+   【KNOWN ISSUE (iOS Safari)】 iPhone Safari / ホーム画面 PWA ではボタン長押しで「コピー / 検索 /
+   翻訳」の callout menu が依然出る。原因は iOS の単語検出が DOM 構造や user-select でなく画面に
+   ペイントされた視覚文字を検出する仕組みのため、pseudo-element 描画の文字列も検出される。
+   選択自体は止まっているのでコピーや検索を押しても無反応 (= 実害は心理的なもののみ)。完全抑止は
+   <canvas> + ctx.fillText 描画 (Flutter CanvasKit 相当) が必要だが実装コストが大きい。 */
 button[aria-label]::before {
   content: attr(aria-label);
 }
 
-/* やわらかグラデーション背景 */
 #root {
   background: linear-gradient(160deg, #fef6e4 0%, #fce4ec 35%, #e8eaf6 65%, #e0f7fa 100%);
 }
 
-/* lang / dir 別の font stack。Latin chars 用に Nunito を先頭に残しつつ、
-   Han / Hangul / Arabic glyph はそれぞれの地域 OS 標準フォントで補完する。
-   そうしないと JA フォントや system fallback が当たって「。」位置等が
-   各地域の typographic 慣習 (台湾/HK/Macao = 中央、Mainland = 左下、
-   韓文 / Arabic 各独自) と外れる。
-   優先順は OS 標準 (PingFang / Microsoft / Apple SD Gothic Neo) → Noto
-   (Linux で noto-fonts-cjk / noto-fonts を自前 install した user 向け
-   保険) → sans-serif。Web font 化していないので bundle 増加なし。
-   i18n/index.tsx が <html lang="..." dir="..."> を locale 検出時に設定
-   するので、これらの selector が build 後の動的 page でちゃんと効く。 */
+/* lang / dir 別の font stack。Nunito を先頭に残しつつ、Han / Hangul / Arabic glyph はそれぞれの
+   地域 OS 標準フォントで補完する (デフォルトの fallback だと「。」位置等が地域 typographic 慣習と
+   外れる: 台湾/HK/Macao = 中央 / Mainland = 左下 / 韓文・Arabic 各独自)。順序は OS 標準 → Noto
+   保険 (Linux で自前 install した user 向け) → sans-serif。Web font 化していないので bundle 増加なし。
+   i18n/index.tsx が <html lang="..." dir="..."> を locale 検出時に設定する。 */
 [lang="zh-TW"] {
   font-family: 'Nunito', 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', sans-serif;
 }
@@ -134,9 +98,8 @@ button[aria-label]::before {
   font-family: 'Nunito', 'Noto Sans Arabic', 'SF Arabic', 'Geeza Pro', 'Segoe UI', 'Tahoma', sans-serif;
 }
 
-/* タイ / インド系スクリプトも Nunito に glyph が無いので OS 標準を指定。
-   未指定だと system-ui fallback 任せになり Linux 素 user で tofu のリスク。
-   順序は OS 標準優先 → Noto 保険 → sans-serif (CJK / Arabic と同方針)。 */
+/* タイ / インド系スクリプトも Nunito に glyph が無いので OS 標準を指定。未指定だと Linux 素 user で
+   tofu のリスク。 */
 [lang="th"] {
   font-family: 'Nunito', 'Thonburi', 'Sukhumvit Set', 'Leelawadee UI', 'Noto Sans Thai', sans-serif;
 }
@@ -153,29 +116,25 @@ button[aria-label]::before {
   font-family: 'Nunito', 'Kohinoor Tamil', 'Tamil Sangam MN', 'Nirmala UI', 'Latha', 'Noto Sans Tamil', sans-serif;
 }
 
-/* 手回しモードの星のまたたき */
 @keyframes twinkle {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
 }
 
-/* chronostasis (= 下層を一時静止する状態。lib/chronostasis/) 中は body.chronostasis が
-   付与され、CSS animation を一括 pause する。
+/* chronostasis 中 (lib/chronostasis/) は body.chronostasis が付与され CSS animation を一括 pause。
    tick 系 (setInterval / rAF) は lib/chronostasis/solid の useChronostasis() 観測で個別停止。 */
 body.chronostasis .star-twinkle {
   animation-play-state: paused;
 }
 
-/* View Transitions: ルート全体のcross-fadeは切り、名前付き要素だけを動かす */
+/* View Transitions: ルート全体の cross-fade は切り、名前付き要素だけを動かす */
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation: none;
 }
 
-/* ===== ClockLayout / SettingsPanel の transition 群を class 化 =====
-   inline style だと @media query で消せないので、prefers-reduced-motion 対応のために
-   class に切り出している。class 自体は常時適用され、デフォルトの transition を持つ。
-   reduce-motion 時のみ後段の body.motion-reduce ルールで transition: none に上書き。 */
+/* ClockLayout / SettingsPanel の transition 群を class 化。inline style だと @media query で消せず
+   prefers-reduced-motion 対応ができないため class に切り出して body.motion-reduce 側で上書きする。 */
 .clock-wrapper-transition {
   transition: transform 560ms cubic-bezier(.34, 1.56, .64, 1),
               opacity 380ms ease,
@@ -194,9 +153,9 @@ body.chronostasis .star-twinkle {
               transform 150ms ease,
               opacity 100ms ease;
 }
-/* selection dim (AM/PM どちら側が「いま」か) の opacity transition。
-   ClockLayout 側で ClockFace/HandsLayer を包む div、ScheduleLayer 内の各 EventIcon の <g> に付与。
-   親 wrapper に .selection-dim-instant が付いている時は子側も 0ms 即時切替に上書き
+/* selection dim (AM/PM どちら側が「いま」か) の opacity transition。ClockLayout 側で ClockFace /
+   HandsLayer を包む div、ScheduleLayer 内の各 EventIcon の <g> に付与。親 wrapper に
+   .selection-dim-instant が付いている時は子側も 0ms 即時切替に上書き
    (発動条件は ClockLayout 側を参照: AM/PM プレビュー押下中 / 自由回転 split で 12:00 跨ぎ時)。
    merge dim (かさね/わけ) は wrapper 自身の opacity transition が担うので、ここでは扱わない。 */
 .fade-on-dim {
@@ -206,10 +165,8 @@ body.chronostasis .star-twinkle {
   transition: opacity 0ms;
 }
 
-/* ===== prefers-reduced-motion: reduce 対応 (アクセシビリティ) =====
-   src/lib/motion-bootstrap.ts が body に motion-reduce class を付けた時のみ有効化。
-   そのコードを index.tsx で import している 1 行を消せばこのブロック全体が dormant になる
-   (= class が付かないので何も上書きしない)。 */
+/* prefers-reduced-motion: reduce 対応。src/lib/motion-bootstrap.ts が body に motion-reduce class
+   を付けた時のみ有効化 (= 該当 import を index.tsx から外せば dormant になる)。 */
 body.motion-reduce .clock-wrapper-transition,
 body.motion-reduce .clock-merged-container-transition,
 body.motion-reduce .settings-button-transition,
@@ -221,4 +178,3 @@ body.motion-reduce ::view-transition-old(*),
 body.motion-reduce ::view-transition-new(*) {
   animation: none;
 }
-

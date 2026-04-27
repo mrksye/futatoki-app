@@ -2,47 +2,29 @@ import { createSignal, createEffect, createRoot, on } from "solid-js";
 import { rotateActive } from "./state";
 
 /**
- * 手回し (てまわし / crank) 操作スタイル。
- * 自由回転モードの manual サブモードのドラッグ操作スタイル2種のうちの一つ。
- * 角度の累積で時刻を進める。CW (時計回り) に最大角まで進めた値だけ反映、
- * 戻りは無視するワンウェイ累積。
+ * 手回し (てまわし / crank) 操作スタイル。manual サブモードのドラッグ操作スタイル 2 種の一つで、
+ * CW に最大角まで進めた値だけ反映、戻りは無視するワンウェイ累積。drag style と相互排他で、外したい
+ * 場合は ClockLayout / SettingsPanel の crank 関連ブロックをコメントアウトすれば機能ごと外せる。
  *
- * Public API:
- *   - accessor: rotateStyle
- *   - action:   toggleRotateStyle
- *   - 操作:     CrankDragState, crankStart, crankAdvance
- *
- * 内部の生 setter (setStyleRaw) は意図的に export していない。
- * モジュール内でも生 setter を直接呼ばず、必ず action 経由で書き換えること。
- *
- * このモジュールは drag style と相互排他。drag のみで運用したくなったら、
- * このファイルを import している箇所 (ClockLayout / SettingsPanel) の
- * crank 関連ブロックをコメントアウトすれば機能ごと外せる。
+ * 内部の生 setter (setStyleRaw) は未 export。モジュール内でも action (toggleRotateStyle) 経由で書く。
  */
 
-/** 自由回転の操作スタイル: crank=角度CW限定 (てまわし), drag=距離ベース (ぐりぐり) */
+/** 自由回転の操作スタイル: crank=角度 CW 限定 (てまわし), drag=距離ベース (ぐりぐり)。 */
 export type RotateStyle = "crank" | "drag";
 
-// ===== Internal state =====
 const [rotateStyle, setStyleRaw] = createSignal<RotateStyle>("drag");
 
-// 自由回転モードに入るたびに drag に戻す。
-// (前回 crank に切り替えた状態が残っていると、再入時にユーザーが戸惑うため)
+// 自由回転モードに入るたびに drag に戻す (前回 crank の状態が残ると再入時にユーザーが戸惑う)。
 createRoot(() => {
   createEffect(on(rotateActive, (active) => {
     if (active) setStyleRaw("drag");
   }, { defer: true }));
 });
 
-// ===== Public accessor =====
 export { rotateStyle };
 
-// ===== Public actions =====
 export const toggleRotateStyle = () =>
   setStyleRaw(s => s === "crank" ? "drag" : "crank");
-
-// ===== ドラッグ操作の handler =====
-// (state を持つので type + 純関数の組で公開。ClockLayout が dragRef に保持して使う)
 
 export type CrankDragState = {
   pivotX: number;
@@ -72,11 +54,8 @@ export const crankStart = (
   };
 };
 
-/**
- * ポインタ移動時に呼ぶ。state を破壊的に更新し、
- * 「rotateMinutes に反映すべき新しい値」を返す。更新不要なら null。
- * (累積が現在最大角を超えた時のみ前進。CW one-way の挙動)
- */
+/** ポインタ移動時に呼ぶ。state を破壊的に更新し、rotateMinutes に反映すべき新しい値を返す
+ *  (更新不要なら null。累積が現在最大角を超えた時のみ前進する CW one-way の挙動)。 */
 export const crankAdvance = (
   e: PointerEvent,
   s: CrankDragState,

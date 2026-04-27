@@ -1,18 +1,9 @@
 /**
- * 反対方向の回転 (= 「針は右回りのみ」原則に反する操作) が試みられた時の
- * フィードバック notification 用 signal。
+ * 反対方向の回転 (「針は右回りのみ」原則に反する操作) が試みられた時の notification 用 signal。
+ * 現在の発火点は wheel.ts の上スクロール検出のみ (将来 reverse drag 等もここに集める)。
  *
- * 現在の発火点は wheel.ts の上スクロール検出のみ。将来 reverse drag や
- * 逆ジェスチャの検出を足す時もここに集める。
- *
- * 値は incrementing counter にしてある。boolean signal だと連続 trigger 時に
- * false→true の遷移が発生せず再発火できないため、counter で「変化したこと」
- * だけを通知する。受信側 = ClockLayout は createEffect で値の変化を見て
- * 針のシェイクアニメーションを発火する。
- *
- * Public API:
- *   - resistTrigger    (read-only signal)
- *   - notifyResistance (action)
+ * incrementing counter で実装している (boolean だと連続 trigger 時に false→true 遷移が起きず
+ * 再発火できないため)。受信側 (ClockLayout) は値の変化を createEffect で観測してシェイクを発火する。
  */
 import { createSignal } from "solid-js";
 

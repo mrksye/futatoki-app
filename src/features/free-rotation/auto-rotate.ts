@@ -3,23 +3,13 @@ import { rotateActive, rotateMinutes, rotateMode, seekRotate } from "./state";
 import { useChronostasis } from "../../lib/chronostasis/solid";
 
 /**
- * 自動回転 (じどうかいてん): 1日 ≒ 24 秒で時刻を進める。
- * requestAnimationFrame で毎フレーム少しずつ rotateMinutes を進める。
- *
- * Public API:
- *   - hook: useAutoRotateTick (コンポーネント内で1回呼ぶ)
- *
- * lifecycle が必要なため hook 形式で公開。createEffect / onCleanup を持つので
- * 呼び出し側は reactive owner (= component setup) の中で呼ぶこと。
+ * 自動回転 (じどうかいてん): 1 日 ≒ 24 秒で時刻を進める。requestAnimationFrame で毎フレーム少しずつ
+ * rotateMinutes を進める。chronostasis 中は止まる。
  */
 
 const MIN_PER_MS = 1440 / 24000;
 
-/**
- * 自由回転モード & mode==="auto" の間だけ requestAnimationFrame で
- * rotateMinutes を進める。コンポーネント内で1回呼ぶだけで、
- * ON/OFF 切り替えと cleanup は自動で処理される。
- */
+/** 自由回転 + mode=auto の間だけ rAF で rotateMinutes を進める。ON/OFF 切替と cleanup は createEffect が処理。 */
 export const useAutoRotateTick = () => {
   const inChronostasis = useChronostasis();
   createEffect(

@@ -8,14 +8,11 @@ import {
 import { animateMotion } from "../lib/motion";
 
 /**
- * 12h ⇄ 24h トグル時の preroll エフェクトのうち、12 を震源にした衝撃波リング担当。
+ * 12h ⇄ 24h トグル時の preroll: 12 を震源にした衝撃波リング担当。
+ * 12 自体の色変化 (ドゥンドゥドゥンッ) は ClockFace 側で <text> の fill を直接アニメしているので、
+ * ここは 2 度のネオン点灯が終わった直後にふわっと外へ抜ける「パァッ」リングだけを描く。
  *
- * 12 自体の色変化 (ドゥンドゥドゥンッ) は ClockFace 側で position 0 の <text> の fill を
- * 直接アニメしている。本 component は 2 度のネオン点灯が終わった直後に外へふわっと
- * 抜ける「ドンッ」リングだけを描く (12 周りの常時 halo は撤廃して情報量を減らした).
- *
- * fill / blur / drop-shadow / filter 系は一切使わない (重い). 高彩度の stroke と
- * opacity だけで衝撃波を表現する。
+ * fill / blur / drop-shadow / filter 系は重いので不使用、stroke + opacity だけで衝撃波を表現する。
  */
 
 interface Props {
@@ -31,8 +28,7 @@ const TimeFormatPrerollFx: Component<Props> = (props) => {
     if (!ringRef) return;
     ringRef.getAnimations().forEach((a) => a.cancel());
 
-    // 2 度のネオン点灯が完全に終わった瞬間 (delay = PULSE_MS * 2) に
-    // 外へふわっと抜ける衝撃波.
+    // ネオン点灯 2 周が完全に終わった瞬間 (delay = PULSE_MS * 2) に外へふわっと抜ける衝撃波。
     animateMotion(
       ringRef,
       [
@@ -54,7 +50,6 @@ const TimeFormatPrerollFx: Component<Props> = (props) => {
       style={{ "pointer-events": "none" }}
       transform={`translate(${props.centerX}, ${props.centerY})`}
     >
-      {/* shockwave: 点灯後にふわっと外へ抜ける残響リング. */}
       <circle
         ref={ringRef}
         cx="0"

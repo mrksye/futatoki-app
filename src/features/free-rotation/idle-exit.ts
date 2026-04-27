@@ -3,24 +3,13 @@ import { exitRotate, rotateActive, rotateMode } from "./state";
 import { pickerOpen } from "../schedule/picker";
 
 /**
- * じゆうかいてん manual モードに入った後、IDLE_EXIT_MS ユーザー操作が
- * 無ければ exitRotate() で通常モードに戻す。
+ * 自由回転 manual モードに入った後、IDLE_EXIT_MS ユーザー操作が無ければ exitRotate() で通常モードに戻す。
  *
- * Public API:
- *   - hook: useIdleExitTimer (ClockLayout 内で1回呼ぶ)
- *
- * 戻すのは「manual モード + 何もしてない」時のみ。以下では timer を停止して
- * 戻さない:
- *   - rotateActive === false (通常モード) → そもそも対象外
- *   - rotateMode === "auto" (じどうかいてん) → 動き続けてほしいので戻さない
- *   - pickerOpen === true (予定 picker 開いている) → 操作中扱いで戻さない
- *
- * 「操作」の検出は document の discrete + continuous な input event を広めに
- * watch する。pointermove / touchmove も含めるので、drag 中や mouse hover
- * 中に誤って idle 判定されることは無い。
+ * 戻さないケース: rotateActive=false (対象外) / rotateMode=auto (動き続けるべき) / pickerOpen=true
+ * (操作中扱い)。「操作」は pointermove / touchmove も含めて広めに watch するので drag や hover 中の
+ * 誤検知は無い。
  */
 
-/** 何 ms 無操作で通常モードに戻すか */
 const IDLE_EXIT_MS = 60_000;
 
 /** 操作と見做す DOM event 一覧。capture phase で document に listen する。 */
@@ -49,8 +38,7 @@ export const useIdleExitTimer = () => {
   const armTimer = () => {
     clearTimer();
     timerId = setTimeout(() => {
-      // fire 時に再 check (60 秒の間に状態が変わっている可能性がある)。
-      // shouldRun と同じ条件で gate。
+      // fire 時に再 check (60 秒の間に状態が変わっている可能性があるので shouldRun と同じ条件で gate)。
       if (rotateActive() && rotateMode() === "manual" && !pickerOpen()) {
         exitRotate();
       }
@@ -64,8 +52,7 @@ export const useIdleExitTimer = () => {
     if (shouldRun()) armTimer();
   };
 
-  // 状態変化 (rotate モード切替 / picker 開閉) を見て自動 arm/clear。
-  // mode=auto に切り替わった時 / picker 開いた時に timer が止まる。
+  // 状態変化 (mode 切替 / picker 開閉) を見て自動 arm/clear。
   createEffect(() => {
     if (shouldRun()) {
       armTimer();

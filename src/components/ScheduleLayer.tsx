@@ -12,37 +12,25 @@ import { detailMode } from "../features/settings/detail-mode";
 import { animateMotion } from "../lib/motion";
 
 /**
- * 時計の上に予定アイコンを描画するレイヤー。
+ * 時計の上に予定アイコンを描画するレイヤー。ClockFace を包む div の中に絶対配置で重ねる
+ * (ClockFace SVG とは独立 SVG)。同じ viewBox (340x340) を使うので座標系が一致する。
  *
- * AnalogClock とは独立した SVG として、ClockFace を包む div の中に絶対配置で重ねる。
- * (「分離できるものは常に分離する」原則: ClockFace の SVG には統合しない)
- *
- * 同じ viewBox (340x340) を使うので、ClockFace の盤面と座標系が完全に一致する。
- *
- * Props:
- *   - period:  "am" / "pm"  描画対象のイベントを時刻でフィルタ
- *   - opacity: レイヤー全体の不透明度 (β レンダリングで後ろレイヤーを薄くする時に使う)
- *
- * インタラクション:
- *   - 各アイコン: 短押しで poyon (ぴょん) アニメ、長押し 500ms で warning 状態に
- *   - warning 中: そのアイコンが wobble (ホワホワ)、右上に 🗑️ 吹き出し出現
- *   - 🗑️ タップ: 回転＋縮小＋フェードで削除アニメ後にデータ削除
- *   - キャンセル: warning 中の SVG 内空タップ、または 3 秒経過
+ * インタラクション: 短押しで poyon、長押し 500ms で warning (右上に ✕ ボタン)、✕ タップで削除
+ * アニメ後にデータ削除。warning は外タップ or 3 秒経過でキャンセル。
  */
 
 interface ScheduleLayerProps {
   period: "am" | "pm";
   /** レイヤー全体のスケール (1 で等倍)。merged β 表示の後ろレイヤーで奥行きを出す用。 */
   scale?: number;
-  /** レイヤー全体に直接かける opacity (= wrapper div の opacity)。
-   *  merged β 表示の後ろレイヤーを薄くする等の用途。指定時は event-level の dimmed より優先。 */
+  /** レイヤー全体に直接かける opacity。merged β の後ろレイヤーを薄くする等で使う。 */
   opacity?: number;
-  /** 親側が薄い側 (= 反対 period のプレビュー中、merged β の後ろレイヤー等) ならば true。
-   *  window 外の event は dimOpacity に薄く、window 内の event は dim 無視で 1.0 に保つ。 */
+  /** 親側が薄い側 (反対 period のプレビュー中, merged β 後ろレイヤー等) なら true。
+   *  window 外の event は dimOpacity に薄く、window 内は dim 無視で 1.0 に保つ。 */
   dimmed?: boolean;
-  /** dimmed=true 時の event 薄さ (default 0.25)。merged β 後ろは 0.15 等で奥行きを強める。 */
+  /** dimmed=true 時の event 薄さ (default 0.25)。merged β 後ろは 0.15 等で奥行き強調。 */
   dimOpacity?: number;
-  /** 現在表示中の時刻 (0..1439 の整数、分単位)。一致するイベントは continuous でポヨンポヨンする */
+  /** 現在表示中の時刻 (0..1439 整数, 分単位)。一致するイベントは continuous でポヨポヨする。 */
   displayedMinutes: number;
 }
 
@@ -53,22 +41,21 @@ const ICON_RADIUS_KUWASHIKU = 84;
 const ICON_RADIUS_SUKKIRI = 94;
 const ICON_SIZE_KUWASHIKU = 18;
 const ICON_SIZE_SUKKIRI = 24;
-/** font-size に対する白背景円の半径比 (em-box 外接円 √2/2 ≈ 0.707 より少し小さく抑える) */
+/** font-size に対する白背景円の半径比 (em-box 外接円 √2/2 ≈ 0.707 より少し小さく抑える)。 */
 const ICON_BG_RADIUS_RATIO = 0.70;
 
 /** 矢印三角形 (白)。底辺の両端が白円周上にぴったり乗るよう sqrt(bgR² - baseHalf²) で算出。 */
 const TRI_BASE_HALF = 1.5;
 const TRI_HEIGHT = 2.5;
 
-/** インタラクション関連 */
 const LONG_PRESS_MS = 500;
-/** タップ判定領域: 視認可能な白円の外側に追加するバッファ (viewBox 単位)。
-   子どもの指でも押しやすくするため、透明の円で touch 範囲を拡げる。 */
+/** タップ判定の追加バッファ (viewBox 単位)。子どもの指でも当てやすくするための透明拡張領域。 */
 const ICON_TOUCH_BUFFER = 16;
-/** ✕ボタンのタップ判定半径 (viewBox 単位)。視認可能な赤円 (TRASH_RADIUS=7) より大きめ。 */
-const TRASH_TOUCH_RADIUS = 26;
+/** ✕ボタンのタップ判定半径。視認可能な赤円 (DELETE_BUTTON_RADIUS=7) より大きめに取る。 */
+const DELETE_BUTTON_TOUCH_RADIUS = 26;
 
-/** ポヨン3 (3 段の高速バウンス): クリック時 + マッチ window 入り口の one-shot で共通 */
+
+/** ポヨン3 (3 段の高速バウンス)。タップ + マッチ window 入り口の one-shot で共通使用。 */
 const POYON3_DURATION_MS = 400;
 const POYON3_KEYFRAMES: Keyframe[] = [
   { transform: "scale(1)",    offset: 0 },
@@ -80,31 +67,22 @@ const POYON3_KEYFRAMES: Keyframe[] = [
   { transform: "scale(1)",    offset: 1 },     // 着地
 ];
 
-/**
- * マッチ中の continuous loop の 1 周期 (1500ms)。
- * 0..42% に「躍動感ある」バウンス (大きめ first + わずかな rotation で揺れる感)、
- * 42..100% は scale 1 で rest。iterations: Infinity で延々繰り返す。
- */
+/** マッチ中の continuous loop。0..42% にバウンス + わずかな rotation で躍動感、42..100% は scale 1 で rest。 */
 const MATCH_LOOP_DURATION_MS = 1500;
 const MATCH_LOOP_KEYFRAMES: Keyframe[] = [
   { transform: "scale(1) rotate(0deg)",     offset: 0 },
-  { transform: "scale(1.28) rotate(-3deg)", offset: 0.05 },  // 大きく速く up + 左に傾く
-  { transform: "scale(0.85) rotate(3deg)",  offset: 0.12 },  // squash + 右に傾く
-  { transform: "scale(0.88) rotate(2deg)",  offset: 0.18 },  // 一瞬の溜め
-  { transform: "scale(1.18) rotate(-2deg)", offset: 0.28 },  // 2 段目
+  { transform: "scale(1.28) rotate(-3deg)", offset: 0.05 },
+  { transform: "scale(0.85) rotate(3deg)",  offset: 0.12 },
+  { transform: "scale(0.88) rotate(2deg)",  offset: 0.18 },
+  { transform: "scale(1.18) rotate(-2deg)", offset: 0.28 },
   { transform: "scale(0.94) rotate(0deg)",  offset: 0.36 },
-  { transform: "scale(1) rotate(0deg)",     offset: 0.42 },  // 着地
-  { transform: "scale(1) rotate(0deg)",     offset: 1 },     // rest
+  { transform: "scale(1) rotate(0deg)",     offset: 0.42 },
+  { transform: "scale(1) rotate(0deg)",     offset: 1 },
 ];
 
-/** くるくる〜パッ: 0..65% は等速で 720° 回転 (見せ場)、65..100% で +360° 回転しながら縮小+フェード */
+/** くるくる〜パッ (削除アニメ)。0..65% は等速で 720° 回転、65..100% で +360° しながら scale/opacity を 0 へ。 */
 const POOF_DURATION_MS = 900;
 
-/**
- * マッチ判定の窓: event 分の 2 分前から event 分まで (= 計 3 分間 isMatched=true)。
- * 自動回転 (60 分/秒) では 3 分 = 50ms しか窓が開かないので、入った瞬間に
- * 別途 one-shot ポヨン3 をトリガーして可視性を担保する (continuous loop だけだと描画が間に合わない)。
- */
 /** displayed - eventM の差を [-720, 720] に正規化 (0/1440 跨ぎ対応)。 */
 const wrapMinuteDiff = (diff: number): number => {
   while (diff > 720) diff -= 1440;
@@ -112,10 +90,7 @@ const wrapMinuteDiff = (diff: number): number => {
   return diff;
 };
 
-/** ポヨポヨアニメ用 window (= EventIcon の isMatched 判定)。
- *  通常 2 分前から、ただし天頂位置 (AM 0:00 / PM 12:00) のみ 5 分前から (AM/PM 境目を強調)。
- *  撤去 (天頂特例だけ): MATCH_WINDOW_MINUTES_BEFORE_NOON の三項演算子を消して
- *  before を MATCH_WINDOW_MINUTES_BEFORE 固定に戻すだけ。 */
+/** ポヨポヨアニメ用 window。通常 2 分前から、天頂位置 (AM 0:00 / PM 12:00) のみ 5 分前から (AM/PM 境目を強調)。 */
 const MATCH_WINDOW_MINUTES_BEFORE = 2;
 const MATCH_WINDOW_MINUTES_BEFORE_NOON = 5;
 const isWithinMatchWindow = (displayed: number, eventM: number): boolean => {
@@ -126,34 +101,28 @@ const isWithinMatchWindow = (displayed: number, eventM: number): boolean => {
   return diff >= -before && diff <= 0;
 };
 
-/** 「dim 側でもハッキリ見せる」用 window (= eventOpacity の判定)。
- *  ポヨポヨ window と分離してあるのは、目的が違うため:
- *    - ポヨポヨ = 発生直前の "アニメで気を引く" → 短く狭い (数分)
- *    - 見える   = "もうすぐ来る" の予告 → ポヨポヨより広く取れる */
+/** 「dim 側でもハッキリ見せる」用 window。ポヨポヨ window と分離してあるのは目的が違うため
+ *  (ポヨポヨ = アニメで気を引く / 見える = もうすぐ来る予告)。 */
 const VISIBILITY_WINDOW_MINUTES_BEFORE = 2;
 const isWithinVisibilityWindow = (displayed: number, eventM: number): boolean => {
   const diff = wrapMinuteDiff(displayed - eventM);
   return diff >= -VISIBILITY_WINDOW_MINUTES_BEFORE && diff <= 0;
 };
 
-/** お昼予定 (12:00〜12:59) の特例ルール: 絶対時刻ベースで visible/dim を判定する。
- *  通常 event は active 側 / dim 側 の二値で opacity が決まるが、お昼予定だけは時計画面の
- *  絶対時刻で「お昼の準備期間 / お昼 / 余韻」(= 06:01〜17:59) の間は常に opacity 1、それ以外
- *  (= 18:00〜翌朝 06:00) は dimOpacity に上書きする。
- *  → "まだ遠い"・"もう過ぎた" 予定を active 側でも特例で薄く見せられる。
- *  撤去するなら eventOpacity 内の `isLunchEvent` 分岐 3 行を消すだけで通常ロジックに戻る。 */
-const LUNCH_EVENT_MINUTES_START = 720;  // 12:00
-const LUNCH_EVENT_MINUTES_END = 779;    // 12:59
-const LUNCH_VISIBLE_HOURS_START = 361;  // 06:01
-const LUNCH_VISIBLE_HOURS_END = 1079;   // 17:59
+/** お昼予定 (12:00〜12:59) の特例。絶対時刻で「お昼の準備〜余韻」(06:01〜17:59) のみ opacity 1、
+ *  それ以外は dimOpacity に上書き (active 側でも特例で薄くなる)。撤去なら eventOpacity 内の
+ *  isLunchEvent 分岐 3 行を消すだけで通常ロジックに戻る。 */
+const LUNCH_EVENT_MINUTES_START = 720;
+const LUNCH_EVENT_MINUTES_END = 779;
+const LUNCH_VISIBLE_HOURS_START = 361;
+const LUNCH_VISIBLE_HOURS_END = 1079;
 const isLunchEvent = (eventM: number): boolean =>
   eventM >= LUNCH_EVENT_MINUTES_START && eventM <= LUNCH_EVENT_MINUTES_END;
 const isInLunchVisibleHours = (displayed: number): boolean =>
   displayed >= LUNCH_VISIBLE_HOURS_START && displayed <= LUNCH_VISIBLE_HOURS_END;
 
-/** 削除ボタン (✕ 印の赤い丸吹き出し) */
-const TRASH_OFFSET = 10;
-const TRASH_RADIUS = 7;
+const DELETE_BUTTON_OFFSET = 10;
+const DELETE_BUTTON_RADIUS = 7;
 
 const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
   const isKuwashiku = () => detailMode() === "kuwashiku";
@@ -212,7 +181,7 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
     return `${leftX},${leftY} ${rightX},${rightY} ${apexX},${apexY}`;
   };
 
-  /** warning/deleting 中のイベントがこのレイヤーに属するか (= ゴミ箱を出すか) */
+  /** warning/deleting 中のイベントがこのレイヤーに属するか (= ✕ボタンを出すか)。 */
   const activeInThisLayer = createMemo(() => {
     const i = interaction();
     if (i.type === "none") return null;
@@ -223,20 +192,19 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
     return null;
   });
 
-  const trashPos = createMemo(() => {
+  const deleteButtonPos = createMemo(() => {
     const a = activeInThisLayer();
     if (!a || a.type !== "warning") return null;
     const iconPos = positionOf(a.minutes);
-    return { x: iconPos.x + TRASH_OFFSET, y: iconPos.y - TRASH_OFFSET };
+    return { x: iconPos.x + DELETE_BUTTON_OFFSET, y: iconPos.y - DELETE_BUTTON_OFFSET };
   });
 
-  // event ごとの opacity 決定。引数の visibleInDim は "dim 側でもハッキリ見せたいか" の判定結果
-  // (= isWithinVisibilityWindow)。ポヨポヨ window とは別概念で広めに取られている。
+  // event ごとの opacity 優先順:
   //   お昼予定特例       → 絶対時刻 06:01〜17:59 のみ 1、それ以外は dimOpacity (active 側も上書き)
   //   dimmed && !visible → dimOpacity (薄い側で予告外の予定)
-  //   dimmed && visible  → 1.0 (薄い側でも "もうすぐ起きる予定" はハッキリ見せる)
-  //   !dimmed            → 1.0 (アクティブ側は全 event 通常表示)
-  // merged 表示中は親 wrapper の opacity=0 で全体が隠れるので、event 単位で隠す必要は無い。
+  //   dimmed && visible  → 1.0 (薄い側でも "もうすぐ起きる予定" はハッキリ)
+  //   !dimmed            → 1.0
+  // merged 表示中は親 wrapper opacity=0 で全体が隠れるので event 単位で隠す必要は無い。
   const eventOpacity = (visibleInDim: boolean, eventM: number): number => {
     if (isLunchEvent(eventM)) {
       return isInLunchVisibleHours(props.displayedMinutes) ? 1 : (props.dimOpacity ?? 0.25);
@@ -275,11 +243,9 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
           )}
         </For>
 
-        {/* warning 中: SVG 全面の透明 rect で外タップを拾ってキャンセル。
-            アイコンより後の document order で上に乗せる (= 下のアイコンへの pointer は届かない)。
-            warning event がこのレイヤーに属する場合のみ描画する。両レイヤーで描画してしまうと、
-            merged モードで重なった「dim 側」の予定の ✕ ボタンが、上のレイヤーの cancel rect に
-            覆われて押せなくなる (= dim 側の予定が削除できない)。 */}
+        {/* warning 中: SVG 全面の透明 rect で外タップを拾ってキャンセル。warning event がこの
+            レイヤーに属する時のみ描画 (両レイヤーで描画すると merged β の dim 側予定の ✕ が
+            上のレイヤーの cancel rect に覆われて押せなくなる)。 */}
         <Show when={activeInThisLayer()?.type === "warning"}>
           <rect
             x={0} y={0} width={VIEW} height={VIEW}
@@ -292,8 +258,8 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
           />
         </Show>
 
-        {/* ゴミ箱吹き出し (warning event がこのレイヤーに属する時のみ、cancel rect の上に配置) */}
-        <Show when={trashPos()}>
+        {/* ✕ボタン (warning event がこのレイヤーに属する時のみ、cancel rect の上に配置) */}
+        <Show when={deleteButtonPos()}>
           {(pos) => (
             <g
               style={{ "pointer-events": "all", cursor: "pointer" }}
@@ -303,31 +269,31 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
                 if (a && a.type === "warning") triggerDelete(a.minutes);
               }}
             >
-              {/* 透明のタップ判定円: 視認できる赤円より大きい。EventIcon と同じ理由 */}
+              {/* 視認できる赤円より大きい透明判定円 (子どもの指で当てやすく) */}
               <circle
                 cx={pos().x}
                 cy={pos().y}
-                r={TRASH_TOUCH_RADIUS}
+                r={DELETE_BUTTON_TOUCH_RADIUS}
                 fill="transparent"
                 style={{ "pointer-events": "all" }}
               />
-              <circle cx={pos().x} cy={pos().y} r={TRASH_RADIUS + 1} fill="#C01030" />
-              <circle cx={pos().x} cy={pos().y} r={TRASH_RADIUS} fill="#FF4060" />
-              {/* ✕ 印は line ペアで描く (text の "✕" よりクロス角度がきれい) */}
+              <circle cx={pos().x} cy={pos().y} r={DELETE_BUTTON_RADIUS + 1} fill="#C01030" />
+              <circle cx={pos().x} cy={pos().y} r={DELETE_BUTTON_RADIUS} fill="#FF4060" />
+              {/* ✕ は line ペアで描く (text "✕" よりクロス角度がきれい) */}
               <line
-                x1={pos().x - TRASH_RADIUS * 0.45}
-                y1={pos().y - TRASH_RADIUS * 0.45}
-                x2={pos().x + TRASH_RADIUS * 0.45}
-                y2={pos().y + TRASH_RADIUS * 0.45}
+                x1={pos().x - DELETE_BUTTON_RADIUS * 0.45}
+                y1={pos().y - DELETE_BUTTON_RADIUS * 0.45}
+                x2={pos().x + DELETE_BUTTON_RADIUS * 0.45}
+                y2={pos().y + DELETE_BUTTON_RADIUS * 0.45}
                 stroke="#222222"
                 stroke-width="2"
                 stroke-linecap="round"
               />
               <line
-                x1={pos().x - TRASH_RADIUS * 0.45}
-                y1={pos().y + TRASH_RADIUS * 0.45}
-                x2={pos().x + TRASH_RADIUS * 0.45}
-                y2={pos().y - TRASH_RADIUS * 0.45}
+                x1={pos().x - DELETE_BUTTON_RADIUS * 0.45}
+                y1={pos().y + DELETE_BUTTON_RADIUS * 0.45}
+                x2={pos().x + DELETE_BUTTON_RADIUS * 0.45}
+                y2={pos().y - DELETE_BUTTON_RADIUS * 0.45}
                 stroke="#222222"
                 stroke-width="2"
                 stroke-linecap="round"
@@ -340,21 +306,16 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
   );
 };
 
-/* ============================================================================
- * EventIcon: 1 イベント = 1 サブコンポーネント。
- * ポインタイベント (短押し/長押し) と Web Animations API でのアニメーションを担う。
- * ============================================================================ */
-
 interface EventIconProps {
   event: ScheduleEvent;
   pos: { x: number; y: number };
   triPoints: string;
   iconBgRadius: number;
   iconFontSize: number;
-  /** 現在の displayed time がこのイベント時刻と一致しているか (連続ポヨンポヨン用) */
+  /** 現在の displayed time がこのイベント時刻と一致しているか (連続ポヨポヨ用)。 */
   isMatched: boolean;
   /** ScheduleLayer が決めたこの event 単体の表示 opacity (0..1)。
-   *  .fade-on-dim class で 380ms transition される (親 .selection-dim-instant 中は 0ms)。 */
+   *  .fade-on-dim class で 380ms transition (親 .selection-dim-instant 中は 0ms)。 */
   opacity: number;
 }
 
@@ -376,7 +337,7 @@ const EventIcon: Component<EventIconProps> = (props) => {
     return i.type === "deleting" && i.minutes === props.event.minutes;
   });
 
-  // ホワホワ (wobble): warning 中は ±4° の往復アニメを継続
+  // ホワホワ (wobble): warning 中は ±4° の往復アニメを継続。
   createEffect(() => {
     if (!groupRef) return;
     if (isWarning()) {
@@ -397,9 +358,7 @@ const EventIcon: Component<EventIconProps> = (props) => {
     }
   });
 
-  // くるくる〜パッ (poof): deleting 開始で 1 回だけ走らせる
-  // 0..65%: 等速で 720° 回転 (2周分の見せ場、scale/opacity 変化なし)
-  // 65..100%: +360° (合計 1080°) しながら scale 1→0 + opacity 1→0
+  // くるくる〜パッ: deleting 開始で 1 回だけ。0..65% は 720° 回転だけ、65..100% で +360° しつつ scale/opacity を 0 へ。
   createEffect(on(isDeleting, (deleting) => {
     if (!groupRef || !deleting) return;
     animateMotion(
@@ -413,8 +372,6 @@ const EventIcon: Component<EventIconProps> = (props) => {
     );
   }));
 
-  // ポヨン3 (高速 3 段バウンス): タップ時の即時フィードバック。
-  // マッチ window 入り口でも同じ keyframes を one-shot で投入する (下の effect 参照)。
   const triggerPoyon3 = () => {
     if (!groupRef) return;
     animateMotion(groupRef, POYON3_KEYFRAMES, {
@@ -423,15 +380,10 @@ const EventIcon: Component<EventIconProps> = (props) => {
     });
   };
 
-  // マッチ window 入った瞬間に one-shot ポヨン3 を投入。
-  // 自動回転で window が 50ms しか開かなくても、このアニメは自分の duration (400ms) を完走する。
-  // 後の continuous loop が (composite "replace" で) 一瞬上書きするが、
-  // window 抜けて continuous が cancel されると one-shot の transform が再び見えるので可視。
-  // 注: この effect を continuous loop effect より「先に定義」しておくこと。
-  //     後発 (continuous) の方が WAAPI composite で勝ち、stopped 状態で continuous の方が見える。
-  // defer なし: mount 直後に既に isMatched=true の場合 (= window 内で表示開始) も
-  // ポヨン3 を発火させたいため。matched=false で start しても matched 内の早期 return で
-  // 何も起きないので副作用は無い。
+  // マッチ window 入った瞬間に one-shot ポヨン3 を投入。自動回転で window が 50ms しか開かなくても
+  // 自身の duration (400ms) を完走する。下の continuous loop effect より「先に」定義しないと、
+  // 後発の continuous が WAAPI composite で勝って one-shot が見えなくなる。
+  // defer なし: mount 時 isMatched=true (window 内で表示開始) でも発火させたい。
   createEffect(on(
     () => props.isMatched,
     (matched) => {
@@ -441,8 +393,7 @@ const EventIcon: Component<EventIconProps> = (props) => {
     },
   ));
 
-  // マッチ中の continuous: 1 周期 = 躍動感バウンス (前半 42%) + rest (後半 58%)。延々ループ。
-  // warning/deleting 中は走らせない (他のアニメと干渉するため)。
+  // マッチ中 continuous: 1 周期 = バウンス前半 42% + rest 後半 58%。warning/deleting 中は他アニメと干渉するので止める。
   createEffect(() => {
     if (!groupRef) return;
     if (isWarning() || isDeleting()) {
@@ -466,7 +417,7 @@ const EventIcon: Component<EventIconProps> = (props) => {
 
   const onPointerDown = (e: PointerEvent) => {
     e.stopPropagation();
-    // 別イベントが warning/deleting 中は新規操作を受け付けない
+    // 別イベントが warning/deleting 中は新規操作を受け付けない。
     if (interaction().type !== "none") return;
     longPressed = false;
     pressTimer = setTimeout(() => {
@@ -481,7 +432,7 @@ const EventIcon: Component<EventIconProps> = (props) => {
       clearTimeout(pressTimer);
       pressTimer = undefined;
     }
-    // 長押しが先に発火していたら何もしない (既に warning に入った)
+    // 長押し発火済みなら何もしない (既に warning へ移行済み)。
     if (!longPressed && interaction().type === "none") {
       triggerPoyon3();
     }
@@ -506,7 +457,7 @@ const EventIcon: Component<EventIconProps> = (props) => {
         ref={groupRef}
         class="fade-on-dim"
         style={{
-          // bbox 中心を transform 原点にすることで、回転/拡縮がアイコン中心まわりで起きる
+          // bbox 中心を transform 原点に → 回転/拡縮がアイコン中心まわりで起きる。
           "transform-box": "fill-box",
           "transform-origin": "center",
           "pointer-events": "auto",
@@ -517,9 +468,8 @@ const EventIcon: Component<EventIconProps> = (props) => {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerCancel}
       >
-        {/* 透明のタップ判定円: 視認できる白円より大きく、子どもの指でも当てやすくする。
-            最初に置くことで pointer event は受けるが、視覚的には後から重なる白円/絵文字/三角の下になる。
-            pointer-events: all で透明領域でもヒットする (デフォルト visiblePainted は alpha 0 でヒットしない) */}
+        {/* 視認できる白円より大きい透明判定円。pointer-events: all で透明領域でもヒット
+            (default visiblePainted は alpha 0 でヒットしない)。 */}
         <circle
           cx={props.pos.x}
           cy={props.pos.y}

@@ -4,17 +4,9 @@ import { motionAllowed } from "../lib/motion";
 /**
  * AM/PM バッジの長押しプレビュー: バッジを押している間だけ反対側 (AM↔PM) を表示する。
  *
- * Public API:
- *   - hook: useAmPmPreviewHold (actualIsAm accessor を渡し、{ isAm, startHold, clearHold } を受け取る)
- *
- * 離す時だけ RELEASE_DELAY_MS の余韻を残してから flip 解除する。
- * 押下 → 即時 flip、離す → ちょっぴり残ってから 380ms フェードで通常表示に戻る、という directional な timing。
- * motion-reduce 時は余韻もスキップして即時解除。
- *
- * onCleanup を持つので呼び出し側は reactive owner (= component setup) の中で呼ぶこと。
- *
- * "押している間だけ flip" の状態 (flipped) は外に出さない。
- * 表示用の isAm だけ accessor として公開する。
+ * 押下 → 即時 flip、離す → RELEASE_DELAY_MS の余韻 → 380ms フェードで通常表示に戻る、の
+ * directional な timing。motion-reduce 時は余韻もスキップして即時解除。
+ * "押している間だけ flip" の状態 (flipped) は外に出さず、表示用の isAm だけ公開する。
  */
 
 /** 離した後に flip を保持する余韻 (ms)。離した瞬間にすぐ戻り始めずワンテンポ置く演出用。 */

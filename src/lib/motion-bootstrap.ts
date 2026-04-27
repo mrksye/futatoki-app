@@ -1,14 +1,10 @@
 /**
- * prefers-reduced-motion (OS 設定の「視差効果を減らす」等) を listen して
- * motion.ts の skip predicate と body の motion-reduce class を切り替える起動コード。
+ * prefers-reduced-motion を listen して motion.ts の skip predicate と body.motion-reduce class を
+ * 切り替える起動コード。src/index.tsx で `import "./lib/motion-bootstrap"` すれば ON、その 1 行を
+ * 消せば全部 dormant (predicate デフォルトで素通し、body class も付かないので CSS rule も効かない)。
  *
- * src/index.tsx で `import "./lib/motion-bootstrap"` するとアクセシビリティ機能 ON。
- * その import 1 行を消せば全部 dormant:
- *   - skip predicate がデフォルト (常に false) のままなので JS アニメは素通し
- *   - body.motion-reduce class が付かないので CSS の reduce-motion ルールも効かない
- *
- * ユーザー識別情報は読み取らない (matchMedia の `(prefers-reduced-motion: reduce)` は
- * OS のアクセシビリティ設定であり、フィンガープリンティング素材ではない)。
+ * ユーザー識別情報は読まない (matchMedia の `(prefers-reduced-motion: reduce)` は OS の
+ * アクセシビリティ設定であり、フィンガープリンティング素材ではない)。
  */
 
 import { setAnimationSkipPredicate } from "./motion";

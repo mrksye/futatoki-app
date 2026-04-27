@@ -1,25 +1,19 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
 import "./index.css";
-// アクセシビリティ: prefers-reduced-motion を尊重して装飾アニメを抑制する。
-// この 1 行を消せば全機能 dormant (素通し)、コードベースから完全に外したい場合は
-// src/lib/motion.ts と motion-bootstrap.ts を消し、components の animateMotion 呼び出しを
-// el.animate に戻し、index.css の body.motion-reduce ブロックを消せば良い。
+// prefers-reduced-motion 対応: この行を消せば全機能 dormant。完全削除する場合は src/lib/motion.ts と
+// motion-bootstrap.ts を消し、animateMotion 呼び出しを el.animate に戻し、index.css の
+// body.motion-reduce ブロックを消す。
 import "./lib/motion-bootstrap";
 import App from "./App";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Root element not found");
 
-// iOS Safari の長押し callout / 文字選択を JS 側でも封殺。CSS (user-select: none,
-// -webkit-touch-callout: none) だけだと iOS で取り切れないケースがあるため、
-// - contextmenu: デスクトップ右クリック + iOS 長押し menu
-// - selectstart: 選択開始イベント
-// の両方を preventDefault し、さらに selectionchange で発生済みの選択を
-// 即 clear する。
-// 注: iPhone では以下の対策をすべて入れても「コピー/検索/翻訳」の callout
-// menu は残る(既知課題)。詳細と残された選択肢は src/index.css の
-// button[aria-label]::before のコメントを参照。
+// iOS Safari の長押し callout / 文字選択を JS でも封殺。CSS だけでは取り切れないケースに備え、
+// contextmenu / selectstart を preventDefault + selectionchange で発生済み選択を即 clear する。
+// それでも iPhone では「コピー/検索/翻訳」の callout は残る (詳細は index.css の
+// button[aria-label]::before コメント参照)。
 document.addEventListener("contextmenu", (e) => e.preventDefault());
 document.addEventListener("selectstart", (e) => e.preventDefault());
 document.addEventListener("selectionchange", () => {
@@ -27,8 +21,7 @@ document.addEventListener("selectionchange", () => {
   if (sel && !sel.isCollapsed) sel.removeAllRanges();
 });
 
-// PWA: 新SWが有効化されたらリロードして新アセットを取り込む。
-// 初回インストール（起動時に controller が居ない）の場合はスキップ。
+// PWA: 新 SW が有効化されたらリロード。初回インストール (起動時 controller 不在) はスキップ。
 if ("serviceWorker" in navigator) {
   const hadControllerAtStart = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
