@@ -1,5 +1,6 @@
 import { createEffect, createSignal, on, onCleanup, type Accessor } from "solid-js";
 import { rotateActive, mergedVisible } from "./state";
+import { requestChronostasis } from "../../lib/chronostasis";
 
 /**
  * かさね (merged) / わける (split) 切替時のトランジション支援。
@@ -78,6 +79,17 @@ export const useMergeAnimation = () => {
         }
       },
     ),
+  );
+
+  // transition 中は chronostasis を要求して下層 tick を凍結 → wrapper opacity 380ms フェードと
+  // merged container の transform/opacity 同時アニメに合成資源を全振りさせる。
+  // useCurrentTime の setInterval / auto-rotate の rAF / Star twinkle の CSS animation が一斉停止。
+  createEffect(
+    on(transitioning, (active) => {
+      if (!active) return;
+      const release = requestChronostasis();
+      onCleanup(release);
+    }),
   );
 
   onCleanup(() => {
