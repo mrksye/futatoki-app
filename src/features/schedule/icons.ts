@@ -9,7 +9,7 @@ export type ScheduleIconId =
   | "lunch"
   | "dinner"
   | "snack"
-  | "nap"
+  | "study"
   | "sleep"
   | "wakeup"
   | "depart"
@@ -24,11 +24,11 @@ export interface ScheduleIconDef {
 }
 
 export const SCHEDULE_ICONS: readonly ScheduleIconDef[] = [
-  { id: "breakfast",  emoji: "🍳" },
+  { id: "breakfast",  emoji: "🥞" },
   { id: "lunch",      emoji: "🍙" },
   { id: "dinner",     emoji: "🍔" },
-  { id: "snack",      emoji: "🍰" },
-  { id: "nap",        emoji: "😴" },
+  { id: "snack",      emoji: "🍩" },
+  { id: "study",      emoji: "📖" },
   { id: "sleep",      emoji: "🛌" },
   { id: "wakeup",     emoji: "☀️" },
   { id: "depart",     emoji: "🚌" },
