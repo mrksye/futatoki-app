@@ -24,10 +24,10 @@
       "lunch": "lunch",
       "dinner": "dinner",
       "snack": "snack",
-      "study": "study",
-      "sleep": "sleep",
       "wakeup": "wake up",
+      "sleep": "sleep",
       "depart": "leaving",
+      "study": "study",
       "bath": "bath",
       "toothbrush": "brush teeth",
       "tidy": "tidy up"

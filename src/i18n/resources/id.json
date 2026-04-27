@@ -24,10 +24,10 @@
       "lunch": "makan siang",
       "dinner": "makan malam",
       "snack": "cemilan",
-      "study": "belajar",
-      "sleep": "tidur",
       "wakeup": "bangun",
+      "sleep": "tidur",
       "depart": "berangkat",
+      "study": "belajar",
       "bath": "mandi",
       "toothbrush": "sikat gigi",
       "tidy": "beres-beres"

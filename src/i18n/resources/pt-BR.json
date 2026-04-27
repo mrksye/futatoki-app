@@ -24,10 +24,10 @@
       "lunch": "almoço",
       "dinner": "jantar",
       "snack": "lanche",
-      "study": "estudo",
-      "sleep": "dormir",
       "wakeup": "acordar",
+      "sleep": "dormir",
       "depart": "sair",
+      "study": "estudo",
       "bath": "banho",
       "toothbrush": "escovar",
       "tidy": "arrumar"

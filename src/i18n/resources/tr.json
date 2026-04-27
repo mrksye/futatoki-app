@@ -24,10 +24,10 @@
       "lunch": "öğle",
       "dinner": "akşam",
       "snack": "atıştırma",
-      "study": "ders",
-      "sleep": "uyumak",
       "wakeup": "uyanma",
+      "sleep": "uyumak",
       "depart": "çıkış",
+      "study": "ders",
       "bath": "banyo",
       "toothbrush": "diş fırçala",
       "tidy": "toplama"

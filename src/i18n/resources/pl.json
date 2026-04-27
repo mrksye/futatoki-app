@@ -24,10 +24,10 @@
       "lunch": "obiad",
       "dinner": "kolacja",
       "snack": "przekąska",
-      "study": "nauka",
-      "sleep": "spanie",
       "wakeup": "pobudka",
+      "sleep": "spanie",
       "depart": "wyjście",
+      "study": "nauka",
       "bath": "kąpiel",
       "toothbrush": "mycie zębów",
       "tidy": "sprzątanie"

@@ -24,10 +24,10 @@
       "lunch": "점심",
       "dinner": "저녁",
       "snack": "간식",
-      "study": "공부",
-      "sleep": "자기",
       "wakeup": "일어나기",
+      "sleep": "자기",
       "depart": "외출",
+      "study": "공부",
       "bath": "목욕",
       "toothbrush": "양치",
       "tidy": "정리"

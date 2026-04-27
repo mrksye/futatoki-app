@@ -24,10 +24,10 @@
       "lunch": "午餐",
       "dinner": "晚餐",
       "snack": "點心",
-      "study": "學習",
-      "sleep": "睡覺",
       "wakeup": "起床",
+      "sleep": "睡覺",
       "depart": "出發",
+      "study": "學習",
       "bath": "洗澡",
       "toothbrush": "刷牙",
       "tidy": "收拾"

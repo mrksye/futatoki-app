@@ -24,10 +24,10 @@
       "lunch": "午饭",
       "dinner": "晚饭",
       "snack": "点心",
-      "study": "学习",
-      "sleep": "睡觉",
       "wakeup": "起床",
+      "sleep": "睡觉",
       "depart": "出发",
+      "study": "学习",
       "bath": "洗澡",
       "toothbrush": "刷牙",
       "tidy": "收拾"

@@ -24,10 +24,10 @@
       "lunch": "おひるごはん",
       "dinner": "ばんごはん",
       "snack": "おやつ",
-      "study": "おべんきょう",
-      "sleep": "ねる",
       "wakeup": "おきる",
+      "sleep": "ねる",
       "depart": "しゅっぱつ",
+      "study": "おべんきょう",
       "bath": "おふろ",
       "toothbrush": "はみがき",
       "tidy": "おかたづけ"
