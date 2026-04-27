@@ -1,15 +1,17 @@
 /**
- * # chronostasis — SolidJS 統合
+ * # chronostasis — SolidJS integration
  *
- * `./index.ts` (framework agnostic core) に SolidJS の reactive primitive を被せる薄い adapter。
+ * A thin adapter that wraps the framework-agnostic core in `./index.ts` with SolidJS reactive
+ * primitives.
  *
- * - {@link useChronostasis} — chronostasis 状態を Solid の {@link Accessor} として取得
- * - {@link useChronostasisBodyClass} — `document.body` の class を toggle する副作用
+ * - {@link useChronostasis} — read chronostasis state as a Solid {@link Accessor}
+ * - {@link useChronostasisBodyClass} — side effect that toggles a class on `document.body`
  *
- * いずれも `onCleanup` を持つので reactive owner (= component setup) の中で呼ぶこと。
+ * Both register an `onCleanup`, so they must be called inside a reactive owner (= component setup).
  *
- * 他フレームワークで使う場合はこの adapter を真似て、core の {@link subscribeChronostasis} に
- * その環境の更新ハンドラ (React の `useSyncExternalStore`、Vue の `ref` 等) を繋ぐだけで良い。
+ * To support another framework, mirror this adapter and bridge the core's
+ * {@link subscribeChronostasis} to that framework's update primitive (React's `useSyncExternalStore`,
+ * Vue's `ref`, etc.).
  *
  * @packageDocumentation
  */
@@ -17,42 +19,43 @@
 import { createEffect, createSignal, onCleanup, type Accessor } from "solid-js";
 import { inChronostasis, subscribeChronostasis } from "./index";
 
-/** デフォルトで toggle する body class 名。 */
+/** Default body class name to toggle. */
 const DEFAULT_BODY_CLASS = "chronostasis";
 
 /**
- * chronostasis 状態を Solid の reactive accessor として取得する。
+ * Read chronostasis state as a Solid reactive accessor.
  *
- * 内部で {@link subscribeChronostasis} に登録するだけの軽量実装。
- * 複数コンポーネントから呼んでも問題ないが、過剰呼び出しが気になるなら呼び出し側で memo するのが筋。
+ * Lightweight implementation — internally just registers via {@link subscribeChronostasis}.
+ * Calling it from multiple components is fine; if call frequency becomes a concern, memoize
+ * at the call site.
  *
  * @example
  * ```ts
- * const inFreeze = useChronostasis();
- * createEffect(on(inFreeze, (frozen) => {
- *   if (frozen) return;       // 凍結中は副作用を起動しない
+ * const inChronostasis = useChronostasis();
+ * createEffect(on(inChronostasis, (held) => {
+ *   if (held) return;       // do not start the side effect while chronostasis is held
  *   const id = setInterval(...);
  *   onCleanup(() => clearInterval(id));
  * }));
  * ```
  */
 export const useChronostasis = (): Accessor<boolean> => {
-  const [active, setActive] = createSignal(inChronostasis());
-  onCleanup(subscribeChronostasis(setActive));
-  return active;
+  const [held, setHeld] = createSignal(inChronostasis());
+  onCleanup(subscribeChronostasis(setHeld));
+  return held;
 };
 
 /**
- * `document.body` に class を toggle する副作用を起動する。
+ * Toggle a class on `document.body` whenever chronostasis state changes.
  *
- * CSS animation を CSS セレクタ側で一括停止する用途で使う。
- * 例: `body.chronostasis .star { animation-play-state: paused; }`
+ * Use it to pause CSS animations in bulk via a CSS selector.
+ * Example: `body.chronostasis .star { animation-play-state: paused; }`
  *
- * @param className 付与する class 名。デフォルト `"chronostasis"`。
+ * @param className Class name to apply. Defaults to `"chronostasis"`.
  */
 export const useChronostasisBodyClass = (className: string = DEFAULT_BODY_CLASS): void => {
-  const active = useChronostasis();
+  const held = useChronostasis();
   createEffect(() => {
-    document.body.classList.toggle(className, active());
+    document.body.classList.toggle(className, held());
   });
 };

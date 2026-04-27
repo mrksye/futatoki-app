@@ -1,67 +1,73 @@
 /**
  * # chronostasis
  *
- * **chronostasis (クロノスタシス)** — 時計の秒針を見つめた直後、針が一瞬止まって見える視覚錯覚。
- * (神経科学/医学用語: https://en.wikipedia.org/wiki/Chronostasis)
+ * **chronostasis (クロノスタシス)** — the visual illusion where the second hand of a clock
+ * appears to freeze for a moment when you first glance at it.
+ * (See: https://en.wikipedia.org/wiki/Chronostasis)
  *
- * このモジュールは「動的な背景 (時計表示、CSS animation、setInterval / requestAnimationFrame
- * 系の tick 副作用) の上で重い合成エフェクトが走る間、下層を一斉に静止させる」状態を
- * 共有するための極小ライブラリ。
+ * This module provides a tiny shared-state library that lets you suspend the dynamic background
+ * of a page (clock display, CSS animations, setInterval / requestAnimationFrame side effects)
+ * for the duration of a heavy compositing effect running on top of it.
  *
- * ## なぜ必要か
+ * ## Why this is needed
  *
- * `backdrop-filter: blur` のような合成系エフェクトの本当の重さは「下のピクセルが変化するたびに
- * 再 blur する」コスト。下が完全に静止していればブラウザは blur 結果を compositing layer に
- * cache して 1 回 paint で済む = 古い iPad / 中華タブレット / 学習用タブレット等の非力な端末
- * でも実用負荷で動く。
+ * Compositing effects like `backdrop-filter: blur` are expensive precisely because the browser
+ * has to re-blur every time the underlying pixels change. If the layer underneath is completely
+ * still, the browser can cache the blurred result on its compositing layer and paint it once —
+ * which makes the effect viable on low-end hardware (older iPads, low-cost tablets, education
+ * tablets, etc.).
  *
- * blur 系以外でも、長尺 opacity transition や transform spring 等「フレーム毎に下層を再合成する」
- * エフェクトの間は同じ問題が起きる。chronostasis 中はそれら下層 tick を一斉 suspend して
- * 合成資源を表側のエフェクトに渡す。
+ * The same problem appears beyond blur. Long opacity transitions, transform springs, and other
+ * "recomposite the layer underneath every frame" effects all suffer when background work keeps
+ * mutating that layer. While chronostasis is held, those background ticks are suspended so
+ * compositing resources can go to the foreground effect.
  *
- * ## 設計
+ * ## Design
  *
- * ゼロ依存・framework agnostic の vanilla TypeScript core。
- * 内部は **acquire 数のカウンタ** で管理し、複数ソース (例: ピッカー open + merge アニメ進行中)
- * が同時に chronostasis を要求しても、最後の release が外れるまで active を保持する。
+ * Zero dependencies, framework-agnostic vanilla TypeScript core.
+ * Internally tracked as an **acquire counter** so multiple sources (e.g. a picker that opened +
+ * a merge animation in flight) can request chronostasis simultaneously; chronostasis stays
+ * held until the last release is called.
  *
- * SolidJS 用の reactive accessor / body class hook は `./solid.ts` に分離。
- * 他のフレームワーク (React / Vue / vanilla) で使う場合も `subscribeChronostasis()` に
- * その環境の更新ハンドラを渡せば同等の bridge が書ける (新しい adapter を `./react.ts` 等として追加)。
+ * The SolidJS reactive accessor and body-class hook live in `./solid.ts`. To bridge to other
+ * frameworks (React, Vue, vanilla DOM), pass an environment-specific update handler to
+ * `subscribeChronostasis()` — see `./solid.ts` as a reference adapter (add new ones at
+ * `./react.ts`, etc.).
  *
- * ## 公開 API
+ * ## Public API
  *
- * - {@link inChronostasis} — 現在状態の同期 getter
- * - {@link requestChronostasis} — chronostasis を要求し release 関数を返す (lease 型)
- * - {@link subscribeChronostasis} — 状態変化を購読
+ * - {@link inChronostasis} — synchronous getter for the current state
+ * - {@link requestChronostasis} — request chronostasis and receive a release function (lease style)
+ * - {@link subscribeChronostasis} — subscribe to state transitions
  *
  * @packageDocumentation
  */
 
-type ChronostasisListener = (active: boolean) => void;
+type ChronostasisListener = (held: boolean) => void;
 
 let acquireCount = 0;
 const listeners = new Set<ChronostasisListener>();
 
-const notify = (active: boolean) => {
-  listeners.forEach((listener) => listener(active));
+const notify = (held: boolean) => {
+  listeners.forEach((listener) => listener(held));
 };
 
-/** 現在 chronostasis 状態にあるか (= 下層 tick 副作用を止めるべきか)。 */
+/** Whether chronostasis is currently held (= background ticks should pause). */
 export const inChronostasis = (): boolean => acquireCount > 0;
 
 /**
- * chronostasis を 1 件 acquire し、release 関数を返す。複数の caller が同時に要求すると
- * 最後の release が呼ばれるまで active が継続する。
+ * Acquire one chronostasis lease and return its release function. When multiple callers hold
+ * leases simultaneously, chronostasis stays held until the last release is called.
  *
- * 返された release 関数は idempotent (二重呼び出しても害なし)。SolidJS なら
- * `onCleanup(release)` に渡すだけで対称呼び出しが構造的に保証される (= leave 忘れバグの罠が無い)。
+ * The returned release function is idempotent (calling it more than once is harmless). In
+ * SolidJS, passing it to `onCleanup(release)` ensures the symmetric release is structurally
+ * guaranteed — there is no "forgot to leave" trap.
  *
  * @example
  * ```ts
  * const release = requestChronostasis();
  * try {
- *   // 重い合成エフェクト
+ *   // heavy compositing effect
  * } finally {
  *   release();
  * }
@@ -80,18 +86,19 @@ export const requestChronostasis = (): (() => void) => {
 };
 
 /**
- * 状態変化を購読する。listener は active が 0→1 / 1→0 の境界で呼ばれる
- * (acquire 数の途中増減では発火しない)。
- * 戻り値は購読解除関数。同じ listener を複数回 add しても Set の性質で 1 回だけ管理される。
+ * Subscribe to chronostasis state changes. The listener is invoked only at the boundaries
+ * (0 → 1 and 1 → 0); intermediate changes to the acquire count do not fire it.
+ * Returns an unsubscribe function. Adding the same listener multiple times has no effect
+ * (the underlying Set deduplicates).
  *
  * @example
  * ```ts
- * const stop = subscribeChronostasis((active) => {
- *   if (active) pauseTicker();
+ * const unsubscribe = subscribeChronostasis((held) => {
+ *   if (held) pauseTicker();
  *   else resumeTicker();
  * });
- * // 後始末:
- * stop();
+ * // Cleanup:
+ * unsubscribe();
  * ```
  */
 export const subscribeChronostasis = (

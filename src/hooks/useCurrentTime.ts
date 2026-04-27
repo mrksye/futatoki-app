@@ -22,8 +22,8 @@ export function useCurrentTime() {
   const inChronostasis = useChronostasis();
 
   createEffect(
-    on(inChronostasis, (active) => {
-      if (active) return; // chronostasis 中は interval 止めたまま
+    on(inChronostasis, (held) => {
+      if (held) return; // chronostasis 中は interval 止めたまま
       // 解除時 (= 初回 mount 含む): 即座に最新時刻に揃えて interval 再開
       setTime(snapshot());
       const timer = setInterval(() => setTime(snapshot()), 1000);
