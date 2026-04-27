@@ -1,5 +1,5 @@
 import { createEffect, createSignal, on, onCleanup } from "solid-js";
-import { useChronostasis } from "../lib/chronostasis-solid";
+import { useChronostasis } from "../lib/chronostasis/solid";
 
 interface CurrentTime {
   hours: number;

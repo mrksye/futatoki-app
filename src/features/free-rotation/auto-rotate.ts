@@ -1,6 +1,6 @@
 import { createEffect, on, onCleanup, untrack } from "solid-js";
 import { rotateActive, rotateMinutes, rotateMode, seekRotate } from "./state";
-import { useChronostasis } from "../../lib/chronostasis-solid";
+import { useChronostasis } from "../../lib/chronostasis/solid";
 
 /**
  * 自動回転 (じどうかいてん): 1日 ≒ 24 秒で時刻を進める。

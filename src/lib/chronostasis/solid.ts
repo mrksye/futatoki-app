@@ -1,7 +1,7 @@
 /**
  * # chronostasis — SolidJS 統合
  *
- * `chronostasis.ts` (framework agnostic core) に SolidJS の reactive primitive を被せる薄い adapter。
+ * `./index.ts` (framework agnostic core) に SolidJS の reactive primitive を被せる薄い adapter。
  *
  * - {@link useChronostasis} — chronostasis 状態を Solid の {@link Accessor} として取得
  * - {@link useChronostasisBodyClass} — `document.body` の class を toggle する副作用
@@ -15,7 +15,7 @@
  */
 
 import { createEffect, createSignal, onCleanup, type Accessor } from "solid-js";
-import { inChronostasis, subscribeChronostasis } from "./chronostasis";
+import { inChronostasis, subscribeChronostasis } from "./index";
 
 /** デフォルトで toggle する body class 名。 */
 const DEFAULT_BODY_CLASS = "chronostasis";

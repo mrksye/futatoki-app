@@ -2,7 +2,7 @@ import { createEffect, type Component } from "solid-js";
 import { ClockLayout } from "./components/ClockLayout";
 import { pickerOpen } from "./features/schedule/picker";
 import { setChronostasis } from "./lib/chronostasis";
-import { useChronostasisBodyClass } from "./lib/chronostasis-solid";
+import { useChronostasisBodyClass } from "./lib/chronostasis/solid";
 import { I18nProvider } from "./i18n";
 
 const App: Component = () => {

@@ -21,9 +21,9 @@
  * ゼロ依存・framework agnostic の vanilla TypeScript core。
  * グローバル boolean state (`active`) と listener Set だけのシンプルな pub/sub。
  *
- * SolidJS 用の reactive accessor / body class hook は `chronostasis-solid.ts` に分離。
+ * SolidJS 用の reactive accessor / body class hook は `./solid.ts` に分離。
  * 他のフレームワーク (React / Vue / vanilla) で使う場合も `subscribeChronostasis()` に
- * その環境の更新ハンドラを渡せば同等の bridge が書ける。
+ * その環境の更新ハンドラを渡せば同等の bridge が書ける (新しい adapter を `./react.ts` 等として追加)。
  *
  * ## 公開 API
  *
