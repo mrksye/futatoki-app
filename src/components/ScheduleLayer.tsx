@@ -37,6 +37,11 @@ interface ScheduleLayerProps {
   dimOpacity?: number;
   /** 現在表示中の時刻 (0..1439 整数, 分単位)。一致するイベントは continuous でポヨポヨする。 */
   displayedMinutes: number;
+  /** リセット警告中の外タップキャンセル用透明 rect を描くか (既定 true)。
+   *  merged β で前面 (active) レイヤーに使う場合だけ false にする: 透明 + pointer-events: all の rect が
+   *  全 SVG を覆うので、後面 (dimmed back) レイヤーのアイコン/✕ タップを奪ってしまうため。
+   *  非 merged (split) や merged β の後面では default true で OK (互いに重ならない or 自分が下層)。 */
+  showResetCancelRect?: boolean;
 }
 
 const VIEW = 340;
@@ -245,8 +250,10 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
       >
         {/* りせっと中の外タップキャンセル用透明 rect。アイコンより前に置くことで「アイコンタップ→
             triggerResetDelete」「外タップ→cancelWarning」を両立 (アイコンが上に乗っているので
-            アイコン領域は rect に届かない)。 */}
-        <Show when={activeInThisLayer()?.type === "resetWarning"}>
+            アイコン領域は rect に届かない)。
+            merged β で前面レイヤーは showResetCancelRect=false で抑制 (下層 dimmed back のタップを
+            この透明 rect が奪うのを避ける、cancel rect は後面側 1 個だけで十分)。 */}
+        <Show when={activeInThisLayer()?.type === "resetWarning" && (props.showResetCancelRect ?? true)}>
           <rect
             x={0} y={0} width={VIEW} height={VIEW}
             fill="transparent"

@@ -366,13 +366,13 @@ export const ClockLayout: Component = () => {
                 fallback={<>
                   <ScheduleLayer period="am" dimmed dimOpacity={0.15} scale={0.85}
                     displayedMinutes={displayedMinutesTotal()} />
-                  <ScheduleLayer period="pm"
+                  <ScheduleLayer period="pm" showResetCancelRect={false}
                     displayedMinutes={displayedMinutesTotal()} />
                 </>}
               >
                 <ScheduleLayer period="pm" dimmed dimOpacity={0.15} scale={0.85}
                   displayedMinutes={displayedMinutesTotal()} />
-                <ScheduleLayer period="am"
+                <ScheduleLayer period="am" showResetCancelRect={false}
                   displayedMinutes={displayedMinutesTotal()} />
               </Show>
             </Show>
