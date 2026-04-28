@@ -32,12 +32,19 @@
    min-height は iPhone 14 Pro Max ランドスケープ (430px) から十分離れる 32rem (512px) に設定。 */
 @custom-variant tablet (@media (min-width: 48rem) and (min-height: 32rem));
 
+/* position: fixed + inset: 0 で viewport にロック。 overflow: hidden 単体だと
+   モバイル browser (DuckDuckGo の URL bar 自動隠蔽 / iOS Safari rubber-banding /
+   Android Chrome pull-to-refresh) が gesture 層で縦ドラッグを scroll と解釈してしまう。
+   body を「scroll できる文脈ではない」 と完全に宣言するために fixed 化する
+   (kiosk-style web app の定石、Flutter Web の index.html template も同じ)。 */
 html, body, #root {
   margin: 0;
   padding: 0;
-  width: 100%;
-  height: 100%;
+  position: fixed;
+  inset: 0;
   overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
   font-family: 'Nunito', system-ui, -apple-system, sans-serif;
   -webkit-tap-highlight-color: transparent;
 }
