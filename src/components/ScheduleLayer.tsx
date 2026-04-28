@@ -136,6 +136,18 @@ const isLunchEvent = (eventM: number): boolean =>
 const isInLunchVisibleHours = (displayed: number): boolean =>
   displayed >= LUNCH_VISIBLE_HOURS_START && displayed <= LUNCH_VISIBLE_HOURS_END;
 
+/** 夜中予定 (00:00〜00:59) の特例。お昼予定と対称に 6 時間時差表示する。絶対時刻で 18:01〜05:59 のみ
+ *  opacity 1、それ以外は dimOpacity に上書き。0:00 跨ぎなので window 判定は OR (lunch とそこだけ違う)。
+ *  撤去なら eventOpacity 内の isMidnightEvent 分岐 3 行を消すだけで通常ロジックに戻る。 */
+const MIDNIGHT_EVENT_MINUTES_START = 0;
+const MIDNIGHT_EVENT_MINUTES_END = 59;
+const MIDNIGHT_VISIBLE_HOURS_START = 1081;
+const MIDNIGHT_VISIBLE_HOURS_END = 359;
+const isMidnightEvent = (eventM: number): boolean =>
+  eventM >= MIDNIGHT_EVENT_MINUTES_START && eventM <= MIDNIGHT_EVENT_MINUTES_END;
+const isInMidnightVisibleHours = (displayed: number): boolean =>
+  displayed >= MIDNIGHT_VISIBLE_HOURS_START || displayed <= MIDNIGHT_VISIBLE_HOURS_END;
+
 const DELETE_BUTTON_OFFSET = 10;
 const DELETE_BUTTON_RADIUS = 7;
 
@@ -224,13 +236,17 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
 
   /** event ごとの opacity 優先順:
    *    1. お昼予定特例       — 絶対時刻 06:01〜17:59 のみ 1、それ以外は dimOpacity (active 側も上書き)
-   *    2. dimmed && !visible — dimOpacity (薄い側で予告外の予定)
-   *    3. dimmed && visible  — 1.0 (薄い側でも「もうすぐ起きる予定」はハッキリ)
-   *    4. !dimmed            — 1.0
+   *    2. 夜中予定特例       — 絶対時刻 18:01〜05:59 のみ 1、それ以外は dimOpacity (お昼と対称)
+   *    3. dimmed && !visible — dimOpacity (薄い側で予告外の予定)
+   *    4. dimmed && visible  — 1.0 (薄い側でも「もうすぐ起きる予定」はハッキリ)
+   *    5. !dimmed            — 1.0
    *  merged 表示中は親 wrapper opacity=0 で全体が隠れるので event 単位で隠す必要は無い。 */
   const eventOpacity = (visibleInDim: boolean, eventM: number): number => {
     if (isLunchEvent(eventM)) {
       return isInLunchVisibleHours(props.displayedMinutes) ? 1 : (props.dimOpacity ?? 0.25);
+    }
+    if (isMidnightEvent(eventM)) {
+      return isInMidnightVisibleHours(props.displayedMinutes) ? 1 : (props.dimOpacity ?? 0.25);
     }
     if (visibleInDim || !props.dimmed) return 1;
     return props.dimOpacity ?? 0.25;
