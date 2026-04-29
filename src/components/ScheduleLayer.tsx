@@ -4,7 +4,6 @@ import { schedule, type ScheduleEvent } from "../features/schedule/state";
 import { getScheduleIcon } from "../features/schedule/icons";
 import {
   interaction,
-  enterWarning,
   cancelWarning,
   triggerDelete,
   triggerResetDelete,
@@ -96,6 +95,21 @@ const POOF_KEYFRAMES: Keyframe[] = [
   { transform: "rotate(0deg) scale(1)", opacity: 1, offset: 0 },
   { transform: "rotate(720deg) scale(1)", opacity: 1, offset: 0.65 },
   { transform: "rotate(1080deg) scale(0)", opacity: 0, offset: 1 },
+];
+
+/** イヤヤン (削除拒否の身振り、暫定)。clock モードで長押しされた時に削除する代わりに発火。
+ *  最終的には「イヤンッ！イヤンッ！」と顔を左右に振って避けるようなモーションにしたい (左右の奥行き
+ *  回転 = rotateY と組み合わせて頭を振る感じ、2 周目はテンポ早め)。今は translateX のみで連続的に揺れて
+ *  しまっており「イヤヤン」(1 回の揺れ) 止まり。 */
+const SHAKE_NO_DURATION_MS = 600;
+const SHAKE_NO_KEYFRAMES: Keyframe[] = [
+  { transform: "translateX(0)",    offset: 0 },
+  { transform: "translateX(-8px)", offset: 0.20 },  // 1 周目 左
+  { transform: "translateX(8px)",  offset: 0.45 },  // 1 周目 右
+  { transform: "translateX(0)",    offset: 0.55 },  // 1 周目終わり 一拍
+  { transform: "translateX(-8px)", offset: 0.65 },  // 2 周目 左 (テンポ早い)
+  { transform: "translateX(8px)",  offset: 0.80 },  // 2 周目 右
+  { transform: "translateX(0)",    offset: 1 },
 ];
 
 /** displayed - eventM の差を [-720, 720] に正規化 (0/1440 跨ぎ対応)。 */
@@ -516,6 +530,14 @@ const EventIcon: Component<EventIconProps> = (props) => {
     });
   };
 
+  const triggerShakeNo = () => {
+    if (!groupRef) return;
+    animateMotion(groupRef, SHAKE_NO_KEYFRAMES, {
+      duration: SHAKE_NO_DURATION_MS,
+      easing: "ease-in-out",
+    });
+  };
+
   const onPointerDown = (e: PointerEvent) => {
     const i = interaction();
     // りせっと警告中は icon タップで全消し (rotation かどうか問わず先に処理)。
@@ -532,9 +554,12 @@ const EventIcon: Component<EventIconProps> = (props) => {
     // 別イベントが warning/deleting/resetDeleting 中は新規操作を受け付けない。
     if (i.type !== "none") return;
     longPressed = false;
+    // clock モードでは削除不可。長押しで warning に入る代わりに「イヤヤン」と身を振って拒否する
+    // (削除は freeRotate 中の container 経由のみ)。最終的には「イヤンッ！イヤンッ！」と顔を左右に振る
+    // モーションにしたいが暫定。
     pressTimer = setTimeout(() => {
       longPressed = true;
-      enterWarning(props.event.minutes);
+      triggerShakeNo();
     }, LONG_PRESS_MS);
   };
 
