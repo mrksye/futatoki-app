@@ -26,7 +26,7 @@ import { useI18n } from "../i18n";
 import { dragStart, dragAdvance, type DragDragState } from "../features/free-rotation/drag";
 import { wheelAdvance } from "../features/free-rotation/wheel";
 import { resistTrigger, notifyResistance } from "../features/free-rotation/resistance";
-import { interaction, enterWarning } from "../features/schedule/interaction";
+import { interaction, enterWarning, cancelWarning } from "../features/schedule/interaction";
 
 /** freeRotate 中の長押し warning 検出パラメータ。clock モードの EventIcon が持つ LONG_PRESS_MS と
  *  揃える。 */
@@ -189,6 +189,13 @@ export const ClockLayout: Component = () => {
 
   const onDragStart = (e: PointerEvent) => {
     if (!isRotating()) return;
+    // warning / resetWarning 中の周辺タップは drag や autoRotate 切替より先にキャンセルを優先。
+    // (ScheduleLayer の透明 rect は SVG 領域だけ覆ってるので、地の余白タップはここで拾う)。
+    const it = interaction().type;
+    if (it === "warning" || it === "resetWarning") {
+      cancelWarning();
+      return;
+    }
     // autoRotate 中の背景タップは freeRotate へ切替て停止 (左下「すとっぷ」と同等の操作)。
     if (clockMode() === "autoRotate") {
       transition("freeRotate");
