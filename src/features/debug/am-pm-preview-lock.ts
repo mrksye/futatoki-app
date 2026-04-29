@@ -1,5 +1,6 @@
-import { createEffect, createSignal, onCleanup, type Accessor } from "solid-js";
+import { createEffect, createSignal, on, onCleanup, type Accessor } from "solid-js";
 import { useAmPmPreviewHold as useBaseAmPmPreviewHold } from "../am-pm-preview";
+import { isRotating } from "../free-rotation/state";
 
 /**
  * 【デバッグ専用】 AM/PM プレビューバッジを 2 連タップすると flip 状態をロック (押し続けなくても
@@ -51,6 +52,17 @@ export const useAmPmPreviewHold = (actualIsAm: Accessor<boolean>) => {
     if (typeof document === "undefined") return;
     document.body.classList.toggle(LOCKED_BODY_CLASS, locked());
   });
+
+  /** 回転モード (freeRotate / autoRotate) に入ったらロックを強制解除。
+   *  rotation 中は AM/PM プレビューバッジ自体が出ないので、ロック状態のまま戻ると
+   *  clock 復帰時に flip だけ残って混乱するのを防ぐ。 */
+  createEffect(on(isRotating, (rotating) => {
+    if (!rotating) return;
+    if (!locked()) return;
+    cancelAutoRelease();
+    setLocked(false);
+    base.clearHold();
+  }, { defer: true }));
 
   onCleanup(() => {
     cancelAutoRelease();
