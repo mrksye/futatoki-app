@@ -1,5 +1,6 @@
 import { createEffect, type Accessor, type Component } from "solid-js";
 import { detailMode } from "../features/settings/detail-mode";
+import { colorMode } from "../features/settings/color-mode";
 
 /**
  * 時計の針 (時針・分針・中心ネジ) を描画するレイヤー。ClockFace を包む div の中に絶対配置で重ね、
@@ -53,9 +54,23 @@ const MINUTE_TICK_TIMING: KeyframeAnimationOptions = {
   easing: "ease-out",
 };
 
+/**
+ * 針長 factor (R との比) を detailMode × colorMode の 4 通りで個別に持つ。
+ * くわしく/すっきり (R が 130 / 148) と くぎり/ばっじ (数字外端の幾何が違う) で
+ * 「針 tip と数字/badge 内端の距離」が揃わないので、4 mode 個別に微調整する。Kawaii 担保用。
+ */
+type ModeKey = "kuwashiku-sector" | "kuwashiku-badge" | "sukkiri-sector" | "sukkiri-badge";
+const HAND_FACTORS: Record<ModeKey, { hour: number; minute: number }> = {
+  "kuwashiku-sector": { hour: 0.48, minute: 0.79 },
+  "kuwashiku-badge":  { hour: 0.48, minute: 0.75 },
+  "sukkiri-sector":   { hour: 0.48, minute: 0.78 },
+  "sukkiri-badge":    { hour: 0.48, minute: 0.73 },
+};
+
 const HandsLayer: Component<HandsLayerProps> = (props) => {
   const isKuwashiku = () => detailMode() === "kuwashiku";
   const R = () => isKuwashiku() ? 130 : 148;
+  const factors = () => HAND_FACTORS[`${detailMode()}-${colorMode()}` as ModeKey];
 
   const hourAngle = () => {
     const h = props.hours % 12;
@@ -90,9 +105,9 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
           transform={`rotate(${hourAngle() + 90} ${CENTER} ${CENTER})`}
           style="will-change: transform"
         >
-          <line x1={CENTER} y1={CENTER + 10} x2={CENTER} y2={CENTER - R() * 0.48}
+          <line x1={CENTER} y1={CENTER + 10} x2={CENTER} y2={CENTER - R() * factors().hour}
             stroke="#ffffff" stroke-width="10" stroke-linecap="round" />
-          <line x1={CENTER} y1={CENTER + 10} x2={CENTER} y2={CENTER - R() * 0.48}
+          <line x1={CENTER} y1={CENTER + 10} x2={CENTER} y2={CENTER - R() * factors().hour}
             stroke="#111111" stroke-width="7" stroke-linecap="round" />
         </g>
 
@@ -105,9 +120,9 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
             transform={`rotate(${minuteAngle() + 90} ${CENTER} ${CENTER})`}
             style="will-change: transform"
           >
-            <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * 0.78}
+            <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
               stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
-            <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * 0.78}
+            <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
               stroke="#111111" stroke-width="3.5" stroke-linecap="round" />
           </g>
         </g>

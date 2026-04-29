@@ -77,7 +77,7 @@ const numberFontSize = (
 
 /** ばっじ円の半径。すっきりで一回り大きく (数字 font-size と一緒にスケールさせる)。 */
 const BADGE_R_KUWASHIKU = 18;
-const BADGE_R_SUKKIRI = 22;
+const BADGE_R_SUKKIRI = 21;
 
 /** 値が変わった瞬間にバウンスさせる effect。実質 PM 盤面のみ発火 (AM/merged は num 不変で no-op)。
  *  連打時に前のバウンスが残らないよう cancel してから start する。 */
