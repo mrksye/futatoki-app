@@ -1,54 +1,78 @@
 import { createSignal } from "solid-js";
 
 /**
- * 自由回転モード (じゆうかいてん) のセッション状態。永続化なし (アプリ再起動で初期化)。
+ * 時計の主モード FSM とレイアウトのセッション状態。永続化なし (アプリ再起動で初期化)。
  *
  * モード階層:
- *   通常モード (rotateActive=false): 現在時刻 + AM/PM バッジ長押しプレビュー
- *   自由回転モード (rotateActive=true)
- *     ├─ manual: ドラッグ時刻変更 / 1 ふんもどす / ランダム / かさね・わけ切替
- *     └─ auto:   1 日 24 秒で自動進行
+ *   clock      : 現在時刻表示。AM/PM バッジ + 長押しプレビュー。layout は構造的に意味なし。
+ *   freeRotate : ドラッグで時刻変更、1 ふんもどす、ランダム、かさね/わけ切替
+ *   autoRotate : 1 日 24 秒で自動進行
  *
- * 「通常モードで merged 表示にならない」排他性は構造で強制している:
- * 生 signal `rotateMerged` は module-private、公開 accessor は AND ガード後の `mergedVisible` のみ、
- * 公開 action `toggleMerged` も rotateActive 中しか動かない。書き忘れの余地が無い。
+ * 許可する遷移 (実 UI に存在するパスのみ):
+ *   clock      -> freeRotate
+ *   freeRotate -> clock | autoRotate
+ *   autoRotate -> clock | freeRotate
+ *   (clock -> autoRotate は UI パスが無いので table で禁止。直接遷移したい場合はまず freeRotate を経由する。)
  *
- * 内部の生 setter (setActiveRaw 等) と生 signal は意図的に未 export。モジュール内でも生 setter は
- * 直接呼ばず必ず action 経由で書き換える。rotateMinutes は seekRotate が 0..1439 に正規化する。
+ * 「clock モードで merged 表示にならない」排他性は構造で強制している:
+ * 生 signal `layout` は module-private、公開 accessor は AND ガード後の `mergedVisible` のみ、
+ * 公開 action `toggleLayout` も rotation 中しか動かない。書き忘れの余地が無い。
+ *
+ * モード遷移も table で構造化されており、setRotateMode のような unguarded passthrough setter は無い。
+ * 全ての書き換えは `transition()` 経由で、許可されない遷移は no-op になる。
+ *
+ * 内部の生 setter (setClockModeRaw 等) と生 signal `layout` は意図的に未 export。モジュール内でも
+ * 生 setter は直接呼ばず必ず action 経由で書き換える。rotateMinutes は seekRotate が 0..1439 に正規化する。
+ *
+ * `isRotating` / `mergedVisible` は派生関数として `clockMode` を transitively tracking する点に注意。
+ * 値が同じでも `clockMode` が変われば tracked dep が動いたと見なされるため、`on(mergedVisible, ...)`
+ * 等の下流 (merge-animation, crank) は callback 内で `if (curr === prev) return;` で値ベースに dedup する。
  */
 
-/** 自由回転のサブモード (らんだむは単発アクションなのでここには含まれない)。 */
-export type RotateMode = "manual" | "auto";
+export type ClockMode = "clock" | "freeRotate" | "autoRotate";
+
+type Layout = "merged" | "separated";
 
 function nowAsMinutes(): number {
   const d = new Date();
   return d.getHours() * 60 + d.getMinutes();
 }
 
-const [rotateActive, setActiveRaw] = createSignal(false);
+const [clockMode, setClockModeRaw] = createSignal<ClockMode>("clock");
 const [rotateMinutes, setMinutesRaw] = createSignal(nowAsMinutes());
-const [rotateMode, setModeRaw] = createSignal<RotateMode>("manual");
-const [rotateMerged, setMergedRaw] = createSignal(true);
+const [layout, setLayoutRaw] = createSignal<Layout>("merged");
 
-export { rotateActive, rotateMinutes, rotateMode };
+export { clockMode, rotateMinutes };
 
-/** merged (かさね) 表示が実際に出ているか。rotateActive との AND を返す
- *  (排他性を構造で担保するため、外に露出する merged 関連 accessor はこれのみ)。 */
-export const mergedVisible = () => rotateActive() && rotateMerged();
+/** clock モード以外 (freeRotate または autoRotate) にいるか。 */
+export const isRotating = () => clockMode() !== "clock";
 
-/** 自由回転モードに入る。minutes=現在時刻、mode=manual、merged=true で毎回初期化。 */
-export const enterRotate = () => {
-  setActiveRaw(true);
-  setMinutesRaw(nowAsMinutes());
-  setModeRaw("manual");
-  setMergedRaw(true);
+/** merged (かさね) 表示が実際に出ているか。clock モード中は構造的に常に false
+ *  (排他性を構造で担保するため、外に露出する layout 関連 accessor はこれのみ)。 */
+export const mergedVisible = () => isRotating() && layout() === "merged";
+
+const ALLOWED_TRANSITIONS: Record<ClockMode, readonly ClockMode[]> = {
+  clock:      ["freeRotate"],
+  freeRotate: ["clock", "autoRotate"],
+  autoRotate: ["clock", "freeRotate"],
 };
 
-/** 自由回転モードを抜けて通常モードへ。次回 enter 時に綺麗に初期化されるよう mode/merged も reset。 */
-export const exitRotate = () => {
-  setActiveRaw(false);
-  setModeRaw("manual");
-  setMergedRaw(true);
+const canTransition = (from: ClockMode, to: ClockMode) =>
+  ALLOWED_TRANSITIONS[from].includes(to);
+
+/**
+ * 主モードの遷移。許可されていない遷移は no-op。
+ * clock からの脱出時 (= rotation に入る時) のみ rotateMinutes を現在時刻にスナップし layout を merged に初期化。
+ * freeRotate <-> autoRotate の往復では rotateMinutes と layout を保持 (ユーザの意図を維持)。
+ */
+export const transition = (next: ClockMode) => {
+  const current = clockMode();
+  if (!canTransition(current, next)) return;
+  if (current === "clock") {
+    setMinutesRaw(nowAsMinutes());
+    setLayoutRaw("merged");
+  }
+  setClockModeRaw(next);
 };
 
 /** rotateMinutes を 0..1439 に wrap-around しながらシーク。負数も正の側に折り返す。 */
@@ -56,11 +80,9 @@ export const seekRotate = (m: number) => {
   setMinutesRaw(((m % 1440) + 1440) % 1440);
 };
 
-export const setRotateMode = (mode: RotateMode) => setModeRaw(mode);
-
-/** かさね/わけ切替。rotateActive=false 時は no-op (通常モード中に merged を動かすと復帰時の挙動が
+/** かさね/わけ切替。clock モード時は no-op (clock 中に layout を動かすと復帰時の挙動が
  *  予期せず変わるため構造的に禁止)。 */
-export const toggleMerged = () => {
-  if (!rotateActive()) return;
-  setMergedRaw(v => !v);
+export const toggleLayout = () => {
+  if (!isRotating()) return;
+  setLayoutRaw(l => l === "merged" ? "separated" : "merged");
 };

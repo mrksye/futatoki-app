@@ -1,8 +1,8 @@
 import { createSignal, createEffect, createRoot, on } from "solid-js";
-import { rotateActive } from "./state";
+import { isRotating } from "./state";
 
 /**
- * 手回し (てまわし / crank) 操作スタイル。manual サブモードのドラッグ操作スタイル 2 種の一つで、
+ * 手回し (てまわし / crank) 操作スタイル。freeRotate のドラッグ操作スタイル 2 種の一つで、
  * CW に最大角まで進めた値だけ反映、戻りは無視するワンウェイ累積。drag style と相互排他で、外したい
  * 場合は ClockLayout / SettingsPanel の crank 関連ブロックをコメントアウトすれば機能ごと外せる。
  *
@@ -14,10 +14,13 @@ export type RotateStyle = "crank" | "drag";
 
 const [rotateStyle, setStyleRaw] = createSignal<RotateStyle>("drag");
 
-/** 自由回転モードに入るたびに drag へ戻すリセット。前回 crank の状態が残ると再入時にユーザーが戸惑うため。 */
+/** rotation モードに入るたびに drag へ戻すリセット。前回 crank の状態が残ると再入時にユーザーが戸惑うため。
+ *  isRotating は派生関数で clockMode を transitively tracking するため freeRotate <-> autoRotate 遷移でも
+ *  callback が走る。値が同じなら早期 return してリセットを防ぐ。 */
 createRoot(() => {
-  createEffect(on(rotateActive, (active) => {
-    if (active) setStyleRaw("drag");
+  createEffect(on(isRotating, (rotating, prev) => {
+    if (rotating === prev) return;
+    if (rotating) setStyleRaw("drag");
   }, { defer: true }));
 });
 

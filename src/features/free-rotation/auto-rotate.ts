@@ -1,5 +1,5 @@
 import { createEffect, on, onCleanup, untrack } from "solid-js";
-import { rotateActive, rotateMinutes, rotateMode, seekRotate } from "./state";
+import { clockMode, rotateMinutes, seekRotate } from "./state";
 import { useChronostasis } from "../../lib/chronostasis/solid";
 
 /**
@@ -9,12 +9,12 @@ import { useChronostasis } from "../../lib/chronostasis/solid";
 
 const MIN_PER_MS = 1440 / 24000;
 
-/** 自由回転 + mode=auto の間だけ rAF で rotateMinutes を進める。ON/OFF 切替と cleanup は createEffect が処理。 */
+/** clockMode === "autoRotate" の間だけ rAF で rotateMinutes を進める。ON/OFF 切替と cleanup は createEffect が処理。 */
 export const useAutoRotateTick = () => {
   const inChronostasis = useChronostasis();
   createEffect(
     on(
-      () => rotateActive() && rotateMode() === "auto" && !inChronostasis(),
+      () => clockMode() === "autoRotate" && !inChronostasis(),
       (running) => {
         if (!running) return;
         let last = performance.now();

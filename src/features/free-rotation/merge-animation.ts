@@ -1,5 +1,5 @@
 import { createEffect, createSignal, on, onCleanup, type Accessor } from "solid-js";
-import { rotateActive, mergedVisible } from "./state";
+import { isRotating, mergedVisible } from "./state";
 import { requestChronostasis } from "../../lib/chronostasis";
 
 /**
@@ -10,7 +10,7 @@ import { requestChronostasis } from "../../lib/chronostasis";
  *   - useButtonsDimmedDuringMergeFlip: SettingsPanel 専用 (周辺ボタン dim 用)
  *   - 純関数: amTransform, pmTransform, mergedTransform, splitShadow
  *
- * mergedVisible は state.ts 側 (rotateActive との AND ガード済み accessor)。本モジュールはそれを
+ * mergedVisible は state.ts 側 (isRotating との AND ガード済み accessor)。本モジュールはそれを
  * 観測して transitioning フラグを 620ms 立ち下げ + mergedRevealed (rising edge だけ double rAF
  * 遅延) を作る。
  *
@@ -48,6 +48,9 @@ export const useMergeAnimation = () => {
       mergedVisible,
       (curr, prev) => {
         if (prev === undefined) return;
+        // mergedVisible は clockMode を transitively tracking するため、freeRotate <-> autoRotate
+        // 遷移でも callback が走ってしまう。値が同じなら何もしない (unwanted chronostasis を防ぐ)。
+        if (curr === prev) return;
         setTransitioning(true);
         if (timer) clearTimeout(timer);
         timer = setTimeout(() => setTransitioning(false), TRANSITION_DURATION_MS);
@@ -110,22 +113,25 @@ export const splitShadow = (transitioning: boolean): string =>
 
 /**
  * かさね/わけ切替時に周辺ボタンを薄く退避させる SettingsPanel 専用 hook。
- * rotateActive 自体の出入りで mergedVisible が動いた時 (= モード遷移) は無視し、
- * manual 中の merged トグルだけで dim 起動する。
+ * isRotating 自体の出入りで mergedVisible が動いた時 (= モード遷移) は無視し、
+ * freeRotate 中の merged トグルだけで dim 起動する。
  */
 export const useButtonsDimmedDuringMergeFlip = (): Accessor<boolean> => {
   const [dimmed, setDimmed] = createSignal(false);
   let timer: ReturnType<typeof setTimeout> | undefined;
-  let prevActive = rotateActive();
+  let prevActive = isRotating();
 
   createEffect(
     on(
       mergedVisible,
-      (_curr, prev) => {
-        const currActive = rotateActive();
+      (curr, prev) => {
+        const currActive = isRotating();
         const activeChanged = currActive !== prevActive;
         prevActive = currActive;
         if (prev === undefined) return;
+        // freeRotate <-> autoRotate 遷移で mergedVisible callback が誤発火するのを弾く
+        // (mergedVisible は clockMode を transitively tracking しているため)。
+        if (curr === prev) return;
         if (activeChanged) return;
         setDimmed(true);
         if (timer) clearTimeout(timer);

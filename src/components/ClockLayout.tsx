@@ -9,7 +9,7 @@ import SettingsPanel from "./SettingsPanel";
 import SkyBackground from "./SkyBackground";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { useOrientation } from "../hooks/useOrientation";
-import { rotateActive, rotateMinutes, rotateMode, seekRotate, setRotateMode } from "../features/free-rotation/state";
+import { clockMode, isRotating, rotateMinutes, seekRotate, transition } from "../features/free-rotation/state";
 import { useAutoRotateTick } from "../features/free-rotation/auto-rotate";
 import { useIdleExitTimer } from "../features/free-rotation/idle-exit";
 import {
@@ -27,7 +27,7 @@ import { wheelAdvance } from "../features/free-rotation/wheel";
 import { resistTrigger, notifyResistance } from "../features/free-rotation/resistance";
 import { interaction, enterWarning } from "../features/schedule/interaction";
 
-/** 回転 manual 中の長押し warning 検出パラメータ。clock mode の EventIcon が持つ LONG_PRESS_MS と
+/** freeRotate 中の長押し warning 検出パラメータ。clock モードの EventIcon が持つ LONG_PRESS_MS と
  *  揃える。 */
 const ROTATION_LONG_PRESS_MS = 500;
 /** 起点から MOVE_THRESHOLD_PX を超えたら drag とみなして warning は出さない。 */
@@ -56,7 +56,7 @@ export const ClockLayout: Component = () => {
   const { t } = useI18n();
 
   const displayed = createMemo(() => {
-    if (rotateActive()) {
+    if (isRotating()) {
       const m = rotateMinutes();
       return { hours: Math.floor(m / 60), minutes: m % 60, seconds: 0 };
     }
@@ -107,9 +107,9 @@ export const ClockLayout: Component = () => {
     if (rafId === null) rafId = requestAnimationFrame(commitPending);
   };
 
-  /** 回転 manual 中、pointerdown が予定アイコン上で起きた時の長押し warning 検出 state。container が
+  /** freeRotate 中、pointerdown が予定アイコン上で起きた時の長押し warning 検出 state。container が
    *  pointer をキャプチャすると icon は pointerup を受け取れないので、icon でなく container 側で
-   *  タイマーと movement 判定を持つ。clock mode の長押し (EventIcon 内) とは独立した経路。 */
+   *  タイマーと movement 判定を持つ。clock モードの長押し (EventIcon 内) とは独立した経路。 */
   let longPressTimer: ReturnType<typeof setTimeout> | undefined;
   let longPressStartX = 0;
   let longPressStartY = 0;
@@ -159,10 +159,10 @@ export const ClockLayout: Component = () => {
   };
 
   const onDragStart = (e: PointerEvent) => {
-    if (!rotateActive()) return;
-    // 自動回転中の背景タップは manual へ切替て停止 (左下「すとっぷ」と同等の操作)。
-    if (rotateMode() === "auto") {
-      setRotateMode("manual");
+    if (!isRotating()) return;
+    // autoRotate 中の背景タップは freeRotate へ切替て停止 (左下「すとっぷ」と同等の操作)。
+    if (clockMode() === "autoRotate") {
+      transition("freeRotate");
       return;
     }
     // pointer が予定アイコン上で押された場合の長押し warning 検出を仕込む
@@ -245,7 +245,7 @@ export const ClockLayout: Component = () => {
    *  attach する (page scroll を抑制する用)。止まる位置を整数分に揃えるため float 累積を Math.round で
    *  snap し、tween で滑らかに動かす。 */
   const onWheel = (e: WheelEvent) => {
-    if (!rotateActive() || rotateMode() !== "manual") return;
+    if (clockMode() !== "freeRotate") return;
     if (dragging()) return;
     e.preventDefault();
     const result = wheelAdvance(e);
@@ -301,7 +301,7 @@ export const ClockLayout: Component = () => {
    *       selection 切替がパッと
    *  merge transition 中 (transitioning) は smooth fade を維持。 */
   const selectionDimInstant = createMemo(
-    () => previewFlipped() || (rotateActive() && !transitioning()),
+    () => previewFlipped() || (isRotating() && !transitioning()),
   );
 
   /** AM/PM 各 wrapper の表示条件: merged 中 (transitioning 以外) は隠す。drag 中は反対側を unmount
@@ -311,7 +311,7 @@ export const ClockLayout: Component = () => {
 
   return (
     <div class="w-full h-full overflow-hidden relative">
-      <Show when={rotateActive()}>
+      <Show when={isRotating()}>
         <SkyBackground totalMinutes={rotateMinutes()} />
       </Show>
 
@@ -319,9 +319,9 @@ export const ClockLayout: Component = () => {
         ref={containerRef}
         class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}
         style={{
-          "touch-action": rotateActive() && rotateMode() === "manual" ? "none" : "auto",
+          "touch-action": clockMode() === "freeRotate" ? "none" : "auto",
           cursor:
-            rotateActive() && rotateMode() === "manual"
+            clockMode() === "freeRotate"
               ? (dragging() ? "grabbing" : "grab")
               : "default",
         }}
@@ -396,13 +396,13 @@ export const ClockLayout: Component = () => {
         </div>
       </div>
 
-      {/* かさねモード container。rotateActive トグル時も滑らかに消えるよう、見えうる間
+      {/* かさねモード container。clockMode 遷移時も滑らかに消えるよう、見えうる間
           (mergedVisible || transitioning) は DOM に保持する。
           opacity / transform は mergedRevealed 経由 (false→true 時に 1 frame 遅延 → fresh mount でも
           CSS transition が発火する。詳細は merge-animation.ts)。 */}
       <Show when={mergedVisible() || transitioning()}>
         {/* pointer-events-none のままでも子 (icon 等) からの bubble は handler に届くので、merged β
-            内の icon ドラッグも auto→manual / drag に拾える。touch-action は icon 等の祖先を辿る
+            内の icon ドラッグも autoRotate→freeRotate / drag に拾える。touch-action は icon 等の祖先を辿る
             ので、ここに none を置かないと browser が touch を panning に取られる (containerRef は
             別 subtree なので touch-action が継承されない)。 */}
         <div
@@ -416,7 +416,7 @@ export const ClockLayout: Component = () => {
             "transform-origin": "center",
             filter: splitShadow(transitioning()),
             "will-change": transitioning() ? "transform, opacity" : "auto",
-            "touch-action": rotateActive() && rotateMode() === "manual" ? "none" : "auto",
+            "touch-action": clockMode() === "freeRotate" ? "none" : "auto",
           }}
           onPointerDown={onDragStart}
           onPointerMove={onDragMove}
@@ -455,15 +455,15 @@ export const ClockLayout: Component = () => {
         </div>
       </Show>
 
-      <Show when={!rotateActive()}>
+      <Show when={!isRotating()}>
         <div class="absolute top-0 left-0 right-0 z-10 pointer-events-none">
           <SecondsBar seconds={displayed().seconds} hours={displayed().hours} />
         </div>
       </Show>
 
-      {/* AM/PM バッジ。MORPHING_SLOT.LEFT を rotate manual の予定ボタンと共有してモード遷移時に
+      {/* AM/PM バッジ。MORPHING_SLOT.LEFT を freeRotate の予定ボタンと共有してモード遷移時に
           ブラウザがモーフィング描画する (slot 一覧は features/view-transition.ts)。 */}
-      <Show when={!rotateActive()}>
+      <Show when={!isRotating()}>
         <div
           class={
             "absolute z-20 px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-black shadow-md cursor-pointer " +

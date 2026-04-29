@@ -40,7 +40,7 @@ export const rotatePicker = (deltaDeg: number) => {
 };
 
 /** 防御的 auto-close。rotateMinutes が変化したら閉じる (通常は overlay で時計操作はブロックされるが、
- *  auto モード等で変化する可能性に備える)。 */
+ *  autoRotate モード等で変化する可能性に備える)。 */
 createRoot(() => {
   createEffect(on(rotateMinutes, () => {
     if (pickerOpen()) closePicker();

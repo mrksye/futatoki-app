@@ -7,13 +7,11 @@ import { timeFormat, toggleTimeFormat } from "../features/settings/time-format";
 import { detailMode, toggleDetailMode } from "../features/settings/detail-mode";
 import { paletteId, cyclePalette } from "../features/settings/palette";
 import {
-  rotateActive,
-  rotateMode,
+  clockMode,
+  isRotating,
   mergedVisible,
-  enterRotate,
-  exitRotate,
-  setRotateMode,
-  toggleMerged,
+  transition,
+  toggleLayout,
 } from "../features/free-rotation/state";
 import { useRewindHold } from "../features/free-rotation/rewind";
 import { randomizeRotate } from "../features/free-rotation/random-time";
@@ -30,7 +28,7 @@ const SettingsPanel: Component = () => {
   let yoteiBtnRef: HTMLButtonElement | undefined;
 
   const toggleRotate = () =>
-    withViewTransition(() => (rotateActive() ? exitRotate() : enterRotate()));
+    withViewTransition(() => transition(isRotating() ? "clock" : "freeRotate"));
 
   /** 子どもの指でも押しやすいサイズ (WCAG 最小 44px を大きく上回る、タブレットでさらに大きく)。
    *  whitespace-nowrap は left+translate で右端寄せするボタン (1ふんもどす) が shrink-to-fit で
@@ -44,22 +42,22 @@ const SettingsPanel: Component = () => {
       <button
         class={`fixed top-2 right-2 z-50 ${btnClass}`}
         onPointerDown={toggleRotate}
-        aria-label={rotateActive() ? t("settings.rotateExit") : t("settings.rotateEnter")}
+        aria-label={isRotating() ? t("settings.rotateExit") : t("settings.rotateEnter")}
       />
 
-      <Show when={rotateActive()}>
-        {/* 左下: じどうかいてん 開始/停止 (auto/manual 問わず常時表示) */}
+      <Show when={isRotating()}>
+        {/* 左下: じどうかいてん 開始/停止 (autoRotate/freeRotate 問わず常時表示) */}
         <button
           class={`fixed bottom-2 left-2 z-50 ${btnClass}`}
-          onPointerDown={() => setRotateMode(rotateMode() === "auto" ? "manual" : "auto")}
-          aria-label={rotateMode() === "auto" ? t("settings.autoStop") : t("settings.autoStart")}
+          onPointerDown={() => transition(clockMode() === "autoRotate" ? "freeRotate" : "autoRotate")}
+          aria-label={clockMode() === "autoRotate" ? t("settings.autoStop") : t("settings.autoStart")}
         />
 
-        <Show when={rotateMode() === "manual"}>
+        <Show when={clockMode() === "freeRotate"}>
           {/* 左上: かさねる/わける (表示は切替先) */}
           <button
             class={`fixed top-2 left-2 z-50 ${btnClass}`}
-            onPointerDown={toggleMerged}
+            onPointerDown={toggleLayout}
             aria-label={mergedVisible() ? t("settings.splitToTwo") : t("settings.mergeToSingle")}
           />
 
@@ -120,7 +118,7 @@ const SettingsPanel: Component = () => {
         </Show>
       </Show>
 
-      <Show when={!rotateActive()}>
+      <Show when={!isRotating()}>
         {/* 左上: 24h / 12h */}
         <button
           class={`fixed top-2 left-2 z-50 ${btnClass}`}
