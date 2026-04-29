@@ -61,10 +61,10 @@ const MINUTE_TICK_TIMING: KeyframeAnimationOptions = {
  */
 type ModeKey = "kuwashiku-sector" | "kuwashiku-badge" | "sukkiri-sector" | "sukkiri-badge";
 const HAND_FACTORS: Record<ModeKey, { hour: number; minute: number }> = {
-  "kuwashiku-sector": { hour: 0.48, minute: 0.79 },
-  "kuwashiku-badge":  { hour: 0.48, minute: 0.75 },
+  "kuwashiku-sector": { hour: 0.49, minute: 0.79 },
+  "kuwashiku-badge":  { hour: 0.46, minute: 0.75 },
   "sukkiri-sector":   { hour: 0.48, minute: 0.78 },
-  "sukkiri-badge":    { hour: 0.48, minute: 0.73 },
+  "sukkiri-badge":    { hour: 0.45, minute: 0.73 },
 };
 
 const HandsLayer: Component<HandsLayerProps> = (props) => {
