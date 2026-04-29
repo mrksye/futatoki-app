@@ -1,4 +1,4 @@
-import { createMemo, createSignal, onCleanup, onMount, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, on, onCleanup, onMount, Show } from "solid-js";
 import type { Component, ParentComponent } from "solid-js";
 import ClockFace from "./ClockFace";
 import HandsLayer from "./HandsLayer";
@@ -68,6 +68,20 @@ export const ClockLayout: Component = () => {
     const d = displayed();
     return ((d.hours * 60 + Math.round(d.minutes)) % 1440 + 1440) % 1440;
   });
+
+  /** 実時刻の分が切り替わるたび increment するカウンタ。HandsLayer 側で WAAPI 軽 wobble の発火に使う。
+   *  rotation 中は minute prop が連続的に変わるが、本シグナルは time() 由来なので rotation の影響を受けない。
+   *  rotation 中の発火は抑止 (回転中は分針 wobble が物理的に意味を持たないため)。
+   *  prev === undefined の早期 return は初回 mount 時の callback 発火を捨てる用。defer: true でも
+   *  Solid の `on` は最初の callback 呼び出し時 prev に undefined を渡す仕様なので、これがないと
+   *  ロード直後に 1 回必ず揺れる。 */
+  const [minuteTickKey, setMinuteTickKey] = createSignal(0);
+  createEffect(on(() => time().minutes, (curr, prev) => {
+    if (prev === undefined) return;
+    if (curr === prev) return;
+    if (isRotating()) return;
+    setMinuteTickKey(k => k + 1);
+  }));
 
   const actualIsAm = createMemo(() => displayed().hours < 12);
   const { isAm, startHold, clearHold } = useAmPmPreviewHold(actualIsAm);
@@ -360,7 +374,7 @@ export const ClockLayout: Component = () => {
             </Show>
             {/* document order が後ろ → 予定アイコンの上に乗る */}
             <DimOverlay opacity={amSelectionOpacity()}>
-              <HandsLayer hours={amTime().hours} minutes={amTime().minutes} shakeKey={resistTrigger} />
+              <HandsLayer hours={amTime().hours} minutes={amTime().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
             </DimOverlay>
           </Show>
         </div>
@@ -391,7 +405,7 @@ export const ClockLayout: Component = () => {
               />
             </Show>
             <DimOverlay opacity={pmSelectionOpacity()}>
-              <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} shakeKey={resistTrigger} />
+              <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
             </DimOverlay>
           </Show>
         </div>
@@ -451,7 +465,7 @@ export const ClockLayout: Component = () => {
               </Show>
             </Show>
             {/* document order が最後 = z-auto 最前面 → 予定アイコンの上に乗る */}
-            <HandsLayer hours={displayed().hours} minutes={displayed().minutes} shakeKey={resistTrigger} />
+            <HandsLayer hours={displayed().hours} minutes={displayed().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
           </div>
         </div>
       </Show>

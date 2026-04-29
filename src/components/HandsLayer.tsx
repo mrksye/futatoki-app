@@ -8,12 +8,17 @@ import { detailMode } from "../features/settings/detail-mode";
  * shakeKey は「逆回転を試みた」イベントの incrementing counter (resistance.ts)。値が増えるたびに
  * minute hand を WAAPI で短時間 wobble させる (= hour hand と中心ネジは shake しない / 抵抗するのは
  * 長針のみ)。連射時は新しい animate() が直前の animation を上書きするので毎回フレッシュに発火する。
+ *
+ * minuteTickKey は「実時刻の分が切り替わった」イベントの incrementing counter (ClockLayout)。値が
+ * 増えるたびに minute hand を進行方向にごく軽くオーバーシュートさせて減衰振動 (ビィィーンッ) を出す。
+ * shake と同じ wrapper を共有するため、最新の animate() が前のものを上書きする (実害なし)。
  */
 
 interface HandsLayerProps {
   hours: number;
   minutes: number;
   shakeKey?: Accessor<number>;
+  minuteTickKey?: Accessor<number>;
 }
 
 const VIEW = 340;
@@ -30,6 +35,22 @@ const SHAKE_KEYFRAMES: Keyframe[] = [
 const SHAKE_TIMING: KeyframeAnimationOptions = {
   duration: 320,
   easing: "cubic-bezier(.36, .07, .19, .97)",
+};
+
+/** 分が進んだ瞬間の軽 wobble。進行方向 (時計回り = +deg) にひと押しオーバーシュートしてから
+ *  振幅を急減衰させ「ビィィーンッ」と止まる。shake より小振幅 (max 1.6deg) でユーザに気付かれない
+ *  くらい軽い演出を狙う。 */
+const MINUTE_TICK_KEYFRAMES: Keyframe[] = [
+  { transform: "rotate(0deg)" },
+  { transform: "rotate(1.6deg)",  offset: 0.22 },
+  { transform: "rotate(-0.7deg)", offset: 0.44 },
+  { transform: "rotate(0.3deg)",  offset: 0.64 },
+  { transform: "rotate(-0.1deg)", offset: 0.82 },
+  { transform: "rotate(0deg)" },
+];
+const MINUTE_TICK_TIMING: KeyframeAnimationOptions = {
+  duration: 380,
+  easing: "ease-out",
 };
 
 const HandsLayer: Component<HandsLayerProps> = (props) => {
@@ -49,6 +70,11 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
     const key = props.shakeKey?.() ?? 0;
     if (key === 0 || !minuteHandWrapperRef) return; // 初期 mount 時は発火しない
     minuteHandWrapperRef.animate(SHAKE_KEYFRAMES, SHAKE_TIMING);
+  });
+  createEffect(() => {
+    const key = props.minuteTickKey?.() ?? 0;
+    if (key === 0 || !minuteHandWrapperRef) return;
+    minuteHandWrapperRef.animate(MINUTE_TICK_KEYFRAMES, MINUTE_TICK_TIMING);
   });
 
   return (
