@@ -18,7 +18,7 @@
     "random": "随机"
   },
   "schedule": {
-    "add": "时段",
+    "add": "活动",
     "reset": "清空",
     "icon": {
       "breakfast": "早饭",

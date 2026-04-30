@@ -18,7 +18,7 @@
     "random": "al azar"
   },
   "schedule": {
-    "add": "Momentos",
+    "add": "Actividad",
     "reset": "borrar",
     "icon": {
       "breakfast": "desayuno",

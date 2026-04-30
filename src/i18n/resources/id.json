@@ -18,7 +18,7 @@
     "random": "acak"
   },
   "schedule": {
-    "add": "Momen",
+    "add": "Kegiatan",
     "reset": "hapus",
     "icon": {
       "breakfast": "sarapan",
