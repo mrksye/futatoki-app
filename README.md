@@ -47,7 +47,7 @@ Most analog clocks overwhelm young children with two overlapping abstractions: r
 ### Development
 
 ```bash
-git clone https://github.com/glimmerworksjp/futatoki-app.git
+git clone https://github.com/mrksye/futatoki-app.git
 cd futatoki-app
 bun install
 bun dev
@@ -85,4 +85,4 @@ The name "Futatoki" / "Futatoki the clock" and the project's branding are not co
 
 Built by [Mrksye](https://github.com/mrksye), a freelance developer based in Japan.
 
-This project lives under the [Glimmer Works](https://github.com/glimmerworksjp) GitHub organization as a personal side project.
+First released: 2026-04-21
