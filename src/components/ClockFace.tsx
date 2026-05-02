@@ -382,9 +382,14 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
             const verticalCardinalOffset = () =>
               isMonotoneBadge() && (position === 0 || position === 6) ? 2 : 0;
             const numR = () => NUM_R() + verticalCardinalOffset();
-            /** monotone-badge の "15" (PM 24h, position 3) は "1" の左下 flag 分視覚重心が右に
-             *  寄って見えるので、ちょっと左に nudge して光学的に揃える。 */
-            const numNudgeX = () => (isMonotoneBadge() && num() === 15 ? -4 : 0);
+            /** monotone-badge の PM 24h 数字は "1" を含むペアで digit weight asymmetry が出る:
+             *  "15" は "5" が右に重い → 左 nudge、"21" は "2" が左に重い → 右 nudge、で光学的に揃える。 */
+            const numNudgeX = () => {
+              if (!isMonotoneBadge()) return 0;
+              if (num() === 15) return -4;
+              if (num() === 21) return 3;
+              return 0;
+            };
             const x = () => CX + numR() * Math.cos(angle()) + numNudgeX();
             const y = () => CY + numR() * Math.sin(angle());
             const color = () => colors()[position];
