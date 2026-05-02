@@ -70,8 +70,8 @@ const numberFontSize = (
   isCardinal: boolean,
 ): string => {
   if (colorModeValue === "badge" && paletteIdValue === "monotone" && isCardinal) {
-    if (kuwashiku) return num >= 10 ? "24" : "28";
-    return num >= 10 ? "32" : "36";
+    if (kuwashiku) return num >= 10 ? "30" : "34";
+    return num >= 10 ? "38" : "42";
   }
   if (colorModeValue === "badge") {
     if (paletteIdValue === "monotone" && !kuwashiku) return num >= 10 ? "24" : "30";
@@ -187,9 +187,12 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
   /** くわしくは時計を縮めて外に分数字スペースを確保、すっきりは画面いっぱい。 */
   const R = () => isKuwashiku() ? 130 : 148;
   /** ばっじ×すっきりは badge 半径が 22 に膨らむので、外周はみ出し回避で内側へ 4 引き込む。
-   *  monotone × badge × すっきりは個別 badge 円を出さないので くぎりモードと同じ NUM_R を使う。 */
-  const NUM_R = () =>
-    R() - (colorMode() === "badge" && !isKuwashiku() && !isMonotoneBadge() ? BADGE_R_SUKKIRI : 18);
+   *  monotone × badge は「文字盤自体がバッジ化」する特別仕様なので、cardinal 数字を縁から
+   *  さらに内側に寄せて中央に呼吸を作る (個別 badge 円を出さない分の視覚密度を確保)。 */
+  const NUM_R = () => {
+    if (isMonotoneBadge()) return R() - 34;
+    return R() - (colorMode() === "badge" && !isKuwashiku() ? BADGE_R_SUKKIRI : 18);
+  };
   const BAND_INNER = () => NUM_R() - 16;
   const BAND_OUTER = () => R();
   const OUTER_RING = () => R() + 3;
@@ -318,14 +321,14 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
         </Show>
 
         {/* monotone × badge 専用の円盤縁メモリ。i=0..59 の 60 本 (12 の真上にも置く)。
-         *  5 の倍数 (= 12 時方向と 1〜11 時の方向) は太く 1.8x 長く描いて時方向の手がかりにする。 */}
+         *  5 の倍数 (= 12 時方向と 1〜11 時の方向) は太く 2.75x 長く描いて時方向の手がかりにする。 */}
         <Show when={isMonotoneBadge()}>
           <For each={Array.from({ length: 60 })}>
             {(_, idx) => {
               const i = () => idx();
               const angle = () => (i() * 6 * Math.PI) / 180 - Math.PI / 2;
               const isMajor = () => i() % 5 === 0;
-              const length = () => isMajor() ? 7.2 : 4;
+              const length = () => isMajor() ? 11 : 4;
               const outer = () => R() - 1;
               const inner = () => outer() - length();
               return (
@@ -335,8 +338,8 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   x2={CX + outer() * Math.cos(angle())}
                   y2={CY + outer() * Math.sin(angle())}
                   stroke="#1a1a1a"
-                  stroke-width={isMajor() ? 1.8 : 1}
-                  stroke-linecap="round"
+                  stroke-width={isMajor() ? 3 : 1.8}
+                  stroke-linecap="square"
                 />
               );
             }}
@@ -374,8 +377,16 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
         <Index each={POSITIONS}>
           {(_pos, position) => {
             const angle = () => (position * 30 * Math.PI) / 180 - Math.PI / 2;
-            const x = () => CX + NUM_R() * Math.cos(angle());
-            const y = () => CY + NUM_R() * Math.sin(angle());
+            /** monotone-badge の縦方向 cardinal (12 と 6/18 = position 0, 6) は font の縦潰し
+             *  (scale Y < 1) で他の cardinal より中心寄りに見えるので、半径を少し増やして光学的に揃える。 */
+            const verticalCardinalOffset = () =>
+              isMonotoneBadge() && (position === 0 || position === 6) ? 2 : 0;
+            const numR = () => NUM_R() + verticalCardinalOffset();
+            /** monotone-badge の "15" (PM 24h, position 3) は "1" の左下 flag 分視覚重心が右に
+             *  寄って見えるので、ちょっと左に nudge して光学的に揃える。 */
+            const numNudgeX = () => (isMonotoneBadge() && num() === 15 ? -4 : 0);
+            const x = () => CX + numR() * Math.cos(angle()) + numNudgeX();
+            const y = () => CY + numR() * Math.sin(angle());
             const color = () => colors()[position];
             const num = createMemo(() => numberAt(position));
 
@@ -416,6 +427,7 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   font-size={numberFontSize(colorMode(), paletteId(), isKuwashiku(), num(), isCardinal)}
                   font-weight="900"
                   font-family="Nunito, sans-serif"
+                  letter-spacing={isMonotoneBadge() && isCardinal ? "-1.4" : "0"}
                   fill={
                     isMonotoneBadge()
                       ? (isCardinal ? "#111111" : "#ffffff")

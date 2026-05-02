@@ -71,8 +71,8 @@ const HAND_FACTORS: Record<ModeKey, { hour: number; minute: number }> = {
 /** monotone × badge は「文字盤自体がバッジ化」する特別仕様。短針は cardinal 数字の縁ギリギリ、
  *  長針は円盤縁のメモリ縁ギリギリまで届かせる。NUM_R/R が高めなので factor を大きく取る。 */
 const MONOTONE_BADGE_FACTORS: Record<"kuwashiku" | "sukkiri", { hour: number; minute: number }> = {
-  "kuwashiku": { hour: 0.78, minute: 0.94 },
-  "sukkiri":   { hour: 0.78, minute: 0.95 },
+  "kuwashiku": { hour: 0.62, minute: 0.94 },
+  "sukkiri":   { hour: 0.62, minute: 0.95 },
 };
 
 const HandsLayer: Component<HandsLayerProps> = (props) => {
