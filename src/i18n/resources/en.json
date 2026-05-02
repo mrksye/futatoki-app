@@ -18,7 +18,7 @@
     "random": "random"
   },
   "schedule": {
-    "add": "Activity",
+    "add": "activity",
     "reset": "reset",
     "icon": {
       "breakfast": "breakfast",
