@@ -59,13 +59,20 @@ const PULSE_SCALE_KEYFRAMES: Keyframe[] = [
 ];
 
 /** 時間の数字 font-size。ばっじ×すっきり×ものとーんだけバッジの円が白で消えるので数字を少し大きく。
- *  ばっじモードでも すっきり/くわしく で差別化 (くぎりモードと同じ流儀)。 */
+ *  ばっじモードでも すっきり/くわしく で差別化 (くぎりモードと同じ流儀)。
+ *  monotone × badge × cardinal (12/3/6/9 と PM 24h の 12/15/18/21) は「文字盤自体がバッジ化」する
+ *  特別仕様で、くぎりモードと同じ font-size に揃える。non-cardinal は invisible 想定で従来サイズ。 */
 const numberFontSize = (
   colorModeValue: "sector" | "badge",
   paletteIdValue: string,
   kuwashiku: boolean,
   num: number,
+  isCardinal: boolean,
 ): string => {
+  if (colorModeValue === "badge" && paletteIdValue === "monotone" && isCardinal) {
+    if (kuwashiku) return num >= 10 ? "24" : "28";
+    return num >= 10 ? "32" : "36";
+  }
   if (colorModeValue === "badge") {
     if (paletteIdValue === "monotone" && !kuwashiku) return num >= 10 ? "24" : "30";
     if (!kuwashiku) return num >= 10 ? "22" : "28";
@@ -74,6 +81,11 @@ const numberFontSize = (
   if (kuwashiku) return num >= 10 ? "24" : "28";
   return num >= 10 ? "32" : "36";
 };
+
+/** monotone × badge の cardinal 数字 (12/3/6/9 と PM 24h の 12/15/18/21) のポジション。
+ *  position 0/3/6/9 はそのまま AM/12h は 12/3/6/9、PM 24h は 12/15/18/21 に対応。 */
+const isCardinalPosition = (position: number): boolean =>
+  position === 0 || position === 3 || position === 6 || position === 9;
 
 /** ばっじ円の半径。すっきりで一回り大きく (数字 font-size と一緒にスケールさせる)。 */
 const BADGE_R_KUWASHIKU = 18;
@@ -165,14 +177,19 @@ function annularSectorPath(
 const ClockFace: Component<ClockFaceProps> = (props) => {
   const { t } = useI18n();
   const isKuwashiku = () => detailMode() === "kuwashiku";
+  /** monotone × badge は「文字盤自体がバッジ化」する特別仕様。個別 badge 円を出さず、cardinal 数字のみ
+   *  くぎりモード流儀の大きなサイズで描き、円盤縁に 59 個の分メモリを置く。 */
+  const isMonotoneBadge = () => colorMode() === "badge" && paletteId() === "monotone";
 
   const VIEW = 340;
   const CX = VIEW / 2;
   const CY = VIEW / 2;
   /** くわしくは時計を縮めて外に分数字スペースを確保、すっきりは画面いっぱい。 */
   const R = () => isKuwashiku() ? 130 : 148;
-  /** ばっじ×すっきりは badge 半径が 22 に膨らむので、外周はみ出し回避で内側へ 4 引き込む。 */
-  const NUM_R = () => R() - (colorMode() === "badge" && !isKuwashiku() ? BADGE_R_SUKKIRI : 18);
+  /** ばっじ×すっきりは badge 半径が 22 に膨らむので、外周はみ出し回避で内側へ 4 引き込む。
+   *  monotone × badge × すっきりは個別 badge 円を出さないので くぎりモードと同じ NUM_R を使う。 */
+  const NUM_R = () =>
+    R() - (colorMode() === "badge" && !isKuwashiku() && !isMonotoneBadge() ? BADGE_R_SUKKIRI : 18);
   const BAND_INNER = () => NUM_R() - 16;
   const BAND_OUTER = () => R();
   const OUTER_RING = () => R() + 3;
@@ -277,7 +294,8 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
           <circle cx={CX} cy={CY} r={R()} fill="#ffffff" />
         </Show>
 
-        <Show when={isKuwashiku()}>
+        {/* くぎりモードの分メモリ。monotone-badge では円盤縁の専用メモリを別途描くので抑止。 */}
+        <Show when={isKuwashiku() && !isMonotoneBadge()}>
           <For each={Array.from({ length: 60 })}>
             {(_, i) => {
               const angle = () => (i() * 6 * Math.PI) / 180 - Math.PI / 2;
@@ -292,6 +310,32 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   y2={CY + outer() * Math.sin(angle())}
                   stroke={isHour() ? "#ffffff" : "#ffffff90"}
                   stroke-width={isHour() ? 2.5 : 1}
+                  stroke-linecap="round"
+                />
+              );
+            }}
+          </For>
+        </Show>
+
+        {/* monotone × badge 専用の円盤縁メモリ。i=0..59 の 60 本 (12 の真上にも置く)。
+         *  5 の倍数 (= 12 時方向と 1〜11 時の方向) は太く 1.8x 長く描いて時方向の手がかりにする。 */}
+        <Show when={isMonotoneBadge()}>
+          <For each={Array.from({ length: 60 })}>
+            {(_, idx) => {
+              const i = () => idx();
+              const angle = () => (i() * 6 * Math.PI) / 180 - Math.PI / 2;
+              const isMajor = () => i() % 5 === 0;
+              const length = () => isMajor() ? 7.2 : 4;
+              const outer = () => R() - 1;
+              const inner = () => outer() - length();
+              return (
+                <line
+                  x1={CX + inner() * Math.cos(angle())}
+                  y1={CY + inner() * Math.sin(angle())}
+                  x2={CX + outer() * Math.cos(angle())}
+                  y2={CY + outer() * Math.sin(angle())}
+                  stroke="#1a1a1a"
+                  stroke-width={isMajor() ? 1.8 : 1}
                   stroke-linecap="round"
                 />
               );
@@ -341,6 +385,16 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
             setupNumberBounce(() => groupRef, num);
             setupTwelveDun(() => props.period, position, () => groupRef, () => textRef);
 
+            const isCardinal = isCardinalPosition(position);
+            /** monotone-badge の cardinal 数字は font を縦に潰して横長に (個別 badge 円が無い分の
+             *  視覚的存在感を文字の太さ/横幅で稼ぐ)。SVG transform 属性は scale が原点 0,0 基準に
+             *  なって text 位置が崩れるので、CSS transform + transform-box: fill-box で text
+             *  自体の中心を pivot にする。 */
+            const cardinalStretchStyle = () =>
+              isMonotoneBadge() && isCardinal
+                ? "transform-box: fill-box; transform-origin: center; transform: scale(1.05, 0.88);"
+                : undefined;
+
             return (
               <g
                 ref={groupRef}
@@ -349,7 +403,8 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   "transform-origin": "center",
                 }}
               >
-                <Show when={colorMode() === "badge"}>
+                {/* 個別 badge 円。monotone-badge は「文字盤自体がバッジ化」なので個別円を描かない。 */}
+                <Show when={colorMode() === "badge" && !isMonotoneBadge()}>
                   <circle cx={x()} cy={y()} r={isKuwashiku() ? BADGE_R_KUWASHIKU : BADGE_R_SUKKIRI} fill={color()!.badge} />
                 </Show>
                 <text
@@ -358,13 +413,18 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   y={y()}
                   text-anchor="middle"
                   dominant-baseline="central"
-                  font-size={numberFontSize(colorMode(), paletteId(), isKuwashiku(), num())}
+                  font-size={numberFontSize(colorMode(), paletteId(), isKuwashiku(), num(), isCardinal)}
                   font-weight="900"
                   font-family="Nunito, sans-serif"
-                  fill={colorMode() === "badge" ? color()!.text : "#111111"}
+                  fill={
+                    isMonotoneBadge()
+                      ? (isCardinal ? "#111111" : "#ffffff")
+                      : (colorMode() === "badge" ? color()!.text : "#111111")
+                  }
                   stroke={colorMode() === "sector" ? "#ffffff" : "none"}
                   stroke-width={colorMode() === "sector" ? (isKuwashiku() ? "4" : "5") : "0"}
                   paint-order="stroke"
+                  style={cardinalStretchStyle()}
                 >
                   {num()}
                 </text>
