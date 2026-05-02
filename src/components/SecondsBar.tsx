@@ -1,6 +1,6 @@
 import { For } from "solid-js";
 import type { Component } from "solid-js";
-import { getHourColor, getPalette } from "../colors";
+import { getPalette, getSecondsBarColor } from "../colors";
 import { paletteId } from "../features/settings/palette";
 
 interface SecondsBarProps {
@@ -9,7 +9,7 @@ interface SecondsBarProps {
 }
 
 const SecondsBar: Component<SecondsBarProps> = (props) => {
-  const color = () => getHourColor(getPalette(paletteId()), props.hours);
+  const color = () => getSecondsBarColor(getPalette(paletteId()), props.hours);
 
   return (
     <div class="flex w-full h-1.5 gap-[1px] px-1">
@@ -23,12 +23,12 @@ const SecondsBar: Component<SecondsBarProps> = (props) => {
             <div
               class="flex-1 transition-all duration-200 ease-out"
               style={{
-                "background-color": active() ? color().bg : "#e8e0f0",
+                "background-color": active() ? color() : "#e8e0f0",
                 opacity: active() ? 1 : 0.25,
                 "border-radius": "99px",
                 height: is5() ? "6px" : "4px",
                 "align-self": "center",
-                "box-shadow": active() ? `0 0 4px ${color().bg}40` : "none",
+                "box-shadow": active() ? `0 0 4px ${color()}40` : "none",
               }}
             />
           );

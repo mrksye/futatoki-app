@@ -285,3 +285,12 @@ export function getPmColor(palette: Palette, hour: number): HourColor {
 export function getHourColor(palette: Palette, hour24: number): HourColor {
   return hour24 < 12 ? getAmColor(palette, hour24) : getPmColor(palette, hour24);
 }
+
+/**
+ * 秒バーの active 色。通常は時の bg を使うが、monotone (bg = #ffffff) では
+ * 白い盤面に白が乗って消えるので near-black に差し替える。
+ */
+export function getSecondsBarColor(palette: Palette, hour24: number): string {
+  if (palette.id === "monotone") return "#555555";
+  return getHourColor(palette, hour24).bg;
+}
