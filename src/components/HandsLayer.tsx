@@ -1,6 +1,7 @@
 import { createEffect, type Accessor, type Component } from "solid-js";
 import { detailMode } from "../features/settings/detail-mode";
 import { colorMode } from "../features/settings/color-mode";
+import { paletteId } from "../features/settings/palette";
 
 /**
  * 時計の針 (時針・分針・中心ネジ) を描画するレイヤー。ClockFace を包む div の中に絶対配置で重ね、
@@ -67,10 +68,22 @@ const HAND_FACTORS: Record<ModeKey, { hour: number; minute: number }> = {
   "sukkiri-badge":    { hour: 0.45, minute: 0.73 },
 };
 
+/** monotone × badge は「文字盤自体がバッジ化」する特別仕様。短針は cardinal 数字の縁ギリギリ、
+ *  長針は円盤縁のメモリ縁ギリギリまで届かせる。NUM_R/R が高めなので factor を大きく取る。 */
+const MONOTONE_BADGE_FACTORS: Record<"kuwashiku" | "sukkiri", { hour: number; minute: number }> = {
+  "kuwashiku": { hour: 0.78, minute: 0.94 },
+  "sukkiri":   { hour: 0.78, minute: 0.95 },
+};
+
 const HandsLayer: Component<HandsLayerProps> = (props) => {
   const isKuwashiku = () => detailMode() === "kuwashiku";
   const R = () => isKuwashiku() ? 130 : 148;
-  const factors = () => HAND_FACTORS[`${detailMode()}-${colorMode()}` as ModeKey];
+  const factors = () => {
+    if (colorMode() === "badge" && paletteId() === "monotone") {
+      return MONOTONE_BADGE_FACTORS[detailMode()];
+    }
+    return HAND_FACTORS[`${detailMode()}-${colorMode()}` as ModeKey];
+  };
 
   const hourAngle = () => {
     const h = props.hours % 12;
