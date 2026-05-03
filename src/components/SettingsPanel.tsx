@@ -1,11 +1,12 @@
 import { Show, type Component } from "solid-js";
 import { useOrientation } from "../hooks/useOrientation";
 import { useI18n } from "../i18n";
-import { getNextPalette } from "../colors";
+import { getNextPalette, palettes } from "../colors";
 import { colorMode, toggleColorMode } from "../features/settings/color-mode";
 import { timeFormat, toggleTimeFormat } from "../features/settings/time-format";
 import { detailMode, toggleDetailMode } from "../features/settings/detail-mode";
 import { paletteId, cyclePalette } from "../features/settings/palette";
+import { usePaletteClearance } from "../features/layout/palette-clearance";
 import {
   clockMode,
   isRotating,
@@ -35,6 +36,13 @@ const SettingsPanel: Component = () => {
    *  CJK 縦書きになるのを防ぐため。 */
   const btnClass =
     "px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-bold shadow-md active:scale-90 transition-all bg-white/80 text-gray-700 whitespace-nowrap";
+
+  // 全 palette ラベルの max ボタン寸法を測って ClockLayout に渡す。floating な palette ボタンが
+  // 時計と被る locale (fr 等) では、その寸法ぶん時計 SVG の max size を縮める用途。
+  usePaletteClearance(
+    () => palettes.map((p) => t(`palette.${p.id}` as never)),
+    btnClass,
+  );
 
   return (
     <>
