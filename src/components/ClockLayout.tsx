@@ -9,6 +9,12 @@ import SettingsPanel from "./SettingsPanel";
 import SkyBackground from "./SkyBackground";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { useOrientation } from "../hooks/useOrientation";
+import { useViewport } from "../hooks/useViewport";
+import {
+  paletteMaxBtnWidth,
+  paletteMaxBtnHeight,
+  computeMaxClockSize,
+} from "../features/layout/palette-clearance";
 import { clockMode, isRotating, rotateMinutes, seekRotate, transition } from "../features/free-rotation/state";
 import { useAutoRotateTick } from "../features/free-rotation/auto-rotate";
 import { useIdleExitTimer } from "../features/free-rotation/idle-exit";
@@ -51,10 +57,59 @@ const DimOverlay: ParentComponent<{ opacity: number }> = (props) => (
   </div>
 );
 
+/**
+ * AM/PM 半盤の中央に置く正方形コンテナ。中の ClockFace / ScheduleLayer / HandsLayer (いずれも
+ * absolute inset-0) はこの slot を containing block として位置取りするので、slot のサイズを
+ * 制限すれば 3 layer まとめて縮む (= 時計中心は変わらず半径だけ縮む)。
+ *
+ * floating な palette ボタンが時計と被る locale で時計の最大寸法を制限する用途。size の決定は
+ * features/layout/palette-clearance の computeMaxClockSize を参照。
+ */
+const ClockSlot: ParentComponent<{ size: number }> = (props) => (
+  <div
+    class="relative"
+    style={{
+      width: `${props.size}px`,
+      height: `${props.size}px`,
+    }}
+  >
+    {props.children}
+  </div>
+);
+
+/** floating な palette ボタンの内側 margin (CSS の `right-2` / `bottom-2` = 0.5rem = 8px)。 */
+const PALETTE_BTN_EDGE_MARGIN_PX = 8;
+/** ボタン rect と clock circle の最低視覚 clearance。0 にすると edge が touch するので少し空ける。 */
+const PALETTE_BTN_SAFETY_GAP_PX = 4;
+
 export const ClockLayout: Component = () => {
   const time = useCurrentTime();
   const isLandscape = useOrientation();
+  const viewport = useViewport();
   const { t } = useI18n();
+
+  /** 各 AM/PM 半盤の clock SVG が取れる最大寸法 (diameter)。floating palette ボタンと交差しない
+   *  最大円を幾何的に求める。isRotating 中は palette ボタンが消えるので natural 最大に戻る
+   *  (computeMaxClockSize は palette wid/hei が 0 で natural を返す挙動も持つが、isRotating でも
+   *  palette signal は前回値を保持しているので明示的に分岐が必要)。 */
+  const maxClockSize = createMemo(() => {
+    const w = viewport.width();
+    const h = viewport.height();
+    const land = isLandscape();
+    const halfW = land ? w / 2 : w;
+    const halfH = land ? h : h / 2;
+    const naturalSize = Math.min(halfW, halfH);
+    if (isRotating()) return naturalSize;
+    return computeMaxClockSize(
+      w,
+      h,
+      land,
+      paletteMaxBtnWidth(),
+      paletteMaxBtnHeight(),
+      PALETTE_BTN_EDGE_MARGIN_PX,
+      PALETTE_BTN_SAFETY_GAP_PX,
+    );
+  });
 
   /** drag / autoRotate 中は rotateMinutes が連続的に動く状態。release-snap の snap 抑制と
    *  display の float-vs-ceil 切替に使う。 */
@@ -386,22 +441,24 @@ export const ClockLayout: Component = () => {
           }}
         >
           <Show when={amSplitVisible()}>
-            <DimOverlay opacity={amSelectionOpacity()}>
-              <ClockFace period="am" hours={amTime().hours} />
-            </DimOverlay>
-            {/* ScheduleLayer は dim 階層の外。merge transition 中 / autoRotate 中は外す
-                (620ms 合成負荷 / autoRotate の高速回転による合成負荷を回避)。 */}
-            <Show when={!transitioning() && clockMode() !== "autoRotate"}>
-              <ScheduleLayer
-                period="am"
-                dimmed={!isAm()}
-                displayedMinutes={displayedMinutesTotal()}
-              />
-            </Show>
-            {/* document order が後ろ → 予定アイコンの上に乗る */}
-            <DimOverlay opacity={amSelectionOpacity()}>
-              <HandsLayer hours={amTime().hours} minutes={amTime().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
-            </DimOverlay>
+            <ClockSlot size={maxClockSize()}>
+              <DimOverlay opacity={amSelectionOpacity()}>
+                <ClockFace period="am" hours={amTime().hours} />
+              </DimOverlay>
+              {/* ScheduleLayer は dim 階層の外。merge transition 中 / autoRotate 中は外す
+                  (620ms 合成負荷 / autoRotate の高速回転による合成負荷を回避)。 */}
+              <Show when={!transitioning() && clockMode() !== "autoRotate"}>
+                <ScheduleLayer
+                  period="am"
+                  dimmed={!isAm()}
+                  displayedMinutes={displayedMinutesTotal()}
+                />
+              </Show>
+              {/* document order が後ろ → 予定アイコンの上に乗る */}
+              <DimOverlay opacity={amSelectionOpacity()}>
+                <HandsLayer hours={amTime().hours} minutes={amTime().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
+              </DimOverlay>
+            </ClockSlot>
           </Show>
         </div>
 
@@ -420,19 +477,21 @@ export const ClockLayout: Component = () => {
           }}
         >
           <Show when={pmSplitVisible()}>
-            <DimOverlay opacity={pmSelectionOpacity()}>
-              <ClockFace period="pm" hours={pmTime().hours} />
-            </DimOverlay>
-            <Show when={!transitioning() && clockMode() !== "autoRotate"}>
-              <ScheduleLayer
-                period="pm"
-                dimmed={isAm()}
-                displayedMinutes={displayedMinutesTotal()}
-              />
-            </Show>
-            <DimOverlay opacity={pmSelectionOpacity()}>
-              <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
-            </DimOverlay>
+            <ClockSlot size={maxClockSize()}>
+              <DimOverlay opacity={pmSelectionOpacity()}>
+                <ClockFace period="pm" hours={pmTime().hours} />
+              </DimOverlay>
+              <Show when={!transitioning() && clockMode() !== "autoRotate"}>
+                <ScheduleLayer
+                  period="pm"
+                  dimmed={isAm()}
+                  displayedMinutes={displayedMinutesTotal()}
+                />
+              </Show>
+              <DimOverlay opacity={pmSelectionOpacity()}>
+                <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
+              </DimOverlay>
+            </ClockSlot>
           </Show>
         </div>
       </div>
