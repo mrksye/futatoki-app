@@ -468,13 +468,17 @@ const setupWobbleAnim = (
 /** deleting 開始で 1 回だけ走るくるくる〜パッ (poof) アニメ。delayMs が指定されている場合は WAAPI の
  *  delay で開始タイミングをずらす (りせっと時の時刻順 stagger 用)。delay 中は wobble が見え続ける。
  *  rotate と scale/opacity は別アニメに分離して、scale phase 中も rotate 速度を一定に保つ。
- *  自分の poof rotation 開始タイミングで wobble を明示 cancel する (理由は setupWobbleAnim の doc)。 */
+ *  自分の poof rotation 開始タイミングで wobble を明示 cancel する (理由は setupWobbleAnim の doc)。
+ *  fill: forwards は完了後も Animation オブジェクトを残すため、unmount 時に必ず明示 cancel して
+ *  element ref を解放する (放置すると detached <g> が累積)。 */
 const setupPoofAnim = (
   groupRef: () => SVGGElement | undefined,
   isDeleting: () => boolean,
   delayMs: () => number,
 ) => {
   let cancelWobbleTimer: ReturnType<typeof setTimeout> | undefined;
+  let rotateAnim: Animation | null = null;
+  let shrinkAnim: Animation | null = null;
   createEffect(on(isDeleting, (deleting) => {
     const g = groupRef();
     if (!g || !deleting) return;
@@ -489,13 +493,15 @@ const setupPoofAnim = (
       if (cancelWobbleTimer) clearTimeout(cancelWobbleTimer);
       cancelWobbleTimer = setTimeout(cancelWobble, delay);
     }
-    animateMotion(g, POOF_ROTATE_KEYFRAMES, {
+    rotateAnim?.cancel();
+    shrinkAnim?.cancel();
+    rotateAnim = animateMotion(g, POOF_ROTATE_KEYFRAMES, {
       duration: POOF_DURATION_MS,
       easing: "linear",
       fill: "forwards",
       delay,
     });
-    animateMotion(g, POOF_SHRINK_KEYFRAMES, {
+    shrinkAnim = animateMotion(g, POOF_SHRINK_KEYFRAMES, {
       duration: POOF_DURATION_MS,
       easing: "linear",
       fill: "forwards",
@@ -504,6 +510,8 @@ const setupPoofAnim = (
   }));
   onCleanup(() => {
     if (cancelWobbleTimer) clearTimeout(cancelWobbleTimer);
+    rotateAnim?.cancel();
+    shrinkAnim?.cancel();
   });
 };
 

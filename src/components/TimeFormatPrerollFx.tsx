@@ -1,4 +1,4 @@
-import { createEffect, on } from "solid-js";
+import { createEffect, on, onCleanup } from "solid-js";
 import type { Component } from "solid-js";
 import {
   prerollKey,
@@ -23,12 +23,15 @@ interface Props {
 
 const TimeFormatPrerollFx: Component<Props> = (props) => {
   let ringRef: SVGCircleElement | undefined;
+  let anim: Animation | null = null;
 
   // ネオン点灯 2 周が完全に終わった瞬間 (delay = PULSE_MS * 2) から衝撃波を発火。
+  // fill: forwards は完了後も Animation を残すため、ref で track して新規発火前と unmount 時に
+  // 明示 cancel する (放置すると detached <circle> が retain される)。
   createEffect(on(prerollKey, () => {
     if (!ringRef) return;
-    ringRef.getAnimations().forEach((a) => a.cancel());
-    animateMotion(
+    anim?.cancel();
+    anim = animateMotion(
       ringRef,
       [
         { transform: "scale(0.15)", opacity: 0 },
@@ -43,6 +46,7 @@ const TimeFormatPrerollFx: Component<Props> = (props) => {
       },
     );
   }, { defer: true }));
+  onCleanup(() => anim?.cancel());
 
   return (
     <g
