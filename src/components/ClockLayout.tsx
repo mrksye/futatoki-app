@@ -20,6 +20,7 @@ import { useAutoRotateTick } from "../features/free-rotation/auto-rotate";
 import { useIdleExitTimer } from "../features/free-rotation/idle-exit";
 import {
   useMergeAnimation,
+  useMergeImpactWobble,
   amTransform,
   pmTransform,
   mergedTransform,
@@ -379,6 +380,8 @@ export const ClockLayout: Component = () => {
   });
 
   const { mergedVisible, transitioning, mergedRevealed } = useMergeAnimation();
+  let mergedContainerRef: HTMLDivElement | undefined;
+  useMergeImpactWobble(() => mergedContainerRef, mergedRevealed);
   useAutoRotateTick();
   useIdleExitTimer();
 
@@ -440,7 +443,7 @@ export const ClockLayout: Component = () => {
           }}
           style={{
             transform: amTransform(mergedVisible(), isLandscape()),
-            "will-change": transitioning() ? "transform, opacity" : "auto",
+            "will-change": transitioning() ? "transform" : "auto",
           }}
         >
           <Show when={amSplitVisible()}>
@@ -477,7 +480,7 @@ export const ClockLayout: Component = () => {
           }}
           style={{
             transform: pmTransform(mergedVisible(), isLandscape()),
-            "will-change": transitioning() ? "transform, opacity" : "auto",
+            "will-change": transitioning() ? "transform" : "auto",
           }}
         >
           <Show when={pmSplitVisible()}>
@@ -510,6 +513,7 @@ export const ClockLayout: Component = () => {
             ので、ここに none を置かないと browser が touch を panning に取られる (containerRef は
             別 subtree なので touch-action が継承されない)。 */}
         <div
+          ref={mergedContainerRef}
           class={
             "clock-merged-container-transition absolute inset-0 flex items-center justify-center pointer-events-none " +
             (isLandscape() ? "flex-row" : "flex-col")

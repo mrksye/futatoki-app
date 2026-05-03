@@ -21,6 +21,9 @@ import { requestChronostasis } from "../../lib/chronostasis";
  * 一旦 opacity=0/scale=0.55 で mount → 1 frame paint → reveal に切替の流れにすることで
  * browser に initial state を認識させてから transition を起こす。double rAF は paint を 1 回確実に
  * 挟むための保険 (single rAF だと paint 前に値変更を踏む browser 実装がある)。
+ *
+ * AM/PM wrapper 側は opacity ではなく visibility 切替 (index.css 参照) なので fresh mount での
+ * transition 不発問題は merged container にだけ存在する。
  */
 
 const TRANSITION_DURATION_MS = 620;
@@ -107,6 +110,73 @@ export const pmTransform = (mergedVisible: boolean, isLandscape: boolean): strin
 
 export const mergedTransform = (mergedVisible: boolean): string =>
   mergedVisible ? "scale(1)" : "scale(0.55)";
+
+/**
+ * merged container 着地時に「ガチャ」の物理振動を WAAPI で載せる hook。
+ *
+ * CSS transform transition (560ms ease-in-out) で merged container が中央 scale(1) に決まった
+ * 直後に、短い damped scale 振動を発火する。これにより「ガッチャン!」の物理的接触音的な
+ * 微振動を表現する (CSS cubic-bezier では 1 回の overshoot しか書けないので多段は WAAPI)。
+ *
+ * - rising edge (mergedRevealed false → true) でだけ仕込む。falling edge では振動不要。
+ * - delay 560ms = CSS transform transition の duration と同じ。これで着地と同時に振動が乗る。
+ * - 途中で mergedRevealed が false に戻った場合 (ユーザが即座に分離に切替) は timer / animation
+ *   とも cancel する。
+ * - WAAPI で transform を直接 animate (個別 scale プロパティではなく) するのは、低スペック GPU で
+ *   transform と個別プロパティの同時 animate が drop される問題を避けるため。fill: "none" で
+ *   終了後 inline style の transform: scale(1) に戻る。
+ */
+export const useMergeImpactWobble = (
+  containerRef: () => HTMLDivElement | undefined,
+  mergedRevealed: Accessor<boolean>,
+) => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let activeAnimation: Animation | null = null;
+
+  const cancel = () => {
+    if (timer) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+    if (activeAnimation) {
+      activeAnimation.cancel();
+      activeAnimation = null;
+    }
+  };
+
+  createEffect(
+    on(mergedRevealed, (curr, prev) => {
+      if (prev === undefined) return;
+      if (curr === prev) return;
+      cancel();
+      if (!curr) return;
+      timer = setTimeout(() => {
+        timer = undefined;
+        const el = containerRef();
+        if (!el) return;
+        activeAnimation = el.animate(
+          [
+            { transform: "scale(1)", offset: 0 },
+            { transform: "scale(1.022)", offset: 0.25 },
+            { transform: "scale(0.994)", offset: 0.55 },
+            { transform: "scale(1.006)", offset: 0.8 },
+            { transform: "scale(1)", offset: 1 },
+          ],
+          {
+            duration: 110,
+            easing: "linear",
+            fill: "none",
+          },
+        );
+        activeAnimation.onfinish = () => {
+          activeAnimation = null;
+        };
+      }, 560);
+    }),
+  );
+
+  onCleanup(cancel);
+};
 
 /**
  * かさね/わけ切替時に周辺ボタンを薄く退避させる SettingsPanel 専用 hook。

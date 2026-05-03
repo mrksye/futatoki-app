@@ -135,23 +135,46 @@ body.chronostasis .star-twinkle {
 
 /* ClockLayout / SettingsPanel の transition 群を class 化。inline style だと @media query で消せず
    prefers-reduced-motion 対応ができないため class に切り出して body.motion-reduce 側で上書きする。 */
-/* opacity は inline style ではなく class で切替する。inline で常時 opacity を当てると Chrome が
-   合成レイヤーを常駐確保しがちで、低スペック端末 (Chromebook 等) でメモリと GPU を食う。
-   .merge-hidden / .merge-revealed の付与で opacity が変化したとき transition が発火する。 */
+/* AM/PM wrapper は opacity フェードを使わず visibility 切替にする。理由:
+   かさね/わけ切替は AM wrapper / PM wrapper / merged container の 3 layer が一瞬同居する。
+   3 つを全て opacity 中間値でクロスフェードすると、半透明 layer 同士のブレンド合成 (3 重) が
+   毎フレーム発生し、低スペック GPU の fillrate を圧迫する (Chromebook 等で顕著)。
+   visibility: hidden なら paint も合成もスキップされる。
+   ただし「scale で縮んでヒュッと消える」見た目は維持したいので、merge-hidden 付与時の
+   visibility フリップは transform animation 完了後 (560ms 後) に遅延させる。
+   merge-hidden が外れた時 (= 戻ってくる時) は :not セレクタで delay を 0s にして即 visible に
+   戻し、scale animation の頭から見える状態にする。
+
+   timing-function は方向別に切替: マージ方向 (中央に集まる) は overshoot なし
+   (cubic-bezier(.4, 0, .2, 1) = ease-in-out 風)、分離方向 (元位置に戻る / 現れる) は
+   back-out で bounce。マージで bounce すると「中央でガクッと跳ねて変」とユーザ feedback。 */
 .clock-wrapper-transition {
-  transition: transform 560ms cubic-bezier(.34, 1.56, .64, 1),
-              opacity 380ms ease;
+  transition-property: transform, visibility;
+  transition-duration: 560ms, 0s;
+  transition-timing-function: cubic-bezier(.34, 1.56, .64, 1), step-end;
+  transition-delay: 0s, 560ms;
+}
+.clock-wrapper-transition:not(.merge-hidden) {
+  transition-delay: 0s, 0s;
 }
 .clock-wrapper-transition.merge-hidden {
-  opacity: 0;
+  visibility: hidden;
+  transition-timing-function: cubic-bezier(.4, 0, .2, 1), step-end;
 }
 .clock-merged-container-transition {
   opacity: 0;
-  transition: opacity 380ms ease,
-              transform 560ms cubic-bezier(.34, 1.56, .64, 1);
+  /* 消える時: パッと短く ease-out で消す (分離の「パッ、ボヨ〜ん」の「パッ」) */
+  transition: opacity 200ms ease-out,
+              transform 560ms cubic-bezier(.4, 0, .2, 1);
 }
 .clock-merged-container-transition.merge-revealed {
   opacity: 1;
+  /* 出現時: opacity を transform 終盤 (delay 340ms) に当て、220ms ease-in で
+     最後に強く立ち上がる = AM/PM 中央到達と同時に「ガッチャン!」と現れる感。
+     220 + 340 = 560ms で transform と同時着地。
+     transform は overshoot ゼロ (マージ方向は bounce 入れない方針)。 */
+  transition: opacity 220ms cubic-bezier(.6, 0, 1, 1) 340ms,
+              transform 560ms cubic-bezier(.4, 0, .2, 1);
 }
 .settings-button-transition {
   transition: top 560ms cubic-bezier(.34, 1.56, .64, 1),
