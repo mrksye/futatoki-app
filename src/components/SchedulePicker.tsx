@@ -50,8 +50,19 @@ const DRAG_THRESHOLD_SLOW_PX = 6;
 const DRAG_FAST_WINDOW_MS = 80;
 /** マウスホイール感度 (deltaY 1 単位 → リング n° 回転)。 */
 const WHEEL_DEG_PER_DELTA = 0.1;
+/** 1 wheel event ぶんの回転を瞬時に当てると単発ノッチで 10° ジャンプして「カクカク」と感じる。
+ *  累積目標値に向かって ease-out で滑らかに寄せる時間。fast 連射時は前 tween を取り消して新しい
+ *  目標へ重ねるので、速い操作でもラグなく追従する。 */
+const WHEEL_TWEEN_DURATION_MS = 200;
+/** ホイールが止まった (= 最後の event から WHEEL_IDLE_TRIGGER_MS 経過) と判定する idle 時間。
+ *  経過後に慣性発火を試みる。早すぎると連続スクロール途中で発火、遅すぎるとフリック後の余韻
+ *  が遅れる。100ms はノッチ間隔の典型 (200ms+) より短く、フリック連射 (~30ms) より長い。 */
+const WHEEL_IDLE_TRIGGER_MS = 100;
+/** ホイール慣性発火に必要な「直近窓内の累積回転量」(deg)。1 ノッチ (10°) では発火させず、
+ *  2-3 ノッチ相当のフリック級だけ発火させる。 */
+const WHEEL_INERTIA_MIN_TOTAL_DEG = 25;
 
-/** 慣性: 直近 N ms の速度サンプルから初速度を出す (touch flick 用)。 */
+/** 慣性: 直近 N ms の速度サンプルから初速度を出す (drag flick / wheel flick 共通)。 */
 const VELOCITY_WINDOW_MS = 80;
 /** 慣性減衰率 (exp 減衰 / ms)。0.003 で約 1.5 秒で減速完了。 */
 const INERTIA_DECAY_PER_MS = 0.003;
@@ -170,6 +181,10 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
       cancelInertia();
       inertiaCanceledByTap = true;
     }
+    // wheel tween 進行中に drag 始めると tween が画面位置を上書きして指追従が壊れる。終端まで
+    // ジャンプして整合を取ってから drag 開始 (tween 中に拾った wheel ぶんは "今" 当てる)。
+    flushWheelTweenToTarget();
+    cancelWheelIdle();
     dragStart = { x: e.clientX, y: e.clientY, timeStamp: e.timeStamp };
     dragHappened = false;
     velocityHistory = [];
@@ -205,13 +220,13 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     }
   };
 
-  const onPointerUp = (e: PointerEvent) => {
+  const onPointerUp = (_e: PointerEvent) => {
     dragStart = null;
     // 慣性開始 / 停止前に rAF 保留分を取りこぼさず即時反映。
     flushPendingNow();
-    // touch flick 離した瞬間: 直近の平均速度から慣性ループ開始。
-    // mouse/pen は慣性なし (ホイールで操作する想定)。reduce-motion 中もスキップ。
-    if (e.pointerType === "touch" && motionAllowed() && velocityHistory.length > 0) {
+    // フリック離した瞬間: 直近の平均速度から慣性ループ開始 (touch / mouse / pen 共通)。
+    // reduce-motion 中はスキップ。
+    if (motionAllowed() && velocityHistory.length > 0) {
       const totalDeg = velocityHistory.reduce((s, h) => s + h.deltaDeg, 0);
       const oldest = velocityHistory[0]!.time;
       const span = performance.now() - oldest || 1;
@@ -238,17 +253,104 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     closePicker();
   };
 
-  /** ホイール操作は慣性無し。慣性中のホイールはキャンセルしてから新規回転。 */
+  let wheelVelocityHistory: { time: number; deltaDeg: number }[] = [];
+  let wheelIdleTimer: ReturnType<typeof setTimeout> | null = null;
+  const cancelWheelIdle = () => {
+    if (wheelIdleTimer !== null) {
+      clearTimeout(wheelIdleTimer);
+      wheelIdleTimer = null;
+    }
+  };
+
+  /** ホイール tween: 各 event の回転を WHEEL_TWEEN_DURATION_MS ease-out で連続的に足す。連射時は
+   *  前 tween の到達途中値から新目標へ再起動 (= "ばね" っぽく追従)。target null のとき非アクティブ。 */
+  let wheelTweenTarget: number | null = null;
+  let wheelTweenStartTime = 0;
+  let wheelTweenStartRotation = 0;
+  let wheelTweenRaf: number | null = null;
+  const cancelWheelTween = () => {
+    if (wheelTweenRaf !== null) {
+      cancelAnimationFrame(wheelTweenRaf);
+      wheelTweenRaf = null;
+    }
+    wheelTweenTarget = null;
+  };
+  /** tween を残ったまま打ち切ると wheelTweenTarget までの未消化回転が "失われる" (= 慣性が
+   *  足された時に画面上の picker 位置と乖離して overshoot 感)。慣性開始前 / drag 開始前に呼んで、
+   *  tween 終端まで瞬時にジャンプさせて整合性を取る。 */
+  const flushWheelTweenToTarget = () => {
+    if (wheelTweenTarget !== null) {
+      rotatePicker(wheelTweenTarget - pickerRotation());
+    }
+    cancelWheelTween();
+  };
+  const tickWheelTween = () => {
+    if (wheelTweenTarget === null) {
+      wheelTweenRaf = null;
+      return;
+    }
+    const now = performance.now();
+    const t = Math.min(1, (now - wheelTweenStartTime) / WHEEL_TWEEN_DURATION_MS);
+    const eased = 1 - (1 - t) * (1 - t);
+    const targetR = wheelTweenStartRotation + (wheelTweenTarget - wheelTweenStartRotation) * eased;
+    rotatePicker(targetR - pickerRotation());
+    if (t >= 1) {
+      wheelTweenTarget = null;
+      wheelTweenRaf = null;
+      return;
+    }
+    wheelTweenRaf = requestAnimationFrame(tickWheelTween);
+  };
+
+  /** ホイール event ごとに tween 目標を加算 + 速度履歴を貯める。最後の event から
+   *  WHEEL_IDLE_TRIGGER_MS 後に累積回転が閾値超え + 平均速度 ≥ INERTIA_VELOCITY_MIN なら慣性発火。
+   *  慣性中の wheel は cancelInertia で中断 → 新規 tween → そのまま新しい慣性に繋がる (フリック追加加速)。 */
   const onWheel = (e: WheelEvent) => {
     e.preventDefault();
     cancelInertia();
     const sign = e.deltaY > 0 ? 1 : -1;
-    scheduleRotation(sign * Math.abs(e.deltaY) * WHEEL_DEG_PER_DELTA);
+    const deltaDeg = sign * Math.abs(e.deltaY) * WHEEL_DEG_PER_DELTA;
+
+    // tween 目標を累積。前 tween が走ってればその目標に加算、無ければ現在 rotation から開始。
+    const baseTarget = wheelTweenTarget ?? pickerRotation();
+    wheelTweenTarget = baseTarget + deltaDeg;
+    wheelTweenStartTime = performance.now();
+    wheelTweenStartRotation = pickerRotation();
+    if (wheelTweenRaf === null) {
+      wheelTweenRaf = requestAnimationFrame(tickWheelTween);
+    }
+
+    const now = performance.now();
+    wheelVelocityHistory.push({ time: now, deltaDeg });
+    const cutoff = now - VELOCITY_WINDOW_MS;
+    while (wheelVelocityHistory.length > 0 && wheelVelocityHistory[0]!.time < cutoff) {
+      wheelVelocityHistory.shift();
+    }
+
+    cancelWheelIdle();
+    if (!motionAllowed()) return;
+    wheelIdleTimer = setTimeout(() => {
+      wheelIdleTimer = null;
+      if (wheelVelocityHistory.length === 0) return;
+      const totalDeg = wheelVelocityHistory.reduce((s, h) => s + h.deltaDeg, 0);
+      const oldest = wheelVelocityHistory[0]!.time;
+      wheelVelocityHistory = [];
+      if (Math.abs(totalDeg) < WHEEL_INERTIA_MIN_TOTAL_DEG) return;
+      // 速度はサンプル区間内の deg/ms 平均。span が 0 のときは 1ms floor で割る。
+      const span = performance.now() - oldest || 1;
+      const velocity = totalDeg / span;
+      if (Math.abs(velocity) >= INERTIA_VELOCITY_MIN) {
+        flushWheelTweenToTarget();
+        startInertia(velocity);
+      }
+    }, WHEEL_IDLE_TRIGGER_MS);
   };
 
   onCleanup(() => {
     cancelInertia();
     cancelPendingRotation();
+    cancelWheelIdle();
+    cancelWheelTween();
     if (resetMountTimer) clearTimeout(resetMountTimer);
   });
 
