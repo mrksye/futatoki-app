@@ -246,6 +246,14 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
     return props.dimOpacity ?? 0.25;
   };
 
+  /** ばっじモードでは文字盤が白円なので白アイコンが浮く。シール感を出すため group シルエット
+   *  (白円 + 三角ポインタ) に薄い drop-shadow を落とす。くぎりモードは色背景なので不要、
+   *  monotone はミニマル基調なので影を入れない (cardinal 大文字盤化との相性も悪い)。 */
+  const stickerShadow = () =>
+    colorMode() === "badge" && paletteId() !== "monotone"
+      ? "drop-shadow(0 1px 1.4px rgba(0,0,0,0.13))"
+      : undefined;
+
   return (
     <div
       class="absolute inset-0 flex items-center justify-center pointer-events-none"
@@ -289,6 +297,7 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
               opacity={eventOpacity(
                 isWithinVisibilityWindow(props.displayedMinutes, event.minutes),
               )}
+              dropShadow={stickerShadow()}
             />
           )}
         </For>
@@ -400,6 +409,8 @@ interface EventIconProps {
   /** ScheduleLayer が決めたこの event 単体の表示 opacity (0..1)。
    *  .fade-on-dim class で 380ms transition (親 .selection-dim-instant 中は 0ms)。 */
   opacity: number;
+  /** CSS filter 文字列 (drop-shadow 等)。ばっじモードでシール感を出す用。undefined で影なし。 */
+  dropShadow: string | undefined;
 }
 
 /** warning 中に ±4° の往復を継続させる wobble (ホワホワ) アニメ。resetDeleting 中も自分の poof が
@@ -616,6 +627,7 @@ const EventIcon: Component<EventIconProps> = (props) => {
           "pointer-events": "auto",
           cursor: "pointer",
           opacity: props.opacity,
+          filter: props.dropShadow,
         }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
