@@ -430,8 +430,17 @@ interface EventIconProps {
   dropShadow: string | undefined;
 }
 
-/** warning 中に ±4° の往復を継続させる wobble (ホワホワ) アニメ。resetDeleting 中も自分の poof が
- *  始まるまで wobble を続ける (poof 開始時に WAAPI の later-animation-wins で transform が乗っ取られる)。 */
+/** WAAPI の Animation.id (getAnimations() からの識別用)。setupPoofAnim が wobble を狙って cancel する。 */
+const WOBBLE_ANIMATION_ID = "schedule-icon-wobble";
+
+/** warning 中に ±7.5° の往復を継続させる wobble (ホワホワ) アニメ。resetDeleting 中も自分の poof が
+ *  始まるまで wobble を続ける (poof 開始時に setupPoofAnim 側から明示 cancel される)。
+ *
+ *  cancel 設計の経緯: 旧 POOF は `transform: rotate(...) scale(...)` でアニメしていたため WAAPI の
+ *  later-animation-wins で wobble の transform を上書きできていたが、現行 POOF は個別 transform
+ *  プロパティ (rotate / scale / opacity) を使うため transform 上書きが効かない。古い Chromium
+ *  (Chromebook 等) で `transform: rotate` (wobble) と `rotate: 1800deg` (POOF 個別) を同時実行すると
+ *  個別プロパティ側のレンダリングが落ちて回転が見えなくなる症状が出る。明示 cancel に切り替えた。 */
 const setupWobbleAnim = (
   groupRef: () => SVGGElement | undefined,
   isWobbling: () => boolean,
@@ -447,6 +456,7 @@ const setupWobbleAnim = (
         [{ transform: "rotate(-7.5deg)" }, { transform: "rotate(7.5deg)" }],
         { duration: 180, iterations: Infinity, direction: "alternate", easing: "ease-in-out" },
       );
+      if (anim) anim.id = WOBBLE_ANIMATION_ID;
     } else {
       anim?.cancel();
       anim = null;
@@ -457,16 +467,28 @@ const setupWobbleAnim = (
 
 /** deleting 開始で 1 回だけ走るくるくる〜パッ (poof) アニメ。delayMs が指定されている場合は WAAPI の
  *  delay で開始タイミングをずらす (りせっと時の時刻順 stagger 用)。delay 中は wobble が見え続ける。
- *  rotate と scale/opacity は別アニメに分離して、scale phase 中も rotate 速度を一定に保つ。 */
+ *  rotate と scale/opacity は別アニメに分離して、scale phase 中も rotate 速度を一定に保つ。
+ *  自分の poof rotation 開始タイミングで wobble を明示 cancel する (理由は setupWobbleAnim の doc)。 */
 const setupPoofAnim = (
   groupRef: () => SVGGElement | undefined,
   isDeleting: () => boolean,
   delayMs: () => number,
 ) => {
+  let cancelWobbleTimer: ReturnType<typeof setTimeout> | undefined;
   createEffect(on(isDeleting, (deleting) => {
     const g = groupRef();
     if (!g || !deleting) return;
     const delay = delayMs();
+    const cancelWobble = () => {
+      const wobble = g.getAnimations().find((a) => a.id === WOBBLE_ANIMATION_ID);
+      wobble?.cancel();
+    };
+    if (delay === 0) {
+      cancelWobble();
+    } else {
+      if (cancelWobbleTimer) clearTimeout(cancelWobbleTimer);
+      cancelWobbleTimer = setTimeout(cancelWobble, delay);
+    }
     animateMotion(g, POOF_ROTATE_KEYFRAMES, {
       duration: POOF_DURATION_MS,
       easing: "linear",
@@ -480,6 +502,9 @@ const setupPoofAnim = (
       delay,
     });
   }));
+  onCleanup(() => {
+    if (cancelWobbleTimer) clearTimeout(cancelWobbleTimer);
+  });
 };
 
 /** マッチ window 入った瞬間に one-shot ポヨン3 を投入。自動回転で window が 50ms しか開かなくても
