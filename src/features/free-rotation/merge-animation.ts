@@ -8,7 +8,7 @@ import { requestChronostasis } from "../../lib/chronostasis";
  * Public API:
  *   - useMergeAnimation: { mergedVisible, transitioning, mergedRevealed } を返す
  *   - useButtonsDimmedDuringMergeFlip: SettingsPanel 専用 (周辺ボタン dim 用)
- *   - 純関数: amTransform, pmTransform, mergedTransform, splitShadow
+ *   - 純関数: amTransform, pmTransform, mergedTransform
  *
  * mergedVisible は state.ts 側 (isRotating との AND ガード済み accessor)。本モジュールはそれを
  * 観測して transitioning フラグを 620ms 立ち下げ + mergedRevealed (rising edge だけ double rAF
@@ -107,9 +107,6 @@ export const pmTransform = (mergedVisible: boolean, isLandscape: boolean): strin
 
 export const mergedTransform = (mergedVisible: boolean): string =>
   mergedVisible ? "scale(1)" : "scale(0.55)";
-
-export const splitShadow = (transitioning: boolean): string =>
-  transitioning ? "drop-shadow(0 6px 26px rgba(40,28,90,0.35))" : "none";
 
 /**
  * かさね/わけ切替時に周辺ボタンを薄く退避させる SettingsPanel 専用 hook。
