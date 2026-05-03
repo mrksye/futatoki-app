@@ -116,6 +116,9 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
    *  (= 即 closePicker されてしまう)。overlay 自身が pointerdown を見た場合のみ click を有効扱いに
    *  するためのフラグ。 */
   let pointerDownOnOverlay = false;
+  /** pointerdown 座標を click ハンドラまで持ち越す。dragStart は pointerup で null 化されるので
+   *  別途保持。click 時にこの座標が「リング帯」内なら隙間タップ救済として nearest icon に snap する。 */
+  let pointerDownCoords: { x: number; y: number } | null = null;
 
   /** rAF 間引き用の累積。120Hz 端末では 1 frame 内に pointermove が複数発火し、毎回 rotatePicker を
    *  呼ぶと親要素の inline style が同フレーム内で重複書込みされる。次の rAF で 1 回だけ commit する。 */
@@ -186,6 +189,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     flushWheelTweenToTarget();
     cancelWheelIdle();
     dragStart = { x: e.clientX, y: e.clientY, timeStamp: e.timeStamp };
+    pointerDownCoords = { x: e.clientX, y: e.clientY };
     dragHappened = false;
     velocityHistory = [];
     lastAngularRad = Math.atan2(e.clientY - props.origin.y, e.clientX - props.origin.x);
@@ -249,6 +253,27 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     if (dragHappened) {
       dragHappened = false;
       return;
+    }
+    // タップ位置が「リング帯」(中心からの距離が ringRadius ± iconSize) 内なら、角度的に最寄りの
+    // icon に snap して登録する。アイコン本体タップは RingIcon 側 (stopPropagation) で完結するので、
+    // ここに来るのは隙間タップだけ。子供がアイコン中心を外しても拾える救済路。
+    if (pointerDownCoords) {
+      const dx = pointerDownCoords.x - props.origin.x;
+      const dy = pointerDownCoords.y - props.origin.y;
+      const dist = Math.hypot(dx, dy);
+      const innerRadius = ringRadius() - iconSize();
+      const outerRadius = ringRadius() + iconSize();
+      if (dist >= innerRadius && dist <= outerRadius) {
+        const N = SCHEDULE_ICONS.length;
+        const ringRotRad = pickerRotation() * Math.PI / 180;
+        // RingIcon は angleRad = (i/N)*2π - π/2 で配置されるので逆算で nearest index を求める。
+        // 親 ring の rotation を打ち消してからベース角度を i に戻す。
+        const rawIdx = ((Math.atan2(dy, dx) - ringRotRad + Math.PI / 2) / (2 * Math.PI)) * N;
+        const nearest = ((Math.round(rawIdx) % N) + N) % N;
+        setScheduleAt(rotateMinutes(), SCHEDULE_ICONS[nearest]!.id);
+        closePicker();
+        return;
+      }
     }
     closePicker();
   };
