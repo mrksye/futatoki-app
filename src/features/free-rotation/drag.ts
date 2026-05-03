@@ -26,7 +26,7 @@ const VELOCITY_EMA_ALPHA = 0.35;
  *  MAX_VELOCITY_GAIN、間は線形補間。500 px/sec ≒ ゆっくりなぞる速度、2000 px/sec ≒ 強めの flick。 */
 const SLOW_THRESHOLD_PX_PER_MS_REFERENCE = 0.5;
 const FAST_THRESHOLD_PX_PER_MS_REFERENCE = 2.0;
-const MAX_VELOCITY_GAIN = 4.0;
+const MAX_VELOCITY_GAIN = 2.5;
 
 const computeViewportScale = (): number => {
   if (typeof window === "undefined") return 1;
