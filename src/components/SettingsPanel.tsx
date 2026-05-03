@@ -26,8 +26,6 @@ const SettingsPanel: Component = () => {
   const { start: startRewind, stop: stopRewind } = useRewindHold();
   const buttonsDimmed = useButtonsDimmedDuringMergeFlip();
 
-  let yoteiBtnRef: HTMLButtonElement | undefined;
-
   const toggleRotate = () =>
     withViewTransition(() => transition(isRotating() ? "clock" : "freeRotate"));
 
@@ -70,9 +68,11 @@ const SettingsPanel: Component = () => {
           />
 
           {/* よてい (予定追加): MORPHING_SLOT.LEFT を AM/PM バッジ (通常モード) と共有して
-              モード遷移時にブラウザがモーフィング描画する。 */}
+              モード遷移時にブラウザがモーフィング描画する。
+              picker 起点はこのボタン中心。e.currentTarget でその場の要素を渡すことで let-ref を持たず
+              済ませている (parent SettingsPanel が unmount されない一方この button は <Show> で
+              出入りするため、let-ref 方式だと unmount 後に detached button が retain される)。 */}
           <button
-            ref={(el) => { yoteiBtnRef = el; }}
             class={
               "settings-button-transition fixed z-50 " +
               (isLandscape()
@@ -88,7 +88,7 @@ const SettingsPanel: Component = () => {
               opacity: buttonsDimmed() ? 0.08 : 1,
               "view-transition-name": MORPHING_SLOT.LEFT,
             }}
-            onPointerDown={() => yoteiBtnRef && openPickerAtElement(yoteiBtnRef)}
+            onPointerDown={(e) => openPickerAtElement(e.currentTarget as HTMLButtonElement)}
             aria-label={t("schedule.add")}
           />
 

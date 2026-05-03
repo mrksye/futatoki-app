@@ -1,4 +1,4 @@
-import { createEffect, type Accessor, type Component } from "solid-js";
+import { createEffect, onCleanup, type Accessor, type Component } from "solid-js";
 import { detailMode } from "../features/settings/detail-mode";
 import { colorMode } from "../features/settings/color-mode";
 import { paletteId } from "../features/settings/palette";
@@ -9,11 +9,13 @@ import { paletteId } from "../features/settings/palette";
  *
  * shakeKey は「逆回転を試みた」イベントの incrementing counter (resistance.ts)。値が増えるたびに
  * minute hand を WAAPI で短時間 wobble させる (= hour hand と中心ネジは shake しない / 抵抗するのは
- * 長針のみ)。連射時は新しい animate() が直前の animation を上書きするので毎回フレッシュに発火する。
+ * 長針のみ)。連射時は前回 Animation を明示 cancel してから新規 animate を発火させる
+ * (cancel しない場合、unmount 後も Animation が element ref を保持して detached node が retain される)。
  *
  * minuteTickKey は「実時刻の分が切り替わった」イベントの incrementing counter (ClockLayout)。値が
  * 増えるたびに minute hand を進行方向にごく軽くオーバーシュートさせて減衰振動 (ビィィーンッ) を出す。
- * shake と同じ wrapper を共有するため、最新の animate() が前のものを上書きする (実害なし)。
+ * shake と同じ wrapper を共有するが、各 effect が独立した Animation ref を持って互いに干渉しないよう
+ * 個別 cancel する。onCleanup で両方明示 cancel して unmount 時にメモリ解放を確実にする。
  */
 
 interface HandsLayerProps {
@@ -97,15 +99,23 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
   /** shake 発動用の外側 wrapper ref。内側 <g> は SVG transform で角度を持つので、それと compose
    *  させるため別レイヤーに分ける。transform-box: view-box で viewBox 中央 (= clock 中心) を pivot に。 */
   let minuteHandWrapperRef: SVGGElement | undefined;
+  let shakeAnim: Animation | null = null;
+  let minuteTickAnim: Animation | null = null;
   createEffect(() => {
     const key = props.shakeKey?.() ?? 0;
     if (key === 0 || !minuteHandWrapperRef) return; // 初期 mount 時は発火しない
-    minuteHandWrapperRef.animate(SHAKE_KEYFRAMES, SHAKE_TIMING);
+    shakeAnim?.cancel();
+    shakeAnim = minuteHandWrapperRef.animate(SHAKE_KEYFRAMES, SHAKE_TIMING);
   });
   createEffect(() => {
     const key = props.minuteTickKey?.() ?? 0;
     if (key === 0 || !minuteHandWrapperRef) return;
-    minuteHandWrapperRef.animate(MINUTE_TICK_KEYFRAMES, MINUTE_TICK_TIMING);
+    minuteTickAnim?.cancel();
+    minuteTickAnim = minuteHandWrapperRef.animate(MINUTE_TICK_KEYFRAMES, MINUTE_TICK_TIMING);
+  });
+  onCleanup(() => {
+    shakeAnim?.cancel();
+    minuteTickAnim?.cancel();
   });
 
   return (
