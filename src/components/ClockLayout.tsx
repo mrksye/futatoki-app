@@ -30,7 +30,7 @@ import { computeVisibleMinutes, useReleaseSnap } from "../features/free-rotation
 import { MORPHING_SLOT } from "../features/view-transition";
 import { useI18n } from "../i18n";
 import { dragStart, dragAdvance, type DragDragState } from "../features/free-rotation/drag";
-import { wheelAdvance } from "../features/free-rotation/wheel";
+import { wheelAdvance, newWheelVelocityState, resetWheelVelocity } from "../features/free-rotation/wheel";
 import { resistTrigger, notifyResistance } from "../features/free-rotation/resistance";
 import { interaction, enterWarning, cancelWarning } from "../features/schedule/interaction";
 
@@ -305,6 +305,8 @@ export const ClockLayout: Component = () => {
   let wheelTweenStartMinutes = 0;
   let wheelTweenRaf: number | null = null;
   let wheelSessionIdleTimer: ReturnType<typeof setTimeout> | undefined;
+  /** 速度ブースト用の state。session idle で reset して次 session を 0 から立ち上げる。 */
+  const wheelVelocityState = newWheelVelocityState();
   const WHEEL_TWEEN_DURATION_MS = 220;
   const WHEEL_SESSION_IDLE_MS = 600;
 
@@ -343,7 +345,7 @@ export const ClockLayout: Component = () => {
     if (clockMode() !== "freeRotate") return;
     if (dragging()) return;
     e.preventDefault();
-    const result = wheelAdvance(e);
+    const result = wheelAdvance(e, wheelVelocityState);
     if (result.kind === "ignore") return;
     if (result.kind === "resist") {
       notifyResistance();
@@ -360,6 +362,7 @@ export const ClockLayout: Component = () => {
     if (wheelSessionIdleTimer) clearTimeout(wheelSessionIdleTimer);
     wheelSessionIdleTimer = setTimeout(() => {
       wheelTargetFloat = null;
+      resetWheelVelocity(wheelVelocityState);
     }, WHEEL_SESSION_IDLE_MS);
   };
 
