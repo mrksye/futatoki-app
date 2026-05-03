@@ -23,7 +23,6 @@ import {
   amTransform,
   pmTransform,
   mergedTransform,
-  splitShadow,
 } from "../features/free-rotation/merge-animation";
 import { useAmPmPreviewHold } from "../features/debug/am-pm-preview-lock";
 import { computeVisibleMinutes, useReleaseSnap } from "../features/free-rotation/release-snap";
@@ -435,11 +434,12 @@ export const ClockLayout: Component = () => {
             "clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
             (isLandscape() ? "-mr-3" : "-mb-3")
           }
-          classList={{ "selection-dim-instant": selectionDimInstant() }}
+          classList={{
+            "selection-dim-instant": selectionDimInstant(),
+            "merge-hidden": mergedVisible(),
+          }}
           style={{
             transform: amTransform(mergedVisible(), isLandscape()),
-            opacity: mergedVisible() ? 0 : 1,
-            filter: splitShadow(transitioning()),
             "will-change": transitioning() ? "transform, opacity" : "auto",
           }}
         >
@@ -471,11 +471,12 @@ export const ClockLayout: Component = () => {
             "clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
             (isLandscape() ? "-ml-3" : "-mt-3")
           }
-          classList={{ "selection-dim-instant": selectionDimInstant() }}
+          classList={{
+            "selection-dim-instant": selectionDimInstant(),
+            "merge-hidden": mergedVisible(),
+          }}
           style={{
             transform: pmTransform(mergedVisible(), isLandscape()),
-            opacity: mergedVisible() ? 0 : 1,
-            filter: splitShadow(transitioning()),
             "will-change": transitioning() ? "transform, opacity" : "auto",
           }}
         >
@@ -513,11 +514,10 @@ export const ClockLayout: Component = () => {
             "clock-merged-container-transition absolute inset-0 flex items-center justify-center pointer-events-none " +
             (isLandscape() ? "flex-row" : "flex-col")
           }
+          classList={{ "merge-revealed": mergedRevealed() }}
           style={{
-            opacity: mergedRevealed() ? 1 : 0,
             transform: mergedTransform(mergedRevealed()),
             "transform-origin": "center",
-            filter: splitShadow(transitioning()),
             "will-change": transitioning() ? "transform, opacity" : "auto",
             "touch-action": clockMode() === "freeRotate" ? "none" : "auto",
           }}
