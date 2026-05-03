@@ -1,4 +1,4 @@
-import { For, Index, Show, createEffect, createMemo, on } from "solid-js";
+import { For, Index, Show, createEffect, createMemo, on, onCleanup } from "solid-js";
 import type { Component } from "solid-js";
 import { colorMode } from "../features/settings/color-mode";
 import { detailMode } from "../features/settings/detail-mode";
@@ -92,7 +92,9 @@ const BADGE_R_KUWASHIKU = 18;
 const BADGE_R_SUKKIRI = 21;
 
 /** 値が変わった瞬間にバウンスさせる effect。実質 PM 盤面のみ発火 (AM/merged は num 不変で no-op)。
- *  連打時に前のバウンスが残らないよう cancel してから start する。 */
+ *  連打時に前のバウンスが残らないよう cancel してから start する。
+ *  unmount 時にも明示 cancel して、Animation オブジェクトが element ref を retain して detached
+ *  node が残るのを防ぐ。 */
 const setupNumberBounce = (
   groupRefGetter: () => SVGGElement | undefined,
   num: () => number,
@@ -107,11 +109,13 @@ const setupNumberBounce = (
       easing: "ease-out",
     });
   }, { defer: true }));
+  onCleanup(() => anim?.cancel());
 };
 
 /** PM の position 0 (てっぺんの 12) のみ発動する「12 ドゥンドゥドゥンッ × 2」effect。num 不変で
  *  setupNumberBounce が走らないので、代わりに 2 サイクル分弾ませて「12 を足す」操作の主役を示す。
- *  text fill をネオン緑に点滅、group scale を波形で弾ませる (互いに transform 取り合いは起きない)。 */
+ *  text fill をネオン緑に点滅、group scale を波形で弾ませる (互いに transform 取り合いは起きない)。
+ *  unmount 時にも明示 cancel して Animation の element retention を断つ。 */
 const setupTwelveDun = (
   period: () => "am" | "pm" | "merged",
   position: number,
@@ -137,6 +141,10 @@ const setupTwelveDun = (
       easing: "ease-in-out",
     });
   }, { defer: true }));
+  onCleanup(() => {
+    pulseAnim?.cancel();
+    pulseScaleAnim?.cancel();
+  });
 };
 
 interface ClockFaceProps {
