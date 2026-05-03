@@ -26,8 +26,10 @@ type Interaction =
   | { type: "resetDeleting" };
 
 const WARNING_AUTO_CANCEL_MS = 3000;
-/** くるくる削除アニメの全体 duration と揃える (ScheduleLayer の POOF_DURATION_MS)。 */
-const DELETE_ANIMATION_MS = 900;
+/** くるくる削除アニメの全体 duration。ScheduleLayer の POOF アニメ keyframes と必ず一致させる
+ *  (アニメ完了前に data を消すと EventIcon の `<Show when={def()}>` が unmount してアニメが
+ *  途切れる)。export して ScheduleLayer 側に POOF_DURATION_MS として import させる single source。 */
+export const DELETE_ANIMATION_MS = 1500;
 /** りせっと削除時の 1 イベントあたり stagger (時刻順)。 */
 export const RESET_STAGGER_MS = 50;
 
