@@ -11,6 +11,8 @@ import {
 } from "../features/schedule/interaction";
 import { isRotating } from "../features/free-rotation/state";
 import { detailMode } from "../features/settings/detail-mode";
+import { colorMode } from "../features/settings/color-mode";
+import { paletteId } from "../features/settings/palette";
 import { animateMotion } from "../lib/motion";
 
 /**
@@ -49,6 +51,10 @@ const CENTER = VIEW / 2;
 
 const ICON_RADIUS_KUWASHIKU = 84;
 const ICON_RADIUS_SUKKIRI = 94;
+/** monotone × badge は cardinal 数字 (12/3/6/9 と PM の 12/15/18/21) を内側に大きく配置する特別仕様で、
+ *  通常半径ではアイコンと数字が radial に被る。アイコンを cardinal 内端より中心側へ寄せる。 */
+const ICON_RADIUS_KUWASHIKU_MONOTONE_BADGE = 64;
+const ICON_RADIUS_SUKKIRI_MONOTONE_BADGE = 72;
 const ICON_SIZE_KUWASHIKU = 18;
 const ICON_SIZE_SUKKIRI = 24;
 /** font-size に対する白背景円の半径比 (em-box 外接円 √2/2 ≈ 0.707 より少し小さく抑える)。 */
@@ -143,7 +149,13 @@ const DELETE_BUTTON_RADIUS = 7;
 
 const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
   const isKuwashiku = () => detailMode() === "kuwashiku";
-  const iconRadius = () => isKuwashiku() ? ICON_RADIUS_KUWASHIKU : ICON_RADIUS_SUKKIRI;
+  const isMonotoneBadge = () => colorMode() === "badge" && paletteId() === "monotone";
+  const iconRadius = () => {
+    if (isMonotoneBadge()) {
+      return isKuwashiku() ? ICON_RADIUS_KUWASHIKU_MONOTONE_BADGE : ICON_RADIUS_SUKKIRI_MONOTONE_BADGE;
+    }
+    return isKuwashiku() ? ICON_RADIUS_KUWASHIKU : ICON_RADIUS_SUKKIRI;
+  };
   const iconFontSize = () => isKuwashiku() ? ICON_SIZE_KUWASHIKU : ICON_SIZE_SUKKIRI;
   const iconBgRadius = () => iconFontSize() * ICON_BG_RADIUS_RATIO;
 
