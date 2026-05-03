@@ -8,6 +8,7 @@ import {
   triggerDelete,
   triggerResetDelete,
   RESET_STAGGER_MS,
+  DELETE_ANIMATION_MS,
 } from "../features/schedule/interaction";
 import { isRotating } from "../features/free-rotation/state";
 import { detailMode } from "../features/settings/detail-mode";
@@ -95,12 +96,28 @@ const MATCH_LOOP_KEYFRAMES: Keyframe[] = [
   { transform: "scale(1) rotate(0deg)",     offset: 1 },
 ];
 
-/** くるくる〜パッ (削除アニメ)。0..65% で 720° 回転、65..100% で +360° しながら scale/opacity を 0 へ。 */
-const POOF_DURATION_MS = 900;
-const POOF_KEYFRAMES: Keyframe[] = [
-  { transform: "rotate(0deg) scale(1)", opacity: 1, offset: 0 },
-  { transform: "rotate(720deg) scale(1)", opacity: 1, offset: 0.65 },
-  { transform: "rotate(1080deg) scale(0)", opacity: 0, offset: 1 },
+/** くるくる〜パッ (削除アニメ)。回転は全期間 linear で等速 (約 300ms/回転 = 1200°/sec)、scale/opacity は
+ *  shrink phase に入るまで hold してから 0 へ。「ぐるぐるぐる→ふわぁ〜っと消える」を演出する。
+ *  rotate と scale を同じ keyframe にまとめると shrink phase の時間が長いほど rotation の傾きも緩む
+ *  (= 急激にスローに見える) ので、WAAPI の individual transform property (rotate / scale は独立 CSS
+ *  プロパティで transform shorthand と合成される) で 2 アニメに分離する。
+ *  duration は interaction.ts の DELETE_ANIMATION_MS を single source として import する
+ *  (ずれると data 削除がアニメ前に走って icon が unmount されて途切れる)。 */
+const POOF_DURATION_MS = DELETE_ANIMATION_MS;
+/** rotation phase が終わって shrink phase に入る相対位置 (= rotation phase 長さ / 全体)。
+ *  rotation 900ms / 全体 1500ms → 0.6。 */
+const POOF_SHRINK_START_OFFSET = 0.6;
+/** 回転速度 (deg/ms)。3 回転 (1080°) を 900ms で = 1.2 deg/ms。全期間この速度をキープする。 */
+const POOF_ROTATION_SPEED_DEG_PER_MS = 1.2;
+const POOF_TOTAL_ROTATION_DEG = POOF_ROTATION_SPEED_DEG_PER_MS * POOF_DURATION_MS;
+const POOF_ROTATE_KEYFRAMES: Keyframe[] = [
+  { rotate: "0deg" },
+  { rotate: `${POOF_TOTAL_ROTATION_DEG}deg` },
+];
+const POOF_SHRINK_KEYFRAMES: Keyframe[] = [
+  { scale: 1, opacity: 1, offset: 0 },
+  { scale: 1, opacity: 1, offset: POOF_SHRINK_START_OFFSET },
+  { scale: 0, opacity: 0, offset: 1 },
 ];
 
 /** イヤヤン (削除拒否の身振り、暫定)。clock モードで長押しされた時に削除する代わりに発火。
@@ -427,7 +444,7 @@ const setupWobbleAnim = (
       anim?.cancel();
       anim = animateMotion(
         g,
-        [{ transform: "rotate(-4deg)" }, { transform: "rotate(4deg)" }],
+        [{ transform: "rotate(-7.5deg)" }, { transform: "rotate(7.5deg)" }],
         { duration: 180, iterations: Infinity, direction: "alternate", easing: "ease-in-out" },
       );
     } else {
@@ -439,7 +456,8 @@ const setupWobbleAnim = (
 };
 
 /** deleting 開始で 1 回だけ走るくるくる〜パッ (poof) アニメ。delayMs が指定されている場合は WAAPI の
- *  delay で開始タイミングをずらす (りせっと時の時刻順 stagger 用)。delay 中は wobble が見え続ける。 */
+ *  delay で開始タイミングをずらす (りせっと時の時刻順 stagger 用)。delay 中は wobble が見え続ける。
+ *  rotate と scale/opacity は別アニメに分離して、scale phase 中も rotate 速度を一定に保つ。 */
 const setupPoofAnim = (
   groupRef: () => SVGGElement | undefined,
   isDeleting: () => boolean,
@@ -448,11 +466,19 @@ const setupPoofAnim = (
   createEffect(on(isDeleting, (deleting) => {
     const g = groupRef();
     if (!g || !deleting) return;
-    animateMotion(
-      g,
-      POOF_KEYFRAMES,
-      { duration: POOF_DURATION_MS, easing: "linear", fill: "forwards", delay: delayMs() },
-    );
+    const delay = delayMs();
+    animateMotion(g, POOF_ROTATE_KEYFRAMES, {
+      duration: POOF_DURATION_MS,
+      easing: "linear",
+      fill: "forwards",
+      delay,
+    });
+    animateMotion(g, POOF_SHRINK_KEYFRAMES, {
+      duration: POOF_DURATION_MS,
+      easing: "linear",
+      fill: "forwards",
+      delay,
+    });
   }));
 };
 
