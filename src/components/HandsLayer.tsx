@@ -68,11 +68,14 @@ const HAND_FACTORS: Record<ModeKey, { hour: number; minute: number }> = {
   "sukkiri-badge":    { hour: 0.45, minute: 0.73 },
 };
 
-/** monotone × badge は「文字盤自体がバッジ化」する特別仕様。短針は cardinal 数字の縁ギリギリ、
- *  長針は円盤縁のメモリ縁ギリギリまで届かせる。NUM_R/R が高めなので factor を大きく取る。 */
+/** monotone × badge は「文字盤自体がバッジ化」する特別仕様。
+ *  - 長針: 円盤縁の minute tick 内端ギリギリ。
+ *  - 短針: cardinal 数字の inner edge に round linecap (stroke radius 5) がちょうど触れる位置。
+ *    PM 24h の "15"/"21" を含む最も内側に来る "3"/"9" 位置の inner edge を基準に決める。
+ *  通常モードの hour:minute 比 (~0.61) にも自然に揃う。 */
 const MONOTONE_BADGE_FACTORS: Record<"kuwashiku" | "sukkiri", { hour: number; minute: number }> = {
-  "kuwashiku": { hour: 0.62, minute: 0.94 },
-  "sukkiri":   { hour: 0.62, minute: 0.95 },
+  "kuwashiku": { hour: 0.58, minute: 0.94 },
+  "sukkiri":   { hour: 0.60, minute: 0.95 },
 };
 
 const HandsLayer: Component<HandsLayerProps> = (props) => {
