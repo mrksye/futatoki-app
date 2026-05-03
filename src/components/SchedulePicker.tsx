@@ -40,8 +40,14 @@ const APPEAR_DURATION_MS = 280;
  *  りせっとを誤発火するのを防ぐ意味も兼ねる (DOM に居なければ click は絶対に当たらない)。 */
 const RESET_BUTTON_MOUNT_DELAY_MS = (SCHEDULE_ICONS.length - 1) * STAGGER_MS + APPEAR_DURATION_MS;
 
-/** 「ドラッグ」と「タップ」を区別する閾値 (px)。 */
-const DRAG_THRESHOLD_PX = 5;
+/** 「ドラッグ」と「タップ」を区別する閾値。タップの drift と意図的なドラッグを両取りするため
+ *  時間軸を入れる: pointerdown 直後 (FAST_WINDOW_MS 以内) に動いたら swipe intent と判定して
+ *  低い閾値で確定、それより遅れて動いた場合は drift の可能性を考慮して高い閾値を要求する。
+ *  このアプリは「長押ししてからドラッグ」する操作が無く、ドラッグはすぐ指を動かすので
+ *  fast path のリスクは低い。 */
+const DRAG_THRESHOLD_FAST_PX = 2;
+const DRAG_THRESHOLD_SLOW_PX = 6;
+const DRAG_FAST_WINDOW_MS = 80;
 /** マウスホイール感度 (deltaY 1 単位 → リング n° 回転)。 */
 const WHEEL_DEG_PER_DELTA = 0.1;
 
@@ -88,7 +94,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
    *  始めて stagger を即見せる)。 */
   const staggerStartIndex = () => isLandscape() ? 3 : 0;
 
-  let dragStart: { x: number; y: number } | null = null;
+  let dragStart: { x: number; y: number; timeStamp: number } | null = null;
   let dragHappened = false;
   let lastAngularRad = 0;
   let velocityHistory: { time: number; deltaDeg: number }[] = [];
@@ -164,7 +170,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
       cancelInertia();
       inertiaCanceledByTap = true;
     }
-    dragStart = { x: e.clientX, y: e.clientY };
+    dragStart = { x: e.clientX, y: e.clientY, timeStamp: e.timeStamp };
     dragHappened = false;
     velocityHistory = [];
     lastAngularRad = Math.atan2(e.clientY - props.origin.y, e.clientX - props.origin.x);
@@ -174,7 +180,10 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
     if (!dragStart) return;
     if (!dragHappened) {
       const dist = Math.hypot(e.clientX - dragStart.x, e.clientY - dragStart.y);
-      if (dist < DRAG_THRESHOLD_PX) return;
+      const elapsed = e.timeStamp - dragStart.timeStamp;
+      const isFastIntent = elapsed < DRAG_FAST_WINDOW_MS && dist >= DRAG_THRESHOLD_FAST_PX;
+      const isLongDrag = dist >= DRAG_THRESHOLD_SLOW_PX;
+      if (!isFastIntent && !isLongDrag) return;
       dragHappened = true;
     }
 
