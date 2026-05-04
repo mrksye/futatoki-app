@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "Jam untuk anak | Futatoki App",
+    "description": "Lihat panduan lengkap dan tips mengajar di futatoki.app. Versi app dari Futatoki Jam."
+  },
   "settings": {
     "hour24": "24j",
     "hour12": "12j",

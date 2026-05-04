@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "Часы для детей | Futatoki Приложение",
+    "description": "Полное руководство и советы по обучению на futatoki.app. Версия-приложение Futatoki Часы."
+  },
   "settings": {
     "hour24": "24ч",
     "hour12": "12ч",

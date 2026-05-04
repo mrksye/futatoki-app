@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "बच्चों की घड़ी | Futatoki ऐप",
+    "description": "पूरी गाइड और सिखाने के तरीके futatoki.app पर। Futatoki घड़ी का ऐप संस्करण।"
+  },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",
