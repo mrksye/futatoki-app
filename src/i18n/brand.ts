@@ -115,13 +115,17 @@ export const APP_EXTRA_VARIANTS: Record<string, readonly string[]> = {
 };
 
 /**
- * LP HomePage.astro の BRAND_VARIANTS と概ね同期。JSON-LD alternateName で
+ * LP HomePage.astro の BRAND_VARIANTS と同期。JSON-LD alternateName で
  * 全 locale variants を flatten して使う。
  *
- * 例外: ja の短縮単独「ふたとき」は alternateName 配列から外す (Google が
- * 「ふたとき = 二刻」の文脈不明なクエリにブランドを出す副作用を避けるため、
- * 短縮形はカタカナ「フタトキ」と Latin「Futatoki」だけに絞る)。LP 側は
- * 別途追従修正する。
+ * 短縮単独「ふたとき」は LP / アプリ両側から削除済み (Google が
+ * 「ふたとき = 二刻 (古語)」の文脈不明なクエリにブランドを出す副作用を
+ * 避けるため、短縮形はカタカナ「フタトキ」と Latin「Futatoki」に絞る)。
+ *
+ * 表記揺れ網羅 (連濁 / Latin / カナ混在) はアプリ側 APP_EXTRA_VARIANTS
+ * に集約し、LP 側はクリーンな本体表記のみ保つ方針。Google は LP/アプリ
+ * 両 page の structured data から cluster を学習するので、両方で網羅
+ * する必要はない。
  */
 export const LP_BRAND_VARIANTS: Record<string, readonly string[]> = {
   ja: ["フタトキ時計", "ふたとき時計", "フタトキ"],
