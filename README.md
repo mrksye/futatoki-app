@@ -1,9 +1,9 @@
-# Futatoki the clock
+# Futatoki the Clock
 
 A free, open-source educational analog clock web app for children aged 1-7, where each hour is represented by a distinct color.
 
 <!-- TODO: add docs/screenshot-hero.png and uncomment
-[![Futatoki the clock screenshot](docs/screenshot-hero.png)](https://futatoki.app/)
+[![Futatoki the Clock screenshot](docs/screenshot-hero.png)](https://futatoki.app/)
 -->
 
 🌐 [Try it live](https://play.futatoki.app/) · 📖 [Learn more](https://futatoki.app/) · 📚 [Usage guide](https://futatoki.app/guide)
@@ -79,7 +79,7 @@ Translations live in `src/i18n/resources/` as JSON files (one per language). `ja
 
 MIT — see [LICENSE](./LICENSE)
 
-The name "Futatoki" / "Futatoki the clock" and the project's branding are not covered by the MIT License — see [NOTICE](./NOTICE) for details.
+The name "Futatoki" / "Futatoki the Clock" and the project's branding are not covered by the MIT License — see [NOTICE](./NOTICE) for details.
 
 ## About
 
