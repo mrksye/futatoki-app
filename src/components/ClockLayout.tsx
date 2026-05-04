@@ -433,11 +433,10 @@ export const ClockLayout: Component = () => {
         {/* 負マージンで中央へオーバーラップ → 盤面サイズを保ちつつ四隅にボタン余白を作る */}
         <div
           ref={amWrapperRef}
-          class={
-            "clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
-            (isLandscape() ? "-mr-3" : "-mb-3")
-          }
+          class="clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
           classList={{
+            "-mr-3": isLandscape(),
+            "-mb-3": !isLandscape(),
             "selection-dim-instant": selectionDimInstant(),
             "merge-hidden": mergedVisible(),
           }}
@@ -470,11 +469,10 @@ export const ClockLayout: Component = () => {
 
         <div
           ref={pmWrapperRef}
-          class={
-            "clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0 " +
-            (isLandscape() ? "-ml-3" : "-mt-3")
-          }
+          class="clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
           classList={{
+            "-ml-3": isLandscape(),
+            "-mt-3": !isLandscape(),
             "selection-dim-instant": selectionDimInstant(),
             "merge-hidden": mergedVisible(),
           }}
@@ -514,11 +512,12 @@ export const ClockLayout: Component = () => {
             別 subtree なので touch-action が継承されない)。 */}
         <div
           ref={mergedContainerRef}
-          class={
-            "clock-merged-container-transition absolute inset-0 flex items-center justify-center pointer-events-none " +
-            (isLandscape() ? "flex-row" : "flex-col")
-          }
-          classList={{ "merge-revealed": mergedRevealed() }}
+          class="clock-merged-container-transition absolute inset-0 flex items-center justify-center pointer-events-none"
+          classList={{
+            "flex-row": isLandscape(),
+            "flex-col": !isLandscape(),
+            "merge-revealed": mergedRevealed(),
+          }}
           style={{
             transform: mergedTransform(mergedRevealed()),
             "transform-origin": "center",
