@@ -11,8 +11,6 @@
     "mergeToSingle": "stack",
     "splitToTwo": "split",
     "rewindMinute": "back 1 min",
-    "styleToCrank": "crank",
-    "styleToDrag": "drag",
     "autoStart": "auto",
     "autoStop": "stop",
     "random": "random"

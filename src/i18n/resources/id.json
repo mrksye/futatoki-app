@@ -11,8 +11,6 @@
     "mergeToSingle": "tumpuk",
     "splitToTwo": "pisah",
     "rewindMinute": "mundur 1 menit",
-    "styleToCrank": "engkol",
-    "styleToDrag": "geser",
     "autoStart": "otomatis",
     "autoStop": "stop",
     "random": "acak"
