@@ -1,5 +1,6 @@
 import {
   createContext,
+  createEffect,
   createResource,
   useContext,
   Show,
@@ -10,6 +11,7 @@ import * as i18n from "@solid-primitives/i18n";
 import IntlMessageFormat from "intl-messageformat";
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE, SOURCE_LOCALE, type LocaleMeta } from "./locales";
 import { detectLocale } from "./detect";
+import { applyDocumentMetadata } from "./document-metadata";
 import jaDict from "./resources/ja.json";
 
 export type Dict = typeof jaDict;
@@ -87,6 +89,11 @@ export function I18nProvider(props: { children: JSX.Element }) {
 
   const t: I18nContextValue["t"] = (key, values) =>
     (translate(key as never, values as never) as string | undefined) ?? key;
+
+  createEffect(() => {
+    const resolved = dict();
+    if (resolved) applyDocumentMetadata(meta, resolved);
+  });
 
   return (
     <I18nContext.Provider value={{ locale: () => meta, t }}>

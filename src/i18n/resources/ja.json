@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "こどもの時計｜フタトキアプリ",
+    "description": "詳しい使い方や教え方は futatoki.app で紹介中。フタトキ時計のアプリ版。"
+  },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",
