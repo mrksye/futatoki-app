@@ -11,8 +11,6 @@
     "mergeToSingle": "juntar",
     "splitToTwo": "separar",
     "rewindMinute": "voltar 1 min",
-    "styleToCrank": "manivela",
-    "styleToDrag": "arrastar",
     "autoStart": "auto",
     "autoStop": "parar",
     "random": "sorteio"
