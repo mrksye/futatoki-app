@@ -1,4 +1,4 @@
-# Contributing to Futatoki the clock
+# Contributing to Futatoki the Clock
 
 Thanks for your interest! All contributions are welcome, from fixing a typo to adding a new language.
 
