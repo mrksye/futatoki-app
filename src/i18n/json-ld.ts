@@ -1,5 +1,5 @@
 import type { LocaleMeta } from "./locales";
-import { APP_BRAND, LP_BRAND_VARIANTS } from "./brand";
+import { APP_BRAND, APP_EXTRA_VARIANTS, LP_BRAND_VARIANTS } from "./brand";
 
 const SOURCE = "ja";
 const APP_URL = "https://play.futatoki.app/";
@@ -8,16 +8,20 @@ const APP_URL = "https://play.futatoki.app/";
  * <script type="application/ld+json"> の payload。
  *
  * - name は APP_BRAND[locale] (アプリ版表記)。
- * - alternateName は LP の全 locale BRAND_VARIANTS を flatten + "Futatoki" 短縮形、
- *   ただし name と重複する値は除外し、配列内の重複も除く。これにより
- *   Google が「フタトキ時計 / Futatoki the Clock / 各国語の本体表記」を
- *   このアプリの別名として認識する (LP との SEO 整合)。
+ * - alternateName は LP_BRAND_VARIANTS と APP_EXTRA_VARIANTS を全 locale 分
+ *   flatten + "Futatoki" 短縮形、ただし name と重複する値は除外し、配列内の
+ *   重複も除く。これにより Google が「フタトキ時計 / Futatoki the Clock /
+ *   各国語の本体表記 / アプリ独自の表記揺れ」を全部このアプリの別名として
+ *   認識する (LP との SEO 整合 + 表記揺れ網羅)。
  * - description は resources の meta.description を流用。
  * - inLanguage は BCP47 タグそのまま。
  */
 function buildJsonLd(locale: LocaleMeta, description: string) {
   const name = APP_BRAND[locale.code] ?? APP_BRAND[SOURCE];
-  const allVariants = Object.values(LP_BRAND_VARIANTS).flat();
+  const allVariants = [
+    ...Object.values(LP_BRAND_VARIANTS).flat(),
+    ...Object.values(APP_EXTRA_VARIANTS).flat(),
+  ];
   const alternateName = [...allVariants, "Futatoki"].filter(
     (value, index, array) =>
       value !== name && array.indexOf(value) === index,

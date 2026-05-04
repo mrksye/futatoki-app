@@ -90,12 +90,41 @@ export const OG_LOCALE: Record<string, string> = {
 };
 
 /**
- * LP HomePage.astro の BRAND_VARIANTS と同じ構造。JSON-LD alternateName で
- * 全 locale variants を flatten して使う。アプリの SEO 整合のため LP 全
- * 表記をそのまま参照する。
+ * アプリ独自の SEO 補強用 variants。LP_BRAND_VARIANTS と分離して持ち、
+ * JSON-LD alternateName 構築時に両方 flatten する。
+ *
+ * ja の場合: 商品名の正式読みが「フタトキトケイ」(連濁なし) か「フタトキドケイ」
+ * (連濁あり、腹時計 / 目覚まし時計 / 鳩時計 の慣習) かまだ定まり切っていないため、
+ * カナ (フタトキ / ふたとき / Futatoki) × 時計表記 (とけい / どけい) の組合せで
+ * 表記揺れを全網羅する。これにより Google は「フタトキ時計 / Futatoki the Clock /
+ * フタトキとけい / ふたどけい」等を同一 entity として cluster できる。
+ *
+ * Schema.org alternateName は entity の表記揺れ全部入れるのが本来用途で、
+ * 商品名 variants の網羅は spam 判定にはならない。
+ */
+export const APP_EXTRA_VARIANTS: Record<string, readonly string[]> = {
+  ja: [
+    "Futatoki時計",
+    "フタトキとけい",
+    "ふたときとけい",
+    "Futatokiとけい",
+    "フタトキどけい",
+    "ふたときどけい",
+    "Futatokiどけい",
+  ],
+};
+
+/**
+ * LP HomePage.astro の BRAND_VARIANTS と概ね同期。JSON-LD alternateName で
+ * 全 locale variants を flatten して使う。
+ *
+ * 例外: ja の短縮単独「ふたとき」は alternateName 配列から外す (Google が
+ * 「ふたとき = 二刻」の文脈不明なクエリにブランドを出す副作用を避けるため、
+ * 短縮形はカタカナ「フタトキ」と Latin「Futatoki」だけに絞る)。LP 側は
+ * 別途追従修正する。
  */
 export const LP_BRAND_VARIANTS: Record<string, readonly string[]> = {
-  ja: ["フタトキ時計", "ふたとき時計", "フタトキ", "ふたとき"],
+  ja: ["フタトキ時計", "ふたとき時計", "フタトキ"],
   en: ["Futatoki the Clock"],
   "zh-CN": ["Futatoki 一双时钟"],
   "zh-TW": ["Futatoki 一雙時鐘"],
