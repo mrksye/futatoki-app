@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "Horloge pour enfants | Futatoki App",
+    "description": "Voir futatoki.app pour le guide complet et les conseils pédagogiques. Version appli de Futatoki Horloge."
+  },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",

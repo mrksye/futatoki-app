@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "ساعت برای کودکان | Futatoki برنامه",
+    "description": "برای راهنمای کامل و نکات آموزشی به futatoki.app مراجعه کنید. نسخهٔ برنامهٔ Futatoki ساعت."
+  },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",

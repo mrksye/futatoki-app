@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "ساعة للأطفال | Futatoki تطبيق",
+    "description": "للدليل الكامل ونصائح التعليم، تفضّل بزيارة futatoki.app. النسخة التطبيقية من Futatoki ساعة."
+  },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",

@@ -30,7 +30,7 @@ export function applyDocumentMetadata(
   if (!title || !description) return;
 
   const siteName = APP_BRAND[locale.code] ?? APP_BRAND[SOURCE];
-  const appleTitle = APPLE_TITLE[locale.code] ?? APPLE_TITLE[SOURCE];
+  const appleTitle = APPLE_TITLE[locale.code] ?? "Futatoki";
   const ogLocale = OG_LOCALE[locale.code] ?? OG_LOCALE[SOURCE];
 
   document.title = title;

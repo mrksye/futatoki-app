@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "Zegar dla dzieci | Futatoki Aplikacja",
+    "description": "Pełny przewodnik i wskazówki dydaktyczne na futatoki.app. Wersja aplikacji Futatoki Zegar."
+  },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",

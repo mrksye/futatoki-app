@@ -1,0 +1,17 @@
+{
+  "name": "Futatoki 一雙時鐘",
+  "short_name": "Futatoki",
+  "description": "兒童益智指針時鐘 app，每小時一種顏色，在瀏覽器中運作。",
+  "lang": "zh-TW",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#f8f0e8",
+  "background_color": "#f8f0e8",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

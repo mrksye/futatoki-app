@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "儿童时钟｜Futatoki 应用",
+    "description": "详细的使用方法和教学建议请见 futatoki.app。Futatoki 一双时钟的应用版。"
+  },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",

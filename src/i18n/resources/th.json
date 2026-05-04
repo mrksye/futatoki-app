@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "นาฬิกาสำหรับเด็ก | Futatoki แอป",
+    "description": "คู่มือฉบับเต็มและคำแนะนำการสอนที่ futatoki.app เวอร์ชันแอปของ Futatoki นาฬิกา"
+  },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",

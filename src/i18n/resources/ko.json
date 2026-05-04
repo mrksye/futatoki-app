@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "어린이 시계 | Futatoki 앱",
+    "description": "자세한 사용법과 지도법은 futatoki.app에서 소개 중. Futatoki 시계의 앱 버전."
+  },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",
