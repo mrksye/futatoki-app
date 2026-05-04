@@ -12,6 +12,7 @@ import IntlMessageFormat from "intl-messageformat";
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE, SOURCE_LOCALE, type LocaleMeta } from "./locales";
 import { detectLocale } from "./detect";
 import { applyDocumentMetadata } from "./document-metadata";
+import { applyJsonLd } from "./json-ld";
 import jaDict from "./resources/ja.json";
 
 export type Dict = typeof jaDict;
@@ -92,7 +93,9 @@ export function I18nProvider(props: { children: JSX.Element }) {
 
   createEffect(() => {
     const resolved = dict();
-    if (resolved) applyDocumentMetadata(meta, resolved);
+    if (!resolved) return;
+    applyDocumentMetadata(meta, resolved);
+    applyJsonLd(meta, resolved);
   });
 
   return (
