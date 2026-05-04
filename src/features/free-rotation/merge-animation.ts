@@ -108,8 +108,12 @@ export const pmTransform = (mergedVisible: boolean, isLandscape: boolean): strin
     : "translateY(-50%) scale(0.96)";
 };
 
+/** merged container の scale 範囲。マージ向は overshoot ゼロ + WAAPI 着地振動で物理感を出す
+ *  設計なので、scale を大きく縮める必要がない。広げると opacity ease-in 立ち上がり序盤
+ *  (opacity がまだ 0.05~0.2 のうっすら値のあたり) で小さい時計がチラ見えする。
+ *  0.85 まで狭めて、見えるタイミングではほぼ完成サイズに居るようにする。 */
 export const mergedTransform = (mergedVisible: boolean): string =>
-  mergedVisible ? "scale(1)" : "scale(0.55)";
+  mergedVisible ? "scale(1)" : "scale(0.85)";
 
 /**
  * merged container 着地時に「ガチャ」の物理振動を WAAPI で載せる hook。
