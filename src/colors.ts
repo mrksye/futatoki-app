@@ -163,23 +163,23 @@ export const palettes: Palette[] = [
   {
     id: "wheel",
     am: [
-      { bg: "#D63384", badge: "#E64394", text: "#ffffff" }, // 0時(12) マゼンタ  320°
-      { bg: "#E63946", badge: "#F64956", text: "#ffffff" }, // 1時  あか        355°
-      { bg: "#FF4D2B", badge: "#FF5D3B", text: "#ffffff" }, // 2時  しゅ          8°
-      { bg: "#FFA500", badge: "#FFB510", text: "#1a1a1a" }, // 3時  だいだい     39°
-      { bg: "#FFD60A", badge: "#FFE61A", text: "#1a1a1a" }, // 4時  き           52°
-      { bg: "#D4DC1F", badge: "#E4EC2F", text: "#1a1a1a" }, // 5時  きみどり     65°
-      { bg: "#5DAA34", badge: "#6DBA44", text: "#ffffff" }, // 6時  わかくさ    100°
-      { bg: "#2E9D5E", badge: "#3EAD6E", text: "#ffffff" }, // 7時  みどり      140°
-      { bg: "#20C997", badge: "#30D9A7", text: "#1a1a1a" }, // 8時  ターコイズ  165°
-      { bg: "#18A2D9", badge: "#28B2E9", text: "#ffffff" }, // 9時  シアン      195°
-      { bg: "#2563C8", badge: "#3573D8", text: "#ffffff" }, // 10時 あお        220°
-      { bg: "#7E57C2", badge: "#8E67D2", text: "#ffffff" }, // 11時 むらさき    265°
+      { bg: "#D63384", badge: "#E64394", text: "#ffffff" }, // 0時(12) マゼンタ
+      { bg: "#E21C3D", badge: "#F22C4D", text: "#ffffff" }, // 1時  あか
+      { bg: "#E0623F", badge: "#F0724F", text: "#ffffff" }, // 2時  テラコッタ
+      { bg: "#FFA500", badge: "#FFB510", text: "#1a1a1a" }, // 3時  だいだい
+      { bg: "#FFD60A", badge: "#FFE61A", text: "#1a1a1a" }, // 4時  き
+      { bg: "#D4DC1F", badge: "#E4EC2F", text: "#1a1a1a" }, // 5時  きみどり
+      { bg: "#5DAA34", badge: "#6DBA44", text: "#ffffff" }, // 6時  わかくさ
+      { bg: "#2E9D5E", badge: "#3EAD6E", text: "#ffffff" }, // 7時  みどり
+      { bg: "#20C997", badge: "#30D9A7", text: "#1a1a1a" }, // 8時  ターコイズ
+      { bg: "#18A2D9", badge: "#28B2E9", text: "#ffffff" }, // 9時  シアン
+      { bg: "#2563C8", badge: "#3573D8", text: "#ffffff" }, // 10時 あお
+      { bg: "#7E57C2", badge: "#8E67D2", text: "#ffffff" }, // 11時 むらさき
     ],
     pm: [
       { bg: "#D63384", badge: "#E64394", text: "#ffffff" }, // 12時 マゼンタ
-      { bg: "#E63946", badge: "#F64956", text: "#ffffff" }, // 13時 あか
-      { bg: "#FF4D2B", badge: "#FF5D3B", text: "#ffffff" }, // 14時 しゅ
+      { bg: "#E21C3D", badge: "#F22C4D", text: "#ffffff" }, // 13時 あか
+      { bg: "#E0623F", badge: "#F0724F", text: "#ffffff" }, // 14時 テラコッタ
       { bg: "#FFA500", badge: "#FFB510", text: "#1a1a1a" }, // 15時 だいだい
       { bg: "#FFD60A", badge: "#FFE61A", text: "#1a1a1a" }, // 16時 き
       { bg: "#D4DC1F", badge: "#E4EC2F", text: "#1a1a1a" }, // 17時 きみどり
