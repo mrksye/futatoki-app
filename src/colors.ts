@@ -158,36 +158,37 @@ export const palettes: Palette[] = [
     ],
   },
 
-  // -------- いろのわ (Itten 12 色相環。対角は補色で AM/PM 同色) --------
+  // -------- いろのわ (12 色相環、和名/カタカナ混在。AM/PM 同色) --------
+  // 12 時=マゼンタ起点で時計回りに 320°→265° を 12 等分。
   {
     id: "wheel",
     am: [
-      { bg: "#F4D800", badge: "#FFE010", text: "#1a1a1a" }, // 0時(12) 黄
-      { bg: "#F4A820", badge: "#FFB830", text: "#1a1a1a" }, // 1時  黄橙
-      { bg: "#ED7810", badge: "#FA8820", text: "#ffffff" }, // 2時  橙
-      { bg: "#E04820", badge: "#F05830", text: "#ffffff" }, // 3時  赤橙
-      { bg: "#D82030", badge: "#E83040", text: "#ffffff" }, // 4時  赤
-      { bg: "#C82078", badge: "#D83088", text: "#ffffff" }, // 5時  赤紫
-      { bg: "#8830B8", badge: "#9838C8", text: "#ffffff" }, // 6時  紫
-      { bg: "#5028B8", badge: "#6030C8", text: "#ffffff" }, // 7時  青紫
-      { bg: "#1848C0", badge: "#2858D0", text: "#ffffff" }, // 8時  青
-      { bg: "#0890B0", badge: "#18A0C0", text: "#ffffff" }, // 9時  青緑
-      { bg: "#18A040", badge: "#28B050", text: "#ffffff" }, // 10時 緑
-      { bg: "#80C020", badge: "#90D030", text: "#1a1a1a" }, // 11時 黄緑
+      { bg: "#D63384", badge: "#E64394", text: "#ffffff" }, // 0時(12) マゼンタ  320°
+      { bg: "#E63946", badge: "#F64956", text: "#ffffff" }, // 1時  あか        355°
+      { bg: "#FF6B35", badge: "#FF7B45", text: "#ffffff" }, // 2時  しゅ         15°
+      { bg: "#FF9500", badge: "#FFA510", text: "#1a1a1a" }, // 3時  だいだい     35°
+      { bg: "#FFD60A", badge: "#FFE61A", text: "#1a1a1a" }, // 4時  き           52°
+      { bg: "#C5D62D", badge: "#D5E63D", text: "#1a1a1a" }, // 5時  きみどり     72°
+      { bg: "#7CB342", badge: "#8CC352", text: "#ffffff" }, // 6時  わかくさ     95°
+      { bg: "#2E9D5E", badge: "#3EAD6E", text: "#ffffff" }, // 7時  みどり      140°
+      { bg: "#20C997", badge: "#30D9A7", text: "#1a1a1a" }, // 8時  ターコイズ  165°
+      { bg: "#18A2D9", badge: "#28B2E9", text: "#ffffff" }, // 9時  シアン      195°
+      { bg: "#2563C8", badge: "#3573D8", text: "#ffffff" }, // 10時 あお        220°
+      { bg: "#7E57C2", badge: "#8E67D2", text: "#ffffff" }, // 11時 むらさき    265°
     ],
     pm: [
-      { bg: "#F4D800", badge: "#FFE010", text: "#1a1a1a" }, // 12時 黄
-      { bg: "#F4A820", badge: "#FFB830", text: "#1a1a1a" }, // 13時 黄橙
-      { bg: "#ED7810", badge: "#FA8820", text: "#ffffff" }, // 14時 橙
-      { bg: "#E04820", badge: "#F05830", text: "#ffffff" }, // 15時 赤橙
-      { bg: "#D82030", badge: "#E83040", text: "#ffffff" }, // 16時 赤
-      { bg: "#C82078", badge: "#D83088", text: "#ffffff" }, // 17時 赤紫
-      { bg: "#8830B8", badge: "#9838C8", text: "#ffffff" }, // 18時 紫
-      { bg: "#5028B8", badge: "#6030C8", text: "#ffffff" }, // 19時 青紫
-      { bg: "#1848C0", badge: "#2858D0", text: "#ffffff" }, // 20時 青
-      { bg: "#0890B0", badge: "#18A0C0", text: "#ffffff" }, // 21時 青緑
-      { bg: "#18A040", badge: "#28B050", text: "#ffffff" }, // 22時 緑
-      { bg: "#80C020", badge: "#90D030", text: "#1a1a1a" }, // 23時 黄緑
+      { bg: "#D63384", badge: "#E64394", text: "#ffffff" }, // 12時 マゼンタ
+      { bg: "#E63946", badge: "#F64956", text: "#ffffff" }, // 13時 あか
+      { bg: "#FF6B35", badge: "#FF7B45", text: "#ffffff" }, // 14時 しゅ
+      { bg: "#FF9500", badge: "#FFA510", text: "#1a1a1a" }, // 15時 だいだい
+      { bg: "#FFD60A", badge: "#FFE61A", text: "#1a1a1a" }, // 16時 き
+      { bg: "#C5D62D", badge: "#D5E63D", text: "#1a1a1a" }, // 17時 きみどり
+      { bg: "#7CB342", badge: "#8CC352", text: "#ffffff" }, // 18時 わかくさ
+      { bg: "#2E9D5E", badge: "#3EAD6E", text: "#ffffff" }, // 19時 みどり
+      { bg: "#20C997", badge: "#30D9A7", text: "#1a1a1a" }, // 20時 ターコイズ
+      { bg: "#18A2D9", badge: "#28B2E9", text: "#ffffff" }, // 21時 シアン
+      { bg: "#2563C8", badge: "#3573D8", text: "#ffffff" }, // 22時 あお
+      { bg: "#7E57C2", badge: "#8E67D2", text: "#ffffff" }, // 23時 むらさき
     ],
   },
 
