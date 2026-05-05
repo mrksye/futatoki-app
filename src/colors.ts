@@ -165,11 +165,11 @@ export const palettes: Palette[] = [
     am: [
       { bg: "#D63384", badge: "#E64394", text: "#ffffff" }, // 0時(12) マゼンタ  320°
       { bg: "#E63946", badge: "#F64956", text: "#ffffff" }, // 1時  あか        355°
-      { bg: "#FF6B35", badge: "#FF7B45", text: "#ffffff" }, // 2時  しゅ         15°
-      { bg: "#FF9500", badge: "#FFA510", text: "#1a1a1a" }, // 3時  だいだい     35°
+      { bg: "#FF4D2B", badge: "#FF5D3B", text: "#ffffff" }, // 2時  しゅ          8°
+      { bg: "#FFA500", badge: "#FFB510", text: "#1a1a1a" }, // 3時  だいだい     39°
       { bg: "#FFD60A", badge: "#FFE61A", text: "#1a1a1a" }, // 4時  き           52°
-      { bg: "#C5D62D", badge: "#D5E63D", text: "#1a1a1a" }, // 5時  きみどり     72°
-      { bg: "#7CB342", badge: "#8CC352", text: "#ffffff" }, // 6時  わかくさ     95°
+      { bg: "#D4DC1F", badge: "#E4EC2F", text: "#1a1a1a" }, // 5時  きみどり     65°
+      { bg: "#5DAA34", badge: "#6DBA44", text: "#ffffff" }, // 6時  わかくさ    100°
       { bg: "#2E9D5E", badge: "#3EAD6E", text: "#ffffff" }, // 7時  みどり      140°
       { bg: "#20C997", badge: "#30D9A7", text: "#1a1a1a" }, // 8時  ターコイズ  165°
       { bg: "#18A2D9", badge: "#28B2E9", text: "#ffffff" }, // 9時  シアン      195°
@@ -179,11 +179,11 @@ export const palettes: Palette[] = [
     pm: [
       { bg: "#D63384", badge: "#E64394", text: "#ffffff" }, // 12時 マゼンタ
       { bg: "#E63946", badge: "#F64956", text: "#ffffff" }, // 13時 あか
-      { bg: "#FF6B35", badge: "#FF7B45", text: "#ffffff" }, // 14時 しゅ
-      { bg: "#FF9500", badge: "#FFA510", text: "#1a1a1a" }, // 15時 だいだい
+      { bg: "#FF4D2B", badge: "#FF5D3B", text: "#ffffff" }, // 14時 しゅ
+      { bg: "#FFA500", badge: "#FFB510", text: "#1a1a1a" }, // 15時 だいだい
       { bg: "#FFD60A", badge: "#FFE61A", text: "#1a1a1a" }, // 16時 き
-      { bg: "#C5D62D", badge: "#D5E63D", text: "#1a1a1a" }, // 17時 きみどり
-      { bg: "#7CB342", badge: "#8CC352", text: "#ffffff" }, // 18時 わかくさ
+      { bg: "#D4DC1F", badge: "#E4EC2F", text: "#1a1a1a" }, // 17時 きみどり
+      { bg: "#5DAA34", badge: "#6DBA44", text: "#ffffff" }, // 18時 わかくさ
       { bg: "#2E9D5E", badge: "#3EAD6E", text: "#ffffff" }, // 19時 みどり
       { bg: "#20C997", badge: "#30D9A7", text: "#1a1a1a" }, // 20時 ターコイズ
       { bg: "#18A2D9", badge: "#28B2E9", text: "#ffffff" }, // 21時 シアン
