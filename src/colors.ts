@@ -30,30 +30,30 @@ export const palettes: Palette[] = [
     id: "distinct12",
     am: [
       { bg: "#DC2040", badge: "#E83050", text: "#ffffff" }, // 0時(12) 赤
-      { bg: "#20A0A8", badge: "#30B0B8", text: "#ffffff" }, // 1時  ティール
+      { bg: "#20A0A8", badge: "#30B0B8", text: "#082828" }, // 1時  ティール
       { bg: "#F4C800", badge: "#FFD400", text: "#1a1a1a" }, // 2時  黄
       { bg: "#9020B0", badge: "#A030C0", text: "#ffffff" }, // 3時  紫
-      { bg: "#F08020", badge: "#FA9030", text: "#ffffff" }, // 4時  橙
+      { bg: "#F08020", badge: "#FA9030", text: "#2a1408" }, // 4時  橙
       { bg: "#2060C8", badge: "#3070D8", text: "#ffffff" }, // 5時  青
       { bg: "#F8A0B0", badge: "#FFB0C0", text: "#4a1820" }, // 6時  ピンク
-      { bg: "#30A048", badge: "#40B058", text: "#ffffff" }, // 7時  緑
+      { bg: "#30A048", badge: "#40B058", text: "#0d2814" }, // 7時  緑
       { bg: "#A0602A", badge: "#B0703A", text: "#ffffff" }, // 8時  茶
       { bg: "#60B0E0", badge: "#70C0F0", text: "#1a2040" }, // 9時  水色
-      { bg: "#E040A0", badge: "#F050B0", text: "#ffffff" }, // 10時 マゼンタ
+      { bg: "#E040A0", badge: "#F050B0", text: "#2a0820" }, // 10時 マゼンタ
       { bg: "#A0C020", badge: "#B0D030", text: "#1a1a1a" }, // 11時 黄緑
     ],
     pm: [
       { bg: "#DC2040", badge: "#E83050", text: "#ffffff" }, // 12時 赤
-      { bg: "#20A0A8", badge: "#30B0B8", text: "#ffffff" }, // 13時 ティール
+      { bg: "#20A0A8", badge: "#30B0B8", text: "#082828" }, // 13時 ティール
       { bg: "#F4C800", badge: "#FFD400", text: "#1a1a1a" }, // 14時 黄
       { bg: "#9020B0", badge: "#A030C0", text: "#ffffff" }, // 15時 紫
-      { bg: "#F08020", badge: "#FA9030", text: "#ffffff" }, // 16時 橙
+      { bg: "#F08020", badge: "#FA9030", text: "#2a1408" }, // 16時 橙
       { bg: "#2060C8", badge: "#3070D8", text: "#ffffff" }, // 17時 青
       { bg: "#F8A0B0", badge: "#FFB0C0", text: "#4a1820" }, // 18時 ピンク
-      { bg: "#30A048", badge: "#40B058", text: "#ffffff" }, // 19時 緑
+      { bg: "#30A048", badge: "#40B058", text: "#0d2814" }, // 19時 緑
       { bg: "#A0602A", badge: "#B0703A", text: "#ffffff" }, // 20時 茶
       { bg: "#60B0E0", badge: "#70C0F0", text: "#1a2040" }, // 21時 水色
-      { bg: "#E040A0", badge: "#F050B0", text: "#ffffff" }, // 22時 マゼンタ
+      { bg: "#E040A0", badge: "#F050B0", text: "#2a0820" }, // 22時 マゼンタ
       { bg: "#A0C020", badge: "#B0D030", text: "#1a1a1a" }, // 23時 黄緑
     ],
   },
@@ -71,7 +71,7 @@ export const palettes: Palette[] = [
       { bg: "#B04888", badge: "#C0589C", text: "#ffffff" }, // 5時  暁(あけぼの)
       { bg: "#F06048", badge: "#FF7058", text: "#ffffff" }, // 6時  朝焼け
       { bg: "#F48858", badge: "#FF9868", text: "#ffffff" }, // 7時  朝焼け明るい
-      { bg: "#F4B868", badge: "#FFC880", text: "#1a1a1a" }, // 8時  朝の金色
+      { bg: "#F4B868", badge: "#FFC880", text: "#ffffff" }, // 8時  朝の金色
       { bg: "#78C0E8", badge: "#88D0F0", text: "#1a2a40" }, // 9時  朝の青空
       { bg: "#3898E8", badge: "#48A8F0", text: "#ffffff" }, // 10時 青空
       { bg: "#1080E0", badge: "#2090F0", text: "#ffffff" }, // 11時 青空深まる
@@ -165,13 +165,13 @@ export const palettes: Palette[] = [
     am: [
       { bg: "#D63384", badge: "#E64394", text: "#ffffff" }, // 0時(12) マゼンタ
       { bg: "#E21C3D", badge: "#F22C4D", text: "#ffffff" }, // 1時  あか
-      { bg: "#E0623F", badge: "#F0724F", text: "#ffffff" }, // 2時  テラコッタ
+      { bg: "#EA5A37", badge: "#FA6A47", text: "#ffffff" }, // 2時  朱赤
       { bg: "#FFA500", badge: "#FFB510", text: "#1a1a1a" }, // 3時  だいだい
       { bg: "#FFD60A", badge: "#FFE61A", text: "#1a1a1a" }, // 4時  き
       { bg: "#D4DC1F", badge: "#E4EC2F", text: "#1a1a1a" }, // 5時  きみどり
-      { bg: "#5DAA34", badge: "#6DBA44", text: "#ffffff" }, // 6時  わかくさ
-      { bg: "#2E9D5E", badge: "#3EAD6E", text: "#ffffff" }, // 7時  みどり
-      { bg: "#20C997", badge: "#30D9A7", text: "#1a1a1a" }, // 8時  ターコイズ
+      { bg: "#5DAA34", badge: "#6DBA44", text: "#2a2a2a" }, // 6時  わかくさ
+      { bg: "#2E9D5E", badge: "#3EAD6E", text: "#333333" }, // 7時  みどり
+      { bg: "#20C997", badge: "#30D9A7", text: "#2a2a2a" }, // 8時  ターコイズ
       { bg: "#18A2D9", badge: "#28B2E9", text: "#ffffff" }, // 9時  シアン
       { bg: "#2563C8", badge: "#3573D8", text: "#ffffff" }, // 10時 あお
       { bg: "#7E57C2", badge: "#8E67D2", text: "#ffffff" }, // 11時 むらさき
@@ -179,13 +179,13 @@ export const palettes: Palette[] = [
     pm: [
       { bg: "#D63384", badge: "#E64394", text: "#ffffff" }, // 12時 マゼンタ
       { bg: "#E21C3D", badge: "#F22C4D", text: "#ffffff" }, // 13時 あか
-      { bg: "#E0623F", badge: "#F0724F", text: "#ffffff" }, // 14時 テラコッタ
+      { bg: "#EA5A37", badge: "#FA6A47", text: "#ffffff" }, // 14時 朱赤
       { bg: "#FFA500", badge: "#FFB510", text: "#1a1a1a" }, // 15時 だいだい
       { bg: "#FFD60A", badge: "#FFE61A", text: "#1a1a1a" }, // 16時 き
       { bg: "#D4DC1F", badge: "#E4EC2F", text: "#1a1a1a" }, // 17時 きみどり
-      { bg: "#5DAA34", badge: "#6DBA44", text: "#ffffff" }, // 18時 わかくさ
-      { bg: "#2E9D5E", badge: "#3EAD6E", text: "#ffffff" }, // 19時 みどり
-      { bg: "#20C997", badge: "#30D9A7", text: "#1a1a1a" }, // 20時 ターコイズ
+      { bg: "#5DAA34", badge: "#6DBA44", text: "#2a2a2a" }, // 18時 わかくさ
+      { bg: "#2E9D5E", badge: "#3EAD6E", text: "#333333" }, // 19時 みどり
+      { bg: "#20C997", badge: "#30D9A7", text: "#2a2a2a" }, // 20時 ターコイズ
       { bg: "#18A2D9", badge: "#28B2E9", text: "#ffffff" }, // 21時 シアン
       { bg: "#2563C8", badge: "#3573D8", text: "#ffffff" }, // 22時 あお
       { bg: "#7E57C2", badge: "#8E67D2", text: "#ffffff" }, // 23時 むらさき
@@ -199,32 +199,32 @@ export const palettes: Palette[] = [
   {
     id: "cud12",
     am: [
-      { bg: "#A64A80", badge: "#BC5A94", text: "#ffffff" }, // 0時(12) 赤紫                 0⇔8
+      { bg: "#A64A80", badge: "#BC5A94", text: "#1a1a1a" }, // 0時(12) 赤紫                 0⇔8
       { bg: "#0060A0", badge: "#0072B2", text: "#ffffff" }, // 1時  濃い青                 1⇔7
-      { bg: "#C24D00", badge: "#D55E00", text: "#ffffff" }, // 2時  朱(ヴァーミリオン)     暖色①/3
+      { bg: "#C24D00", badge: "#D55E00", text: "#1a1a1a" }, // 2時  朱(ヴァーミリオン)     暖色①/3
       { bg: "#56B4E9", badge: "#68C0F0", text: "#0A2030" }, // 3時  空色(ライト)           3⇔9
       { bg: "#F0E442", badge: "#FAE858", text: "#1a1a1a" }, // 4時  黄                     単独
-      { bg: "#30A8B0", badge: "#40B8C0", text: "#ffffff" }, // 5時  青緑(ミッド)           5⇔11
+      { bg: "#30A8B0", badge: "#40B8C0", text: "#1a1a1a" }, // 5時  青緑(ミッド)           5⇔11
       { bg: "#E69F00", badge: "#F4AC10", text: "#1a1a1a" }, // 6時  橙                     暖色②/3
       { bg: "#4828A0", badge: "#5830B0", text: "#ffffff" }, // 7時  すみれ(ダーク)         1⇔7
       { bg: "#F4A8BC", badge: "#FFB8CC", text: "#441624" }, // 8時  桃(ライト)             0⇔8
       { bg: "#78CCD0", badge: "#88DCE0", text: "#0A2830" }, // 9時  水色(ライト)           3⇔9
-      { bg: "#A86828", badge: "#B87838", text: "#ffffff" }, // 10時 金茶                   暖色③/3
-      { bg: "#009E73", badge: "#10AE83", text: "#ffffff" }, // 11時 青緑(明るめ)           5⇔11
+      { bg: "#A86828", badge: "#B87838", text: "#1a1a1a" }, // 10時 金茶                   暖色③/3
+      { bg: "#009E73", badge: "#10AE83", text: "#1a1a1a" }, // 11時 青緑(明るめ)           5⇔11
     ],
     pm: [
-      { bg: "#A64A80", badge: "#BC5A94", text: "#ffffff" }, // 12時 赤紫
+      { bg: "#A64A80", badge: "#BC5A94", text: "#1a1a1a" }, // 12時 赤紫
       { bg: "#0060A0", badge: "#0072B2", text: "#ffffff" }, // 13時 濃い青
-      { bg: "#C24D00", badge: "#D55E00", text: "#ffffff" }, // 14時 朱
+      { bg: "#C24D00", badge: "#D55E00", text: "#1a1a1a" }, // 14時 朱
       { bg: "#56B4E9", badge: "#68C0F0", text: "#0A2030" }, // 15時 空色
       { bg: "#F0E442", badge: "#FAE858", text: "#1a1a1a" }, // 16時 黄
-      { bg: "#30A8B0", badge: "#40B8C0", text: "#ffffff" }, // 17時 青緑(ミッド)
+      { bg: "#30A8B0", badge: "#40B8C0", text: "#1a1a1a" }, // 17時 青緑(ミッド)
       { bg: "#E69F00", badge: "#F4AC10", text: "#1a1a1a" }, // 18時 橙
       { bg: "#4828A0", badge: "#5830B0", text: "#ffffff" }, // 19時 すみれ
       { bg: "#F4A8BC", badge: "#FFB8CC", text: "#441624" }, // 20時 桃
       { bg: "#78CCD0", badge: "#88DCE0", text: "#0A2830" }, // 21時 水色
-      { bg: "#A86828", badge: "#B87838", text: "#ffffff" }, // 22時 金茶
-      { bg: "#009E73", badge: "#10AE83", text: "#ffffff" }, // 23時 青緑
+      { bg: "#A86828", badge: "#B87838", text: "#1a1a1a" }, // 22時 金茶
+      { bg: "#009E73", badge: "#10AE83", text: "#1a1a1a" }, // 23時 青緑
     ],
   },
 
