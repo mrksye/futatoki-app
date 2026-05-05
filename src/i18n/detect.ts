@@ -1,34 +1,5 @@
-import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from "./locales";
-
-/**
- * BCP 47 マッチング: 完全一致 → 言語サブタグ一致 → null。
- * スクリプト付き ("zh-Hant-HK" 等) は最初の "-" で切るので "zh-HK" や "zh-Hant-HK" は "zh-TW" に
- * 落ちる。CLDR Likely Subtags まで含めるのは過剰なのでここまでで止める。
- */
-export function matchLocale(requested: string): string | null {
-  if (!requested) return null;
-  const req = requested.replace(/_/g, "-");
-
-  const exact = SUPPORTED_LOCALES.find(
-    (l) => l.code.toLowerCase() === req.toLowerCase(),
-  );
-  if (exact) return exact.code;
-
-  const lang = req.split("-")[0]?.toLowerCase();
-  if (!lang) return null;
-
-  const sameCode = SUPPORTED_LOCALES.find(
-    (l) => l.code.toLowerCase() === lang,
-  );
-  if (sameCode) return sameCode.code;
-
-  const sameFamily = SUPPORTED_LOCALES.find((l) =>
-    l.code.toLowerCase().startsWith(lang + "-"),
-  );
-  if (sameFamily) return sameFamily.code;
-
-  return null;
-}
+import { DEFAULT_LOCALE } from "./locales";
+import { matchLocale } from "./match";
 
 /** localStorage キー。LP (futatoki.app) と同名だが play.futatoki.app と別オリジン扱いなので実体は
  *  分かれる (命名だけ揃えてある)。 */

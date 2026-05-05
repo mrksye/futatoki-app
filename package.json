@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && bun run scripts/generate-locale-html.ts",
     "preview": "vite preview",
     "cf:preview": "bun run build && wrangler dev",
     "deploy": "bun run build && wrangler deploy",
@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
+    "@cloudflare/workers-types": "^4.20260504.1",
     "@tailwindcss/vite": "^4.2.2",
     "tailwindcss": "^4.2.2",
     "vite": "^8.0.8",

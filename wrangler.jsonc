@@ -2,8 +2,18 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "futatoki-the-clock-app",
   "compatibility_date": "2026-04-19",
+  "main": "src/worker/index.ts",
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // Worker を必ず先に通す。/ への request で ?lang= query を見て locale 別 HTML を
+    // 返す or Accept-Language で 302 redirect するため、static asset matching で
+    // 先回りされると分岐が機能しない。
+    "run_worker_first": true,
+    // 既定 ("auto-trailing-slash") だと Worker から ASSETS.fetch("/locales/ja.html") が
+    // 307→/locales/ja に正規化されてクライアントに伝搬してしまう。明示パスで取りに行く
+    // 内部 fetch なので extension-less rewrite は不要、none に倒す。
+    "html_handling": "none"
   },
   "routes": [
     { "pattern": "play.futatoki.app", "custom_domain": true }
