@@ -93,11 +93,12 @@ function buildLocaleHtml(template: string, locale: LocaleMeta, res: ResourceJson
 
   let html = template;
 
-  // <html lang="ja"> → <html lang="xx" [dir="rtl"]>
+  // <html lang="ja" translate="no"> → <html lang="xx" [dir="rtl"] translate="no">
+  // translate="no" は全 locale で維持 (Chrome 自動翻訳抑制、index.html の方針と整合)。
   const dirAttr = locale.dir === "rtl" ? ' dir="rtl"' : "";
   html = html.replace(
     /<html[^>]*>/,
-    `<html lang="${escapeHtmlAttr(locale.code)}"${dirAttr}>`,
+    `<html lang="${escapeHtmlAttr(locale.code)}"${dirAttr} translate="no">`,
   );
 
   // <title>
