@@ -168,7 +168,7 @@ export const palettes: Palette[] = [
       { bg: "#EA5A37", badge: "#FA6A47", text: "#ffffff" }, // 2時  赤茶
       { bg: "#FFA500", badge: "#FFB510", text: "#1a1a1a" }, // 3時  オレンジ
       { bg: "#FFD60A", badge: "#FFE61A", text: "#1a1a1a" }, // 4時  き
-      { bg: "#D4DC1F", badge: "#E4EC2F", text: "#1a1a1a" }, // 5時  マスタード
+      { bg: "#D4DC1F", badge: "#E4EC2F", text: "#1a1a1a" }, // 5時  ライムイエロー
       { bg: "#5DAA34", badge: "#6DBA44", text: "#2a2a2a" }, // 6時  ウグイス
       { bg: "#2E9D5E", badge: "#3EAD6E", text: "#333333" }, // 7時  みどり
       { bg: "#20C997", badge: "#30D9A7", text: "#2a2a2a" }, // 8時  ミントグリーン
@@ -182,7 +182,7 @@ export const palettes: Palette[] = [
       { bg: "#EA5A37", badge: "#FA6A47", text: "#ffffff" }, // 14時 赤茶
       { bg: "#FFA500", badge: "#FFB510", text: "#1a1a1a" }, // 15時 オレンジ
       { bg: "#FFD60A", badge: "#FFE61A", text: "#1a1a1a" }, // 16時 き
-      { bg: "#D4DC1F", badge: "#E4EC2F", text: "#1a1a1a" }, // 17時 マスタード
+      { bg: "#D4DC1F", badge: "#E4EC2F", text: "#1a1a1a" }, // 17時 ライムイエロー
       { bg: "#5DAA34", badge: "#6DBA44", text: "#2a2a2a" }, // 18時 ウグイス
       { bg: "#2E9D5E", badge: "#3EAD6E", text: "#333333" }, // 19時 みどり
       { bg: "#20C997", badge: "#30D9A7", text: "#2a2a2a" }, // 20時 ミントグリーン
