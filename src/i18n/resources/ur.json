@@ -26,14 +26,15 @@
       "breakfast": "ناشتہ",
       "lunch": "لنچ",
       "dinner": "رات کا کھانا",
-      "snack": "سنیک",
-      "wakeup": "جاگنا",
+      "study": "کتاب",
+      "pause": "چائے",
       "sleep": "سونا",
-      "depart": "جانا",
-      "study": "پڑھائی",
       "bath": "غسل",
-      "toothbrush": "برش",
-      "tidy": "صفائی"
+      "brush": "برش",
+      "depart": "جانا",
+      "play": "کھیل",
+      "music": "موسیقی",
+      "still": "سکون"
     }
   },
   "badge": {

@@ -26,14 +26,15 @@
       "breakfast": "kahvaltı",
       "lunch": "öğle",
       "dinner": "akşam",
-      "snack": "atıştırma",
-      "wakeup": "uyanma",
+      "study": "okuma",
+      "pause": "çay",
       "sleep": "uyumak",
-      "depart": "çıkış",
-      "study": "ders",
       "bath": "banyo",
-      "toothbrush": "diş fırçala",
-      "tidy": "toplama"
+      "brush": "diş fırçala",
+      "depart": "çıkış",
+      "play": "oyun",
+      "music": "müzik",
+      "still": "sessizlik"
     }
   },
   "badge": {

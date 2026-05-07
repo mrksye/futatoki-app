@@ -26,14 +26,15 @@
       "breakfast": "صبحانه",
       "lunch": "ناهار",
       "dinner": "شام",
-      "snack": "میان‌وعده",
-      "wakeup": "بیدار شدن",
+      "study": "کتاب",
+      "pause": "چای",
       "sleep": "خواب",
-      "depart": "رفتن",
-      "study": "مطالعه",
       "bath": "حمام",
-      "toothbrush": "مسواک",
-      "tidy": "مرتب کردن"
+      "brush": "مسواک",
+      "depart": "رفتن",
+      "play": "بازی",
+      "music": "موسیقی",
+      "still": "آرامش"
     }
   },
   "badge": {

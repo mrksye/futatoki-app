@@ -26,14 +26,15 @@
       "breakfast": "아침",
       "lunch": "점심",
       "dinner": "저녁",
-      "snack": "간식",
-      "wakeup": "일어나기",
+      "study": "책",
+      "pause": "차 한잔",
       "sleep": "자기",
-      "depart": "외출",
-      "study": "공부",
       "bath": "목욕",
-      "toothbrush": "양치",
-      "tidy": "정리"
+      "brush": "양치",
+      "depart": "외출",
+      "play": "놀기",
+      "music": "음악",
+      "still": "조용한 시간"
     }
   },
   "badge": {
