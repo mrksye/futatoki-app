@@ -1,40 +1,40 @@
 {
   "meta": {
-    "title": "ساعت برای کودکان | Futatoki برنامه",
-    "description": "برای راهنمای کامل و نکات آموزشی به futatoki.app مراجعه کنید. نسخهٔ برنامهٔ Futatoki ساعت."
+    "title": "ساعَت بَرایِ کودَکان | Futatoki بَرنامه",
+    "description": "بَرایِ راهنَمایِ کامِل و نُکاتِ آموزِشی به futatoki.app مُراجِعه کُنید. نُسخه‌یِ بَرنامه‌یِ Futatoki ساعَت."
   },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",
-    "sukkiri": "ساده",
-    "kuwashiku": "کامل",
-    "sector": "برش",
-    "badge": "نشان",
-    "rotateEnter": "چرخش",
-    "rotateExit": "ساعت",
-    "mergeToSingle": "روی هم",
-    "splitToTwo": "جدا",
-    "rewindMinute": "1 دقیقه عقب",
+    "sukkiri": "سادِه",
+    "kuwashiku": "کامِل",
+    "sector": "بُرِش",
+    "badge": "نِشان",
+    "rotateEnter": "چَرخِش",
+    "rotateExit": "ساعَت",
+    "mergeToSingle": "رویِ هَم",
+    "splitToTwo": "جُدا",
+    "rewindMinute": "1 دَقیقه عَقَب",
     "autoStart": "خودکار",
-    "autoStop": "توقف",
-    "random": "تصادفی"
+    "autoStop": "تَوَقُّف",
+    "random": "تَصادُفی"
   },
   "schedule": {
-    "add": "فعالیت",
-    "reset": "پاک کن",
+    "add": "فَعّالیَّت",
+    "reset": "پاک کُن",
     "icon": {
-      "breakfast": "صبحانه",
+      "breakfast": "صُبحانه",
       "lunch": "ناهار",
       "dinner": "شام",
-      "study": "کتاب",
+      "study": "کِتاب",
       "pause": "چای",
       "sleep": "خواب",
-      "bath": "حمام",
-      "brush": "مسواک",
-      "depart": "رفتن",
+      "bath": "حَمّام",
+      "brush": "مِسواک",
+      "depart": "رَفتَن",
       "play": "بازی",
       "music": "موسیقی",
-      "still": "آرامش"
+      "still": "آرامِش"
     }
   },
   "badge": {
@@ -42,17 +42,17 @@
     "pm": "🌙 PM"
   },
   "palette": {
-    "distinct12": "رنگ‌های روشن",
-    "vivid": "رنگ آسمان",
-    "ygb": "آسمان خورشید چمن",
-    "primary3": "سه رنگ اصلی",
-    "wheel": "چرخه رنگ",
-    "cud12": "همگانی",
-    "monotone": "تک‌رنگ"
+    "distinct12": "رَنگ‌هایِ روشَن",
+    "vivid": "رَنگِ آسمان",
+    "ygb": "آسمان خورشید چَمَن",
+    "primary3": "سه رَنگِ اَصلی",
+    "wheel": "چَرخه‌یِ رَنگ",
+    "cud12": "هَمگانی",
+    "monotone": "تَک‌رَنگ"
   },
   "a11y": {
-    "clockFaceAm": "ساعت عقربه‌ای صبح",
-    "clockFacePm": "ساعت عقربه‌ای بعدازظهر",
-    "clockFace": "ساعت عقربه‌ای"
+    "clockFaceAm": "ساعَتِ عَقربه‌ایِ صُبح",
+    "clockFacePm": "ساعَتِ عَقربه‌ایِ بَعدازظُهر",
+    "clockFace": "ساعَتِ عَقربه‌ای"
   }
 }

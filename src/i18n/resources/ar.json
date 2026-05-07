@@ -1,40 +1,40 @@
 {
   "meta": {
-    "title": "ساعة للأطفال | Futatoki تطبيق",
-    "description": "للدليل الكامل ونصائح التعليم، تفضّل بزيارة futatoki.app. النسخة التطبيقية من Futatoki ساعة."
+    "title": "سَاعَة لِلْأَطْفَال | Futatoki تَطْبِيق",
+    "description": "لِلدَّلِيل الْكَامِل وَنَصَائِح التَّعْلِيم، تَفَضَّلْ بِزِيَارَة futatoki.app. النُّسْخَة التَّطْبِيقِيَّة مِنْ Futatoki سَاعَة."
   },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",
-    "sukkiri": "بسيط",
-    "kuwashiku": "بالتفصيل",
-    "sector": "شرائح",
-    "badge": "شارة",
-    "rotateEnter": "تدوير",
-    "rotateExit": "ساعة",
-    "mergeToSingle": "دمج",
-    "splitToTwo": "فصل",
-    "rewindMinute": "رجوع 1 دقيقة",
-    "autoStart": "تلقائي",
-    "autoStop": "إيقاف",
-    "random": "عشوائي"
+    "sukkiri": "بَسِيط",
+    "kuwashiku": "بِالتَّفْصِيل",
+    "sector": "شَرَائِح",
+    "badge": "شَارَة",
+    "rotateEnter": "تَدْوِير",
+    "rotateExit": "سَاعَة",
+    "mergeToSingle": "دَمْج",
+    "splitToTwo": "فَصْل",
+    "rewindMinute": "رُجُوع 1 دَقِيقَة",
+    "autoStart": "تِلْقَائِيّ",
+    "autoStop": "إِيقَاف",
+    "random": "عَشْوَائِيّ"
   },
   "schedule": {
-    "add": "نشاط",
-    "reset": "مسح",
+    "add": "نَشَاط",
+    "reset": "مَسْح",
     "icon": {
-      "breakfast": "فطور",
-      "lunch": "غداء",
-      "dinner": "عشاء",
-      "study": "قراءة",
-      "pause": "شاي",
-      "sleep": "نوم",
-      "bath": "حمام",
-      "brush": "تنظيف الأسنان",
-      "depart": "ذهاب",
-      "play": "لعب",
-      "music": "موسيقى",
-      "still": "هدوء"
+      "breakfast": "فَطُور",
+      "lunch": "غَدَاء",
+      "dinner": "عَشَاء",
+      "study": "قِرَاءَة",
+      "pause": "شَاي",
+      "sleep": "نَوْم",
+      "bath": "حَمَّام",
+      "brush": "تَنْظِيف الْأَسْنَان",
+      "depart": "ذَهَاب",
+      "play": "لَعِب",
+      "music": "مُوسِيقَى",
+      "still": "هُدُوء"
     }
   },
   "badge": {
@@ -42,17 +42,17 @@
     "pm": "🌙 PM"
   },
   "palette": {
-    "distinct12": "ألوان زاهية",
-    "vivid": "ألوان السماء",
-    "ygb": "سماء شمس عشب",
-    "primary3": "الألوان الأساسية",
-    "wheel": "عجلة الألوان",
-    "cud12": "شامل",
-    "monotone": "أحادي اللون"
+    "distinct12": "أَلْوَان زَاهِيَة",
+    "vivid": "أَلْوَان السَّمَاء",
+    "ygb": "سَمَاء شَمْس عُشْب",
+    "primary3": "الْأَلْوَان الْأَسَاسِيَّة",
+    "wheel": "عَجَلَة الْأَلْوَان",
+    "cud12": "شَامِل",
+    "monotone": "أُحَادِيّ اللَّوْن"
   },
   "a11y": {
-    "clockFaceAm": "ساعة عقارب صباحية",
-    "clockFacePm": "ساعة عقارب مسائية",
-    "clockFace": "ساعة عقارب"
+    "clockFaceAm": "سَاعَة عَقَارِب صَبَاحِيَّة",
+    "clockFacePm": "سَاعَة عَقَارِب مَسَائِيَّة",
+    "clockFace": "سَاعَة عَقَارِب"
   }
 }
