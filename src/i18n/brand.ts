@@ -13,8 +13,8 @@
 export const LP_BRAND: Record<string, string> = {
   ja: "フタトキ時計",
   en: "Futatoki the Clock",
-  "zh-CN": "Futatoki 一双时钟",
-  "zh-TW": "Futatoki 一雙時鐘",
+  "zh-CN": "Futatoki 双面时钟",
+  "zh-TW": "Futatoki 雙面時鐘",
   ko: "Futatoki 시계",
   es: "Futatoki Reloj",
   fr: "Futatoki Horloge",
@@ -130,8 +130,8 @@ export const APP_EXTRA_VARIANTS: Record<string, readonly string[]> = {
 export const LP_BRAND_VARIANTS: Record<string, readonly string[]> = {
   ja: ["フタトキ時計", "ふたとき時計", "フタトキ"],
   en: ["Futatoki the Clock"],
-  "zh-CN": ["Futatoki 一双时钟"],
-  "zh-TW": ["Futatoki 一雙時鐘"],
+  "zh-CN": ["Futatoki 双面时钟"],
+  "zh-TW": ["Futatoki 雙面時鐘"],
   ko: ["Futatoki 시계"],
   es: ["Futatoki Reloj"],
   fr: ["Futatoki Horloge"],
