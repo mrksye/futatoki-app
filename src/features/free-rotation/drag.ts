@@ -10,15 +10,16 @@
  *
  * 速度 gain (bimodal): 「1 分単位で精密に合わせる」と「思いっきりスキップする」の二極を速度で
  * 表現する。低速は gain<1 で 1px の効きを減らして精密合わせを楽にし、高速は gain>1 でフリック
- * のスキップを強調する。中速 (普通の drag) は gain=1 で従来感。閾値は viewport diagonal に比例
- * させて画面サイズ非依存に揃える (大画面でも小画面でも同じ "速さ感" で zone が切り替わる)。
+ * のスキップを強調する。中速 (やや速めの drag) で gain=1 に到達するよう補間 zone を広めに取り、
+ * 「ゆっくり扱い」の帯を厚くして精密モードを長持ちさせる。閾値は viewport diagonal に比例させて
+ * 画面サイズ非依存に揃える (大画面でも小画面でも同じ "速さ感" で zone が切り替わる)。
  *
  * 単純な「速ければ純増」モデル (= gain >= 1 のみ) だと、低速の精密モードが分離されず体感的に
- * ただの感度ブレに近くなる。0.5 (超低速) → 1.0 (中速) → 2.0 (高速) の 3 zone 線形補間で
+ * ただの感度ブレに近くなる。0.25 (超低速) → 1.0 (中速) → 2.0 (高速) の 3 zone 線形補間で
  * 「飛ばすか / 止めるか」の意図を速度に対応付ける。
  *
  * raw velocity は pointermove の dt 揺らぎや coalesce で bumpy なので EMA で平滑化して使う。
- * dragStart 直後は smoothed=0 (= 超低速 zone = gain 0.5) から立ち上がるので、最初の 1, 2 event は
+ * dragStart 直後は smoothed=0 (= 超低速 zone = gain 0.25) から立ち上がるので、最初の 1, 2 event は
  * 鈍い感触になるが、5 event 程度で実 velocity に追従する (60Hz で ~80ms)。これは「弾みで
  * ブッ飛ばさない」性質に効く (intent 検出として機能)。
  */
@@ -28,12 +29,13 @@ const REFERENCE_PX_PER_MINUTE = 6;
 
 const VELOCITY_EMA_ALPHA = 0.35;
 /** 3 zone の境界閾値 (px/ms @ reference diagonal)。超低速以下は MIN_GAIN 固定、中速で 1.0、
- *  高速以上は MAX_GAIN 固定、間は線形補間。100 px/sec = なぞる程の速度、500 px/sec = 普通に
- *  指を動かす速度、2000 px/sec = フリック。 */
+ *  高速以上は MAX_GAIN 固定、間は線形補間。100 px/sec = なぞる程の速度、850 px/sec = やや
+ *  速めに動かす速度 (= gain 1.0 到達点)、2000 px/sec = フリック。低速→中速の補間 zone を
+ *  広く取って slope を緩やかにし、ゆっくり扱いの帯を厚くしている。 */
 const VERY_SLOW_THRESHOLD_PX_PER_MS_REFERENCE = 0.1;
-const SLOW_THRESHOLD_PX_PER_MS_REFERENCE = 0.5;
+const SLOW_THRESHOLD_PX_PER_MS_REFERENCE = 0.85;
 const FAST_THRESHOLD_PX_PER_MS_REFERENCE = 2.0;
-const MIN_VELOCITY_GAIN = 0.5;
+const MIN_VELOCITY_GAIN = 0.25;
 const MAX_VELOCITY_GAIN = 2.0;
 
 const computeViewportScale = (): number => {
