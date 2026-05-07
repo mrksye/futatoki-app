@@ -26,14 +26,15 @@
       "breakfast": "あさごはん",
       "lunch": "おひるごはん",
       "dinner": "ばんごはん",
-      "snack": "おやつ",
-      "wakeup": "おきる",
+      "study": "ほん",
+      "pause": "おちゃ",
       "sleep": "ねる",
-      "depart": "しゅっぱつ",
-      "study": "おべんきょう",
       "bath": "おふろ",
-      "toothbrush": "はみがき",
-      "tidy": "おかたづけ"
+      "brush": "はみがき",
+      "depart": "しゅっぱつ",
+      "play": "あそぶ",
+      "music": "おんがく",
+      "still": "しずかなじかん"
     }
   },
   "badge": {

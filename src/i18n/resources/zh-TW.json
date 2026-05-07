@@ -26,14 +26,15 @@
       "breakfast": "早餐",
       "lunch": "午餐",
       "dinner": "晚餐",
-      "snack": "點心",
-      "wakeup": "起床",
+      "study": "看書",
+      "pause": "喝茶",
       "sleep": "睡覺",
-      "depart": "出發",
-      "study": "學習",
       "bath": "洗澡",
-      "toothbrush": "刷牙",
-      "tidy": "收拾"
+      "brush": "刷牙",
+      "depart": "出發",
+      "play": "玩耍",
+      "music": "音樂",
+      "still": "靜一靜"
     }
   },
   "badge": {

@@ -26,14 +26,15 @@
       "breakfast": "śniadanie",
       "lunch": "obiad",
       "dinner": "kolacja",
-      "snack": "przekąska",
-      "wakeup": "pobudka",
+      "study": "czytanie",
+      "pause": "herbata",
       "sleep": "spanie",
-      "depart": "wyjście",
-      "study": "nauka",
       "bath": "kąpiel",
-      "toothbrush": "mycie zębów",
-      "tidy": "sprzątanie"
+      "brush": "mycie zębów",
+      "depart": "wyjście",
+      "play": "zabawa",
+      "music": "muzyka",
+      "still": "cisza"
     }
   },
   "badge": {

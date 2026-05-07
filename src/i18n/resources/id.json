@@ -26,14 +26,15 @@
       "breakfast": "sarapan",
       "lunch": "makan siang",
       "dinner": "makan malam",
-      "snack": "cemilan",
-      "wakeup": "bangun",
+      "study": "membaca",
+      "pause": "teh",
       "sleep": "tidur",
-      "depart": "berangkat",
-      "study": "belajar",
       "bath": "mandi",
-      "toothbrush": "sikat gigi",
-      "tidy": "beres-beres"
+      "brush": "sikat gigi",
+      "depart": "berangkat",
+      "play": "bermain",
+      "music": "musik",
+      "still": "tenang"
     }
   },
   "badge": {

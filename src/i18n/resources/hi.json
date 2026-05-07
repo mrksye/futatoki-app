@@ -26,14 +26,15 @@
       "breakfast": "नाश्ता",
       "lunch": "लंच",
       "dinner": "रात का खाना",
-      "snack": "स्नैक",
-      "wakeup": "उठना",
+      "study": "किताब",
+      "pause": "चाय",
       "sleep": "सोना",
-      "depart": "जाना",
-      "study": "पढ़ाई",
       "bath": "नहाना",
-      "toothbrush": "ब्रश",
-      "tidy": "सफाई"
+      "brush": "ब्रश",
+      "depart": "जाना",
+      "play": "खेल",
+      "music": "संगीत",
+      "still": "शांति"
     }
   },
   "badge": {

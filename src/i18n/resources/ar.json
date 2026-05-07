@@ -26,14 +26,15 @@
       "breakfast": "فطور",
       "lunch": "غداء",
       "dinner": "عشاء",
-      "snack": "حلوى",
-      "wakeup": "استيقاظ",
+      "study": "قراءة",
+      "pause": "شاي",
       "sleep": "نوم",
-      "depart": "ذهاب",
-      "study": "دراسة",
       "bath": "حمام",
-      "toothbrush": "تنظيف الأسنان",
-      "tidy": "ترتيب"
+      "brush": "تنظيف الأسنان",
+      "depart": "ذهاب",
+      "play": "لعب",
+      "music": "موسيقى",
+      "still": "هدوء"
     }
   },
   "badge": {
