@@ -1,40 +1,40 @@
 {
   "meta": {
-    "title": "بچوں کی گھڑی | Futatoki ایپ",
-    "description": "مکمل گائیڈ اور تدریسی تجاویز کے لیے futatoki.app دیکھیں۔ Futatoki گھڑی کا ایپ ورژن۔"
+    "title": "بَچّوں کی گَھڑی | Futatoki ایپ",
+    "description": "مُکَمَّل گائیڈ اَور تَدریسی تَجاویز کے لِیے futatoki.app دیکھیں۔ Futatoki گَھڑی کا ایپ وَرژَن۔"
   },
   "settings": {
     "hour24": "24h",
     "hour12": "12h",
     "sukkiri": "صاف",
-    "kuwashiku": "تفصیل",
-    "sector": "ٹکڑے",
+    "kuwashiku": "تَفصِیل",
+    "sector": "ٹُکڑے",
     "badge": "بَیج",
-    "rotateEnter": "گھماؤ",
-    "rotateExit": "گھڑی",
-    "mergeToSingle": "ملا دو",
-    "splitToTwo": "الگ کرو",
-    "rewindMinute": "1 منٹ پیچھے",
+    "rotateEnter": "گُھماؤ",
+    "rotateExit": "گَھڑی",
+    "mergeToSingle": "مِلا دو",
+    "splitToTwo": "اَلَگ کَرو",
+    "rewindMinute": "1 مِنَٹ پِیچھے",
     "autoStart": "خودکار",
-    "autoStop": "بند",
+    "autoStop": "بَند",
     "random": "کوئی بھی"
   },
   "schedule": {
-    "add": "سرگرمی",
+    "add": "سَرگَرمی",
     "reset": "ری سیٹ",
     "icon": {
-      "breakfast": "ناشتہ",
-      "lunch": "لنچ",
+      "breakfast": "ناشتَہ",
+      "lunch": "لَنچ",
       "dinner": "رات کا کھانا",
-      "study": "کتاب",
+      "study": "کِتاب",
       "pause": "چائے",
       "sleep": "سونا",
-      "bath": "غسل",
-      "brush": "برش",
+      "bath": "غُسل",
+      "brush": "بُرش",
       "depart": "جانا",
       "play": "کھیل",
       "music": "موسیقی",
-      "still": "سکون"
+      "still": "سُکون"
     }
   },
   "badge": {
@@ -42,17 +42,17 @@
     "pm": "🌙 PM"
   },
   "palette": {
-    "distinct12": "چمکیلے رنگ",
-    "vivid": "آسمانی رنگ",
-    "ygb": "آسمان سورج گھاس",
-    "primary3": "تین بنیادی رنگ",
-    "wheel": "رنگوں کا دائرہ",
+    "distinct12": "چَمکیلے رَنگ",
+    "vivid": "آسمانی رَنگ",
+    "ygb": "آسمان سُورَج گھاس",
+    "primary3": "تین بُنیادی رَنگ",
+    "wheel": "رَنگوں کا دائِرہ",
     "cud12": "آفاقی",
-    "monotone": "یک رنگ"
+    "monotone": "یَک رَنگ"
   },
   "a11y": {
-    "clockFaceAm": "صبح کی اینالاگ گھڑی",
-    "clockFacePm": "دوپہر کی اینالاگ گھڑی",
-    "clockFace": "اینالاگ گھڑی"
+    "clockFaceAm": "صُبح کی اینالاگ گَھڑی",
+    "clockFacePm": "دوپَہَر کی اینالاگ گَھڑی",
+    "clockFace": "اینالاگ گَھڑی"
   }
 }
