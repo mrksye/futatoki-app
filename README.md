@@ -35,6 +35,7 @@ Open the app directly in your language:
 - [Español - https://play.futatoki.app/?lang=es](https://play.futatoki.app/?lang=es)
 - [Français - https://play.futatoki.app/?lang=fr](https://play.futatoki.app/?lang=fr)
 - [Deutsch - https://play.futatoki.app/?lang=de](https://play.futatoki.app/?lang=de)
+- [Italiano - https://play.futatoki.app/?lang=it](https://play.futatoki.app/?lang=it)
 - [Português (Brasil) - https://play.futatoki.app/?lang=pt-BR](https://play.futatoki.app/?lang=pt-BR)
 - [简体中文 - https://play.futatoki.app/?lang=zh-CN](https://play.futatoki.app/?lang=zh-CN)
 - [繁體中文 - https://play.futatoki.app/?lang=zh-TW](https://play.futatoki.app/?lang=zh-TW)
