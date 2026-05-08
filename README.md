@@ -83,11 +83,9 @@ Translations live in `src/i18n/resources/` as JSON files (one per language). `ja
 
 தமிழ் பேசும் குழந்தைகளுக்கும் இந்த கடிகாரம் சேர வேண்டும் என்று நினைத்தேன். மொழியின் "உணர்வை" எனக்குக் கொடுக்க யாரையாவது தேடினேன். கிடைக்கவில்லை.
 
-நான் இந்த ஆப் வெளியிடப்படும் பெரும்பாலான மொழிகளில் தாய்மொழி பேசுபவன் இல்லை. ஒவ்வொரு மொழிக்கும், நான் AI விளக்கங்களை, கொஞ்சம் தடுமாறிக் கொண்டே, படிக்கிறேன். உள்ளுணர்வைப் பின்பற்றுகிறேன் — இந்த வார்த்தை அரவணைப்பாக இருக்கிறதா? வாசிக்கக் கற்றுக் கொள்ளும் ஒரு குழந்தை இதைப் பார்த்து சிரிக்கும், அல்லது குளிர்ந்த அலுவலகச் சத்தம் கேட்கும்? அந்த உள்ளுணர்வு தான் எல்லா மொழிபெயர்ப்பையும் சோதிக்கும் ஒரே அளவுகோல். "இது சரியா" அல்ல — சரியான வார்த்தைகள் கூட குளிர்ந்து இருக்கலாம், குளிர்ந்த வார்த்தைகள் வாசிக்கக் கற்றுக் கொள்ளும் குழந்தைக்கு பொருந்தாது.
+நான் இந்த ஆப் வெளியிடப்படும் பெரும்பாலான மொழிகளில் தாய்மொழி பேசுபவன் இல்லை. ஒவ்வொரு மொழிக்கும், நான் AI விளக்கங்களை, கொஞ்சம் தடுமாறிக் கொண்டே, படிக்கிறேன். உள்ளுணர்வைப் பின்பற்றுகிறேன் — இந்த வார்த்தை அரவணைப்பாக இருக்கிறதா? வாசிக்கக் கற்றுக் கொள்ளும் ஒரு குழந்தை இதைப் பார்த்து சிரிக்கும், அல்லது குளிர்ந்த அலுவலகச் சத்தம் கேட்கும்? அந்த உள்ளுணர்வு தான் எல்லா மொழிபெயர்ப்பையும் சோதிக்கும் ஒரே அளவுகோல் — எல்லா மொழிக்கும் ஒரே அளவுகோல். "இது சரியா" அல்ல — சரியான வார்த்தைகள் கூட குளிர்ந்து இருக்கலாம், குளிர்ந்த வார்த்தைகள் வாசிக்கக் கற்றுக் கொள்ளும் குழந்தைக்கு பொருந்தாது.
 
-தமிழுக்கு, கிடைக்கும் ஒவ்வொரு AI விளக்கத்தையும் படித்தேன். அந்த உள்ளுணர்வு வரவே இல்லை. எந்த வார்த்தை அரவணைப்பாக இருக்கிறது, எது வெறும் சரியாக இருக்கிறது என்பதை என்னால் உணர முடியவில்லை. **என்னாலேயே உணர முடியாத வார்த்தைகளை ஒரு குழந்தையின் கையில் கொடுக்க என்னால் முடியாது.** அதனால் தமிழை வெளியே எடுத்துவிட்டேன்.
-
-இது தவறுகளைப் பற்றியது அல்ல. அரவணைப்பைப் பற்றியது. தமிழ் பேசும் குழந்தைகளுக்காக அரவணைப்பான வார்த்தைகளை — தடுமாறியாவது — என் கைகளால் தேர்ந்தெடுக்கும் வரை, தமிழ் வெளியேயே இருக்கும்.
+தமிழில், அந்த அளவுகோலைத் தாண்ட முடியவில்லை. அந்த உள்ளுணர்வு எனக்கு வரவே இல்லை. **இது தமிழின் வரம்பு அல்ல, என்னுடைய வரம்பு** — தமிழ் காதுகள் கொண்ட ஒரு டெவலப்பர் ஒரு மதியத்தில் இந்த அளவுகோலைத் தாண்டுவார். ஆனால் இதை வெளியிடுவது நான். என் கைகளாலேயே இந்த வார்த்தைகளைத் தேர்ந்தெடுக்கும் வரை, தமிழ் வெளியே இருக்கும்.
 
 நிலுவையில். கைவிடவில்லை. திரும்பி வருவேன்.
 
@@ -103,11 +101,9 @@ Tamil has been pulled for now, and I'm GENUINELY mortified about this one. It hu
 
 I wanted Tamil-speaking children to have this clock too. I went looking for someone who could give me a *feel* for the language. I couldn't find them.
 
-Here's how I actually do this: I'm not a native speaker of most of the languages this app ships in. For each one, I read AI explanations — clumsily, word by word — and follow my gut. Does this word feel *warm*? Would a small child smile at it, or would they hear a cold administrator? That gut sense is the only bar I hold every translation to. Not "is this technically correct" — even technically-right words can be cold, and cold doesn't fit a child who is just learning to read.
+Here's how I actually do this: I'm not a native speaker of most of the languages this app ships in. For each one, I read AI explanations — clumsily, word by word — and follow my gut. Does this word feel *warm*? Would a small child smile at it, or would they hear a cold administrator? That gut sense is the only bar I hold every translation to — the same bar, every language. Not "is this technically correct" — even technically-right words can be cold, and cold doesn't fit a child who is just learning to read.
 
-For Tamil, I read every AI explanation I could get. The gut feel never arrived. I couldn't tell which words were warm and which were merely accurate. **And until that feel comes through my own hands — clumsy as they are — I cannot hand a Tamil-speaking child these words.** So I pulled it out.
-
-This isn't about errors. It's about warmth. Until I can pick warm Tamil words for these children with my own clumsy hands, Tamil stays out.
+With Tamil, that bar didn't get cleared. The gut feel never arrived for me. **That's about my limits, not Tamil's** — a developer with Tamil ears would clear this bar in an afternoon. But I'm the one shipping this, and until my own hands can pick these words, Tamil stays out.
 
 **Pending**, not abandoned. I'll come back to this.
 
