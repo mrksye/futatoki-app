@@ -23,10 +23,34 @@ Most analog clocks overwhelm young children with two overlapping abstractions: r
 * 🎲 **Random mode** - 15-minute interval quizzes
 * ☀️ **Auto rotation** - 24 hours in 24 seconds, with sky color transitions
 * 📱 **PWA** - install on phone/tablet, works offline
-* 🌍 **Multilingual** - 20 languages — see [CONTRIBUTING.md](./CONTRIBUTING.md) for maintenance status
+* 🌍 **Multilingual** — see [CONTRIBUTING.md](./CONTRIBUTING.md) for maintenance status
 * 🔒 **No ads, no user tracking, no accounts** - app is 100% client-side
 
-> 💡 **Force a language via URL:** Append `?lang=<code>` to the URL — for example, [`play.futatoki.app/?lang=ja`](https://play.futatoki.app/?lang=ja) for Japanese, or `?lang=zh-TW` for Traditional Chinese.
+## Available languages
+
+Open the app directly in your language:
+
+- [English - https://play.futatoki.app/?lang=en](https://play.futatoki.app/?lang=en)
+- [日本語 - https://play.futatoki.app/?lang=ja](https://play.futatoki.app/?lang=ja)
+- [Español - https://play.futatoki.app/?lang=es](https://play.futatoki.app/?lang=es)
+- [Français - https://play.futatoki.app/?lang=fr](https://play.futatoki.app/?lang=fr)
+- [Deutsch - https://play.futatoki.app/?lang=de](https://play.futatoki.app/?lang=de)
+- [Português (Brasil) - https://play.futatoki.app/?lang=pt-BR](https://play.futatoki.app/?lang=pt-BR)
+- [简体中文 - https://play.futatoki.app/?lang=zh-CN](https://play.futatoki.app/?lang=zh-CN)
+- [繁體中文 - https://play.futatoki.app/?lang=zh-TW](https://play.futatoki.app/?lang=zh-TW)
+- [한국어 - https://play.futatoki.app/?lang=ko](https://play.futatoki.app/?lang=ko)
+- [Русский - https://play.futatoki.app/?lang=ru](https://play.futatoki.app/?lang=ru)
+- [Polski - https://play.futatoki.app/?lang=pl](https://play.futatoki.app/?lang=pl)
+- [Türkçe - https://play.futatoki.app/?lang=tr](https://play.futatoki.app/?lang=tr)
+- [ไทย - https://play.futatoki.app/?lang=th](https://play.futatoki.app/?lang=th)
+- [العربية - https://play.futatoki.app/?lang=ar](https://play.futatoki.app/?lang=ar)
+- [فارسی - https://play.futatoki.app/?lang=fa](https://play.futatoki.app/?lang=fa)
+- [اردو - https://play.futatoki.app/?lang=ur](https://play.futatoki.app/?lang=ur)
+- [हिन्दी - https://play.futatoki.app/?lang=hi](https://play.futatoki.app/?lang=hi)
+- [বাংলা - https://play.futatoki.app/?lang=bn](https://play.futatoki.app/?lang=bn)
+- [Bahasa Indonesia - https://play.futatoki.app/?lang=id](https://play.futatoki.app/?lang=id)
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the maintenance status of each language.
 
 ## Tech stack
 
