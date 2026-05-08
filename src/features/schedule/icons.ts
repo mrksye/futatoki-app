@@ -16,7 +16,7 @@ export type ScheduleIconId =
   | "depart"
   | "play"
   | "music"
-  | "still";
+  | "special";
 
 export interface ScheduleIconDef {
   id: ScheduleIconId;
@@ -36,7 +36,7 @@ export const SCHEDULE_ICONS: readonly ScheduleIconDef[] = [
   { id: "depart",    emoji: "🚪" }, // 当初の 🚌 (北米寄り) からドアに差し替えた。内部 id は departure 概念を意識して迷っていたままだったので、素直にドアに変更。
   { id: "play",      emoji: "⚽️" }, // 南米 / 欧州 / アフリカ / 中東いずれでも子供の外遊びの第一象徴として。
   { id: "music",     emoji: "🎵" }, // 万国共通。
-  { id: "still",     emoji: "🕯️" }, // 全宗教 / 誕生日 / 世俗いずれにも流用される、最も柔軟な静寂シンボル。🙏 (合掌) は強すぎるため入れられずに居たが、🕯を12個目のスロットとして正式に採用。💐や🌟も考えたが、これが一番良いと今のところ。
+  { id: "special",   emoji: "⭐️" }, // 自分や家族にとっての特別な時間を表す枠。誕生日・記念日・お祝いなど、子ども本人が意味を込めて使えるよう中立的にした。当初は 🕯 (静寂シンボル) だったが、ろうそくは宗教色が強く出るため避けて ⭐️ に変更。
 ];
 
 const ICON_BY_ID: Record<ScheduleIconId, ScheduleIconDef> = Object.fromEntries(
