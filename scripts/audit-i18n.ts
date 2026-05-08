@@ -58,7 +58,6 @@ const EXPECTED_SCRIPT: Record<string, RegExp | null> = {
   th: /[\u0E00-\u0E7F]/,           // Thai
   hi: /[\u0900-\u097F]/,           // Devanagari
   bn: /[\u0980-\u09FF]/,           // Bengali
-  ta: /[\u0B80-\u0BFF]/,           // Tamil
 };
 
 // ja/en/zh-CN/zh-TW では漢字があってもOK。他は漢字混入もNG

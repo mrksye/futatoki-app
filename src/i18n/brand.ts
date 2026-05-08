@@ -30,7 +30,6 @@ export const LP_BRAND: Record<string, string> = {
   fa: "Futatoki ساعت",
   ur: "Futatoki گھڑی",
   bn: "Futatoki ঘড়ি",
-  ta: "Futatoki கடிகாரம்",
 };
 
 export const APP_BRAND: Record<string, string> = {
@@ -53,7 +52,6 @@ export const APP_BRAND: Record<string, string> = {
   fa: "Futatoki برنامه",
   ur: "Futatoki ایپ",
   bn: "Futatoki অ্যাপ",
-  ta: "Futatoki செயலி",
 };
 
 /**
@@ -86,7 +84,6 @@ export const OG_LOCALE: Record<string, string> = {
   fa: "fa_IR",
   ur: "ur_PK",
   bn: "bn_BD",
-  ta: "ta_IN",
 };
 
 /**
@@ -147,5 +144,4 @@ export const LP_BRAND_VARIANTS: Record<string, readonly string[]> = {
   fa: ["Futatoki ساعت"],
   ur: ["Futatoki گھڑی"],
   bn: ["Futatoki ঘড়ি"],
-  ta: ["Futatoki கடிகாரம்"],
 };
