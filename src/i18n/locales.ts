@@ -29,7 +29,6 @@ export const SUPPORTED_LOCALES: readonly LocaleMeta[] = [
   { code: "ur",    name: "Urdu",                 endonym: "اردو",                dir: "rtl" },
   { code: "hi",    name: "Hindi",                endonym: "हिन्दी",                dir: "ltr" },
   { code: "bn",    name: "Bengali",              endonym: "বাংলা",               dir: "ltr" },
-  { code: "ta",    name: "Tamil",                endonym: "தமிழ்",                dir: "ltr" },
   { code: "id",    name: "Indonesian",           endonym: "Bahasa Indonesia",   dir: "ltr" },
 ] as const;
 

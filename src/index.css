@@ -112,10 +112,6 @@ button[aria-label]::before {
   font-family: 'Nunito', 'Kohinoor Bangla', 'Bangla Sangam MN', 'Nirmala UI', 'Vrinda', 'Noto Sans Bengali', sans-serif;
 }
 
-[lang="ta"] {
-  font-family: 'Nunito', 'Kohinoor Tamil', 'Tamil Sangam MN', 'Nirmala UI', 'Latha', 'Noto Sans Tamil', sans-serif;
-}
-
 @keyframes twinkle {
   0%, 100% { opacity: 0.4; }
   50% { opacity: 1; }
