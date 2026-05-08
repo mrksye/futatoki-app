@@ -16,6 +16,7 @@ export const SUPPORTED_LOCALES: readonly LocaleMeta[] = [
   { code: "es",    name: "Spanish",              endonym: "Español",            dir: "ltr" },
   { code: "fr",    name: "French",               endonym: "Français",           dir: "ltr" },
   { code: "de",    name: "German",               endonym: "Deutsch",            dir: "ltr" },
+  { code: "it",    name: "Italian",              endonym: "Italiano",           dir: "ltr" },
   { code: "pt-BR", name: "Portuguese (Brazil)",  endonym: "Português (Brasil)", dir: "ltr" },
   { code: "zh-CN", name: "Chinese (Simplified)", endonym: "简体中文",            dir: "ltr" },
   { code: "zh-TW", name: "Chinese (Traditional)",endonym: "繁體中文",            dir: "ltr" },

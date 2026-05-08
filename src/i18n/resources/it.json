@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "title": "Orologio per bambini | Futatoki App",
+    "description": "Guida completa e consigli per insegnare su futatoki.app. La versione app di Futatoki Orologio."
+  },
+  "settings": {
+    "hour24": "24h",
+    "hour12": "12h",
+    "sukkiri": "semplice",
+    "kuwashiku": "tutto",
+    "sector": "fette",
+    "badge": "bollino",
+    "rotateEnter": "gira",
+    "rotateExit": "orologio",
+    "mergeToSingle": "insieme",
+    "splitToTwo": "dividi",
+    "rewindMinute": "indietro 1m",
+    "autoStart": "auto",
+    "autoStop": "stop",
+    "random": "a caso"
+  },
+  "schedule": {
+    "add": "attività",
+    "reset": "pulisci",
+    "icon": {
+      "breakfast": "colazione",
+      "lunch": "pranzo",
+      "dinner": "cena",
+      "study": "libro",
+      "pause": "merenda",
+      "sleep": "nanna",
+      "bath": "bagnetto",
+      "brush": "spazzolino",
+      "depart": "andiamo",
+      "play": "gioco",
+      "music": "musica",
+      "special": "speciale"
+    }
+  },
+  "badge": {
+    "am": "☀️ AM",
+    "pm": "🌙 PM"
+  },
+  "palette": {
+    "distinct12": "colori netti",
+    "vivid": "colori del cielo",
+    "ygb": "cielo sole erba",
+    "primary3": "3 primari",
+    "wheel": "ruota colori",
+    "cud12": "universale",
+    "monotone": "un colore"
+  },
+  "a11y": {
+    "clockFaceAm": "orologio analogico AM",
+    "clockFacePm": "orologio analogico PM",
+    "clockFace": "orologio analogico"
+  }
+}
