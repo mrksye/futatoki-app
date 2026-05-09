@@ -1,5 +1,6 @@
 import { For, Show, createMemo } from "solid-js";
 import type { Component } from "solid-js";
+import { isFullMoonActive } from "../features/full-moon-easter-egg";
 
 /**
  * 自由回転モード時の空背景。時間帯に応じてグラデーション・太陽/月・星を描く。
@@ -221,7 +222,9 @@ const SkyBackground: Component<SkyBackgroundProps> = (props) => {
               <mask id="crescent-mask">
                 <rect x="-42" y="-42" width="84" height="84" fill="black" />
                 <circle cx="0" cy="0" r="32" fill="white" />
-                <circle cx="14" cy="-8" r="28" fill="black" />
+                <Show when={!isFullMoonActive()}>
+                  <circle cx="14" cy="-8" r="28" fill="black" />
+                </Show>
               </mask>
             </defs>
             {/* 光彩代わりの透明ディスク */}
