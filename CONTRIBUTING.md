@@ -14,7 +14,7 @@ Before contributing, please read the [NOTICE](./NOTICE) regarding the project's 
 
 ## Adding a translation
 
-Translations are the most impactful contribution you can make.
+Translations are particularly helpful — feel free to start there.
 
 ### Officially maintained languages
 
@@ -140,13 +140,12 @@ Open an issue describing the idea. Before suggesting:
 
 ## Philosophy
 
-Futatoki exists to help young children learn time. Keep in mind:
+Futatoki was built to help young children learn time. Keep in mind:
 
 - **Simple is better.** If a feature adds complexity for an edge case, it might not belong.
 - **No tracking, ever.** User privacy is non-negotiable.
 - **No ads.** Ever.
-- **Accessibility matters.** Color-blind, low-vision, and motor-impaired children all deserve to use this.
-
+- **Accessibility matters.** Color-blind users have a dedicated palette. RTL languages render correctly.
 
 ## License & Trademark
 
