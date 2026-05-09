@@ -20,3 +20,42 @@ html, body, #root {
   touch-action: none;
   overscroll-behavior: none;
 }
+
+/* 印刷対応 (Ctrl+P 経由のみを想定、印刷ボタンは設けない)。
+ *
+ * 上の kiosk lock がそのままだと viewport 外が clip されて出力に何も載らない / ボタンが乗ったまま
+ * になる。 印刷時だけ lock を解除し、操作系 UI を消し、background gradient を紙にも焼き付ける。
+ *
+ * `.fixed` は Tailwind の `position: fixed` utility。 SettingsPanel の各ボタン
+ * (`fixed top-2 right-2 ...`) と SchedulePicker の overlay (`fixed inset-0 z-[100] ...`) は
+ * 全て `.fixed` を通るので、ここ一箇所で UI chrome を一括非表示にできる
+ * (ClockLayout 側の AM/PM バッジ等は `absolute` なので残る)。 */
+@media print {
+  @page {
+    margin: 8mm;
+  }
+  html, body, #root {
+    position: static;
+    inset: auto;
+    overflow: visible;
+    width: 100%;
+    height: 100vh;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .fixed {
+    display: none !important;
+  }
+  /* ClockSlot は JS が画面 viewport から算出した固定 px (例: 1920px monitor で ~800px) を inline
+   * style で持つため、印刷の半幅 (~560 CSS px) に対して overflow して AM/PM が中央で重なる。
+   * 印刷時だけ親 wrapper full size に上書きし、 SVG (viewBox + preserveAspectRatio="xMidYMid meet")
+   * の自動 fit に任せて綺麗に並べる。
+   * 隣接 wrapper を中央に寄せる負マージン (`-mr-3` / `-ml-3` / `-mb-3` / `-mt-3`) も紙では不要。 */
+  .clock-wrapper-transition {
+    margin: 0 !important;
+  }
+  .clock-wrapper-transition > div {
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
