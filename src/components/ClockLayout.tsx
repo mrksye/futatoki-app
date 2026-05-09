@@ -562,7 +562,7 @@ export const ClockLayout: Component = () => {
       </Show>
 
       <Show when={!isRotating()}>
-        <div class="absolute top-0 left-0 right-0 z-10 pointer-events-none">
+        <div class="absolute top-0 left-0 right-0 z-10 pointer-events-none print:hidden">
           <SecondsBar seconds={displayed().seconds} hours={displayed().hours} />
         </div>
       </Show>
