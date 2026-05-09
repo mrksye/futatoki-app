@@ -11,7 +11,7 @@ import { pickerOpen, closePicker } from "../schedule/picker";
  * 「操作」は pointermove / touchmove も含めて広めに watch するので drag や hover 中の誤検知は無い。
  */
 
-const IDLE_EXIT_MS = 60_000;
+const IDLE_EXIT_MS = 180_000;
 
 /** 操作と見做す DOM event 一覧。capture phase で document に listen する。 */
 const ACTIVITY_EVENTS = [
@@ -41,7 +41,7 @@ export const useIdleExitTimer = () => {
   const armTimer = () => {
     clearTimer();
     timerId = setTimeout(() => {
-      // fire 時に再 check (60 秒の間に mode が変わっている可能性があるので gate)。
+      // fire 時に再 check (180 秒の間に mode が変わっている可能性があるので gate)。
       if (clockMode() !== "freeRotate") return;
       if (pickerOpen()) closePicker();
       transition("clock");
