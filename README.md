@@ -1,6 +1,6 @@
 <img src="./public/icon-192.png" alt="Futatoki" width="96" />
 
-# Futatoki the clock
+# Futatoki the Clock
 
 A free, open-source 24-hour analog clock for kids learning to tell time. No install, no sign-up — runs in any browser.
 
