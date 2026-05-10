@@ -2,6 +2,8 @@
 
 # Futatoki the Clock
 
+<img src="./public/screenshot.webp" alt="Two analog faces side by side — PM face in full color showing 20:00, AM face dimmed" />
+
 A free, open-source 24-hour analog clock for kids learning to tell time. No install, no sign-up — runs in any browser.
 
 🌐 [Try it live](https://play.futatoki.app/?lang=en) · 📖 [Learn more](https://futatoki.app/en/) · 📚 [Usage guide](https://futatoki.app/en/guide)
