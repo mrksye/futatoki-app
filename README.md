@@ -1,30 +1,33 @@
+<img src="./public/icon-192.png" alt="Futatoki" width="96" />
+
 # Futatoki the clock
 
-A free, open-source educational analog clock web app for children aged 1-7, where each hour is represented by a distinct color.
+A free, open-source 24-hour analog clock for kids learning to tell time. No install, no sign-up — runs in any browser.
 
-🌐 [Try it live](https://play.futatoki.app/) · 📖 [Learn more](https://futatoki.app/) · 📚 [Usage guide](https://futatoki.app/guide)
+🌐 [Try it live](https://play.futatoki.app/?lang=en) · 📖 [Learn more](https://futatoki.app/en/) · 📚 [Usage guide](https://futatoki.app/en/guide)
 
 ## Why another clock app?
 
-Most analog clocks overwhelm young children with two overlapping abstractions: reading numbers *and* interpreting hand positions. Futatoki reverses the order — children learn time **through color first**, then numbers come later.
+Targets kids who read digital clocks fluently but can't yet parse analog ones. The design removes common sources of confusion and adds explicit anchors for early learners.
 
-* Each hour is a distinct color in a 12-segment ring
-* AM and PM shown as two parallel faces (no "3 o'clock happens twice" confusion)
-* Six color palettes, including a colorblind-friendly option
-* "Clean" mode for young children, "Detailed" mode for number practice
-* Free rotation mode that can't go backward — because time doesn't
+* Clockwise-only hand motion — no backward rotation
+* Two parallel 12-hour faces (AM / PM) — same hour mapped to two distinct positions
+* Schedule icons placed on dial positions — clock time anchored to a child's daily routine
+* Color rings as an optional helper layer — disable-able once not needed
 
 ## Features
 
-* ⏰ **Color-coded hour rings** - 12 distinct colors, one per hour
-* 🌓 **AM/PM parallel display** - both halves of the day, side by side
-* 🎨 **6 color palettes** - vivid, sky, blue-green, primary, color wheel, colorblind-friendly
-* 🔄 **Free rotation mode** - drag the hands to any time
-* 🎲 **Random mode** - 15-minute interval quizzes
-* ☀️ **Auto rotation** - 24 hours in 24 seconds, with sky color transitions
-* 📱 **PWA** - install on phone/tablet, works offline
-* 🌍 **Multilingual** — see [CONTRIBUTING.md](./CONTRIBUTING.md) for maintenance status
-* 🔒 **No ads, no user tracking, no accounts** - app is 100% client-side
+* 🌓 **AM/PM stack & split** — one 12-hour face, or two parallel faces for both halves of the day
+* 🕛 **True 24-hour design** — AM face untouched (1–12); PM side adds 13–23
+* ☀️ **Visible clock-hand movement** — a full day in ~24 seconds; sun and moon arc across a shifting sky
+* 🔄 **Drag-anywhere spinning** — free rotation from any spot on screen; one-handed phone use works
+* 🔢 **Three reading stages** — *Badge × Simple* → *Slices × Detailed* (1–60 minute marks) → *Slices × Simple*
+* 🎨 **Color as helper lines** — six palettes (incl. colorblind-friendly), as temporary scaffolding
+* 📌 **Activity drops** — icons on the dial as completed stamps or upcoming events that animate as the clock hand approaches
+* 🎲 **Random quiz** — random 15-minute interval, for reading practice
+* 📱 **PWA** — installable, offline-capable
+* 🌍 **Multilingual** — see [CONTRIBUTING.md](./CONTRIBUTING.md) for status
+* 🔒 **No ads, no tracking, no accounts** — fully client-side
 
 ## Available languages
 
@@ -102,7 +105,7 @@ Contributions welcome — especially translations. See [CONTRIBUTING.md](./CONTR
 
 MIT — see [LICENSE](./LICENSE).
 
-The name "Futatoki" / "Futatoki the Clock" and the project's branding are not covered by the MIT License — see [NOTICE](./NOTICE) for details.
+The name "Futatoki" / "Futatoki the Clock" — including its renderings in any language (e.g. "フタトキ", "ふたとき") — and the project's branding are not covered by the MIT License. See [NOTICE](./NOTICE) for details.
 
 ## About
 
