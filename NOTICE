@@ -1,5 +1,8 @@
 # NOTICE
 
+This NOTICE clarifies what is and isn't covered by the MIT license — it does
+not modify the license itself.
+
 The source code of this project is MIT-licensed — fork, modify, ship, sell, go wild.
 
 Two small asks, though:
@@ -18,8 +21,10 @@ including the dual-face AM/PM clock layout, the color palettes used in the
 clock faces, the 12-fixed-at-top 24-hour layout, and the overall visual
 identity — are not part of the MIT-licensed "Software" above.
 
-Reusing these elements in another product — whether a clock, toy, merchandise,
-or anything else — is outside the scope of this license. If you want to do
-that, please contact the author.
+The MIT license above covers standalone computer programs. Embedding the
+software in a device is fine — what falls outside the license is using the
+dual-face layout, palettes, and visual identity as the brand identity (trade
+dress) of a hardware clock, toy, merchandise, or other non-software product.
+If you want to do that, please contact the author.
 
 Trademark application filed in Japan.
