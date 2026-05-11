@@ -105,9 +105,11 @@ Contributions welcome — especially translations. See [CONTRIBUTING.md](./CONTR
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT — see [LICENSE](./LICENSE)
 
-The name "Futatoki" / "Futatoki the Clock" — including its renderings in any language (e.g. "フタトキ", "ふたとき") — and the project's branding are not covered by the MIT License. See [NOTICE](./NOTICE) for details.
+The names "Futatoki" / "Futatoki the Clock", logos, branding, and the visual
+design of the clock face when reproduced outside the screen-based app are not
+covered by the MIT License — see [NOTICE](./NOTICE) for details.
 
 ## About
 

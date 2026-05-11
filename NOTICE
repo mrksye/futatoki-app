@@ -1,31 +1,66 @@
 # NOTICE
 
-This NOTICE clarifies what is and isn't covered by the MIT license — it does
-not modify the license itself.
-
 The source code of this project is MIT-licensed — fork, modify, ship, sell, go wild.
 
 Two small asks, though:
 
 1. **Pick a different name for your fork.** "Futatoki" / "Futatoki the Clock" is
-   how people find the original. A fork under the same name just confuses users.
+how people find the original. A fork under the same name just confuses users.
 
 2. **Don't hold the original author responsible for other people's forks.**
-   Anything shipped under the "Futatoki" or "Futatoki the Clock" name by someone
-   other than Mrksye isn't endorsed, supported, or vouched for. If someone else's
-   "Futatoki" misbehaves, that's on them — not on the original project.
+Anything shipped under the "Futatoki" or "Futatoki the Clock" name by someone
+other than Mrksye isn't endorsed, supported, or vouched for. If someone else's
+"Futatoki" misbehaves, that's on them — not on the original project.
 
-The names "Futatoki" / "Futatoki the Clock", their renderings in any language
-(e.g. "フタトキ", "ふたとき"), and the project's logos, icons, and branding —
-including the dual-face AM/PM clock layout, the color palettes used in the
-clock faces, the 12-fixed-at-top 24-hour layout, and the overall visual
-identity — are not part of the MIT-licensed "Software" above.
+---
 
-The MIT license above covers standalone computer programs. Embedding the
-software in a device is fine — what falls outside the license is using the
-dual-face layout, palettes, and visual identity as the brand identity (trade
-dress) of a hardware clock, toy (including educational clocks for children),
-merchandise, or other non-software product. If you want to do that, please
-contact the author.
+The MIT License covers the source code. The following are **not** part of the
+MIT-licensed "Software":
 
-Trademark application filed in Japan.
+## Names and branding
+
+- "Futatoki" / "Futatoki the Clock" / "ふたとき時計" / "Futatoki 双面时钟"
+  and any other localized brand names
+- All logos, icons, and brand assets in any format (PNG, SVG, WebP, ICO,
+  or otherwise), including but not limited to:
+    - `public/icon-*.png` (PWA icons, all sizes)
+    - `public/icon*.svg`, `public/favicon.svg`, and any other SVG icon sources
+    - `public/screenshot.webp` and any promotional imagery
+    - Any icon, logo, or brand asset embedded in source files (e.g. inline
+      SVG within `src/` that represents the Futatoki brand or its clock-face
+      identity, as opposed to generic UI iconography)
+- Visual assets used on futatoki.app / play.futatoki.app, regardless of
+  whether they are stored in this repository
+
+## Visual design of the clock face, when reproduced outside the screen
+
+The MIT-licensed source code renders the clock on screens — web, mobile,
+desktop. That use is unrestricted, including embedding the app inside other
+software (tablet learning apps, websites, educational platforms). What is
+separately reserved is the *visual design itself* when lifted out of the
+running app and into another medium, including:
+
+- Physical products: clocks, watches, toys, educational materials, stationery
+- Merchandise: apparel, stickers, prints, accessories, plush goods
+- Print publications, broadcast media, or any other non-software reproduction
+- AI-generated derivatives intended for any of the above
+
+This reservation covers, but is not limited to:
+
+- The six color palettes and their specific combinations
+- The AM/PM dual-face composition and layout
+- The "stack" (かさねる) overlap behavior and its visual expression
+- The sun-and-moon sky illustration
+- The stage-progression dial layouts
+  (Badge × Simple / Slices × Detailed / Slices × Simple)
+
+Running the app on a screen: fine, that's MIT.
+Taking the design off the screen: please ask first — open a GitHub issue
+or use the contact below.
+
+---
+
+For licensing inquiries about physical products, merchandise, or other
+non-software uses of the visual design and branding, contact:
+
+  <mrksye@gmail.com>
