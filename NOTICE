@@ -47,9 +47,26 @@ running app and into another medium, including:
 
 This reservation covers, but is not limited to:
 
-- The six color palettes and their specific combinations
+- The color-placement scheme: in all palettes except "そらのいろ"
+  (sky colors) and "ものとーん" (monotone), contrasting colors are
+  deliberately arranged in a non-adjacent manner around the dial,
+  serving as visual anchors and reference lines for early learners
+  (as opposed to rainbow-order, hue-wheel-order, or sequential
+  gradient arrangements common in other educational clocks)
+
+- The named color palette set and its specific color values,
+  including the Japanese and English names of each palette:
+    - "くっきりいろ" / crisp colors
+    - "あおきみどり" / sky sun grass
+    - "さんげんしょく" / 3 primaries
+    - "いろのわ" / color wheel
+    - "みんなのいろ" / universal
+    - "そらのいろ" / sky colors
+    - "ものとーん" / monotone
+  The pedagogical rationale behind each palette is documented
+  separately by the author.
 - The AM/PM dual-face composition and layout
-- The "stack" (かさねる) overlap behavior and its visual expression
+- The "kasaneru" (重ねる) overlap behavior and its visual expression
 - The sun-and-moon sky illustration
 - The stage-progression dial layouts
   (Badge × Simple / Slices × Detailed / Slices × Simple)
@@ -62,5 +79,6 @@ or use the contact below.
 
 For licensing inquiries about physical products, merchandise, or other
 non-software uses of the visual design and branding, contact:
+
 
   <mrksye@gmail.com>
