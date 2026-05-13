@@ -57,12 +57,17 @@ reproduction, and regardless of any rebranding along the way.
 
 This reservation covers, but is not limited to:
 
-- The color-placement scheme: in all palettes except "そらのいろ"
-  (sky colors) and "ものとーん" (monotone), contrasting colors are
-  deliberately arranged in a non-adjacent manner around the dial,
-  serving as visual anchors and reference lines for early learners
-  (as opposed to rainbow-order, hue-wheel-order, or sequential
-  gradient arrangements common in other educational clocks)
+- The color-placement principle: in the "くっきりいろ" (crisp colors),
+  "あおきみどり" (sky sun grass), "さんげんしょく" (3 primaries), and
+  "みんなのいろ" (universal) palettes, adjacent time regions are
+  deliberately given hues that sit far apart on the color wheel — no
+  smooth gradient between neighboring segments — so that the color
+  boundaries themselves function as visual guide lines for early
+  learners (in contrast to the rainbow-order or sequential gradient
+  arrangements common in other educational clocks). The remaining
+  palettes ("いろのわ" / color wheel, "そらのいろ" / sky colors,
+  "ものとーん" / monotone) follow separate design intents and this
+  principle does not apply to them.
 
 - The named color palette set and its specific color values,
   including the Japanese and English names of each palette:
