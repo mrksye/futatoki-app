@@ -16,14 +16,12 @@ import {
 } from "../features/free-rotation/state";
 import { useRewindHold } from "../features/free-rotation/rewind";
 import { randomizeRotate } from "../features/free-rotation/random-time";
-import { useButtonsDimmedDuringMergeFlip } from "../features/free-rotation/merge-animation";
 import { openPickerAtElement } from "../features/schedule/picker";
 
 const SettingsPanel: Component = () => {
   const { t } = useI18n();
   const isLandscape = useOrientation();
   const { start: startRewind, stop: stopRewind } = useRewindHold();
-  const buttonsDimmed = useButtonsDimmedDuringMergeFlip();
 
   /** Slot ボタンの dim animation (slot-crossfade) を 560ms だけ走らせる。とけい/かいてん や
    *  かさねる/わける で時計が大きく動くタイミングでスロットボタンを薄くし、子どもの視線を時計の
@@ -116,7 +114,7 @@ const SettingsPanel: Component = () => {
           式を使う。 */}
 
       {/* LEFT スロット 予定追加: freeRotate 中だけ可視 */}
-      <div
+      <button
         class={
           "fixed z-50 slot-crossfade " +
           (isLandscape()
@@ -125,25 +123,16 @@ const SettingsPanel: Component = () => {
                 : "left-1/2 top-2 -translate-x-1/2")
             : (mergedVisible()
                 ? "left-2 top-[80%] -translate-y-1/2"
-                : "left-2 top-1/2 -translate-y-1/2"))
+                : "left-2 top-1/2 -translate-y-1/2")) +
+          " " + btnClass
         }
         style={{
           opacity: clockMode() === "freeRotate" ? 1 : 0,
           "pointer-events": clockMode() === "freeRotate" ? "auto" : "none",
         }}
-      >
-        {/* 内側 button の opacity は useButtonsDimmedDuringMergeFlip 用 (merge transition 中だけ
-            0.08 に dim)。slot 可視性 (outer opacity) とは別レイヤーなので timing 干渉なし。 */}
-        <button
-          class={btnClass}
-          style={{
-            opacity: buttonsDimmed() ? 0.08 : 1,
-            transition: "opacity 100ms ease",
-          }}
-          onPointerDown={(e) => openPickerAtElement(e.currentTarget as HTMLButtonElement)}
-          aria-label={t("schedule.add")}
-        />
-      </div>
+        onPointerDown={(e) => openPickerAtElement(e.currentTarget as HTMLButtonElement)}
+        aria-label={t("schedule.add")}
+      />
 
       {/* RIGHT スロット パレット: clock モード中だけ可視 */}
       <button
@@ -167,7 +156,7 @@ const SettingsPanel: Component = () => {
       />
 
       {/* RIGHT スロット 1ふんもどす: freeRotate 中だけ可視 */}
-      <div
+      <button
         class={
           "fixed z-50 slot-crossfade " +
           (isLandscape()
@@ -176,26 +165,19 @@ const SettingsPanel: Component = () => {
                 : "bottom-2 left-1/2 -translate-x-1/2")
             : (mergedVisible()
                 ? "right-2 top-[80%] -translate-y-1/2"
-                : "right-2 top-1/2 -translate-y-1/2"))
+                : "right-2 top-1/2 -translate-y-1/2")) +
+          " " + btnClass
         }
         style={{
+          "touch-action": "none",
           opacity: clockMode() === "freeRotate" ? 1 : 0,
           "pointer-events": clockMode() === "freeRotate" ? "auto" : "none",
         }}
-      >
-        <button
-          class={btnClass}
-          style={{
-            "touch-action": "none",
-            opacity: buttonsDimmed() ? 0.08 : 1,
-            transition: "opacity 100ms ease",
-          }}
-          onPointerDown={startRewind}
-          onPointerUp={stopRewind}
-          onPointerCancel={stopRewind}
-          aria-label={t("settings.rewindMinute")}
-        />
-      </div>
+        onPointerDown={startRewind}
+        onPointerUp={stopRewind}
+        onPointerCancel={stopRewind}
+        aria-label={t("settings.rewindMinute")}
+      />
     </>
   );
 };
