@@ -201,7 +201,7 @@ body.slot-transitioning .slot-crossfade {
 }
 @keyframes slot-dim {
   0%, 100% { filter: opacity(1); }
-  18%, 82% { filter: opacity(0.25); }
+  18%, 82% { filter: opacity(0.2); }
 }
 /* selection dim (AM/PM どちら側が「いま」か) の opacity transition。ClockLayout 側で ClockFace /
    HandsLayer を包む div、ScheduleLayer 内の各 EventIcon の <g> に付与。親 wrapper に
