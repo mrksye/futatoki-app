@@ -411,12 +411,13 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
 
             const isCardinal = isCardinalPosition(position);
             /** monotone-badge の cardinal 数字は font を縦に潰して横長に (個別 badge 円が無い分の
-             *  視覚的存在感を文字の太さ/横幅で稼ぐ)。SVG transform 属性は scale が原点 0,0 基準に
-             *  なって text 位置が崩れるので、CSS transform + transform-box: fill-box で text
-             *  自体の中心を pivot にする。 */
-            const cardinalStretchStyle = () =>
+             *  視覚的存在感を文字の太さ/横幅で稼ぐ)。SVG transform 属性で translate-scale-translate
+             *  パターンを使うことで text の視覚的中心 (x, y) を pivot に scale する。CSS の
+             *  transform-box: fill-box は iOS Safari の SVG <text> 要素で正しく解釈されず、scale が
+             *  SVG 原点基準になって全 cardinal が右上にずれる症状が出るため使えない。 */
+            const cardinalStretchTransform = () =>
               isMonotoneBadge() && isCardinal
-                ? "transform-box: fill-box; transform-origin: center; transform: scale(1.05, 0.88);"
+                ? `translate(${x()} ${y()}) scale(1.05 0.88) translate(${-x()} ${-y()})`
                 : undefined;
 
             return (
@@ -449,7 +450,7 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   stroke={colorMode() === "sector" ? "#ffffff" : "none"}
                   stroke-width={colorMode() === "sector" ? (isKuwashiku() ? "4" : "5") : "0"}
                   paint-order="stroke"
-                  style={cardinalStretchStyle()}
+                  transform={cardinalStretchTransform()}
                 >
                   {num()}
                 </text>
