@@ -19,8 +19,9 @@ MIT-licensed "Software":
 
 ## Names and branding
 
-- "Futatoki" / "Futatoki the Clock" / "ふたとき時計" / "Futatoki 双面时钟"
-  and any other localized brand names
+- "Futatoki" / "Futatoki the Clock" / "ふたとき時計" / "フタトキ時計" /
+  "Futatoki 双面时钟" and any other localized brand names (including prior
+  spellings used by this project)
 - All logos, icons, and brand assets in any format (PNG, SVG, WebP, ICO,
   or otherwise), including but not limited to:
     - `public/icon-*.png` (PWA icons, all sizes)
