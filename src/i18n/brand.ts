@@ -11,7 +11,7 @@
  */
 
 export const LP_BRAND: Record<string, string> = {
-  ja: "フタトキ時計",
+  ja: "ふたとき時計",
   en: "Futatoki the Clock",
   "zh-CN": "Futatoki 双面时钟",
   "zh-TW": "Futatoki 雙面時鐘",
@@ -34,7 +34,7 @@ export const LP_BRAND: Record<string, string> = {
 };
 
 export const APP_BRAND: Record<string, string> = {
-  ja: "フタトキアプリ",
+  ja: "ふたときアプリ",
   en: "Futatoki App",
   "zh-CN": "Futatoki 应用",
   "zh-TW": "Futatoki App",
@@ -62,7 +62,7 @@ export const APP_BRAND: Record<string, string> = {
  * Futatoki Latin 表記なので整合する。
  */
 export const APPLE_TITLE: Record<string, string> = {
-  ja: "フタトキ",
+  ja: "ふたとき",
 };
 
 /** og:locale (Open Graph 形式 = BCP47 を underscore + 大文字 region に)。 */
@@ -93,11 +93,11 @@ export const OG_LOCALE: Record<string, string> = {
  * アプリ独自の SEO 補強用 variants。LP_BRAND_VARIANTS と分離して持ち、
  * JSON-LD alternateName 構築時に両方 flatten する。
  *
- * ja の場合: 商品名の正式読みが「フタトキトケイ」(連濁なし) か「フタトキドケイ」
+ * ja の場合: 商品名の正式読みが「ふたときとけい」(連濁なし) か「ふたときどけい」
  * (連濁あり、腹時計 / 目覚まし時計 / 鳩時計 の慣習) かまだ定まり切っていないため、
- * カナ (フタトキ / ふたとき / Futatoki) × 時計表記 (とけい / どけい) の組合せで
- * 表記揺れを全網羅する。これにより Google は「フタトキ時計 / Futatoki the Clock /
- * フタトキとけい / ふたどけい」等を同一 entity として cluster できる。
+ * カナ (ふたとき / フタトキ / Futatoki) × 時計表記 (とけい / どけい) の組合せで
+ * 表記揺れを全網羅する。これにより Google は「ふたとき時計 / Futatoki the Clock /
+ * ふたときとけい / ふたときどけい」等を同一 entity として cluster できる。
  *
  * Schema.org alternateName は entity の表記揺れ全部入れるのが本来用途で、
  * 商品名 variants の網羅は spam 判定にはならない。
@@ -105,11 +105,11 @@ export const OG_LOCALE: Record<string, string> = {
 export const APP_EXTRA_VARIANTS: Record<string, readonly string[]> = {
   ja: [
     "Futatoki時計",
-    "フタトキとけい",
     "ふたときとけい",
+    "フタトキとけい",
     "Futatokiとけい",
-    "フタトキどけい",
     "ふたときどけい",
+    "フタトキどけい",
     "Futatokiどけい",
   ],
 };
@@ -118,9 +118,9 @@ export const APP_EXTRA_VARIANTS: Record<string, readonly string[]> = {
  * LP HomePage.astro の BRAND_VARIANTS と同期。JSON-LD alternateName で
  * 全 locale variants を flatten して使う。
  *
- * 短縮単独「ふたとき」は LP / アプリ両側から削除済み (Google が
- * 「ふたとき = 二刻 (古語)」の文脈不明なクエリにブランドを出す副作用を
- * 避けるため、短縮形はカタカナ「フタトキ」と Latin「Futatoki」に絞る)。
+ * 短縮単独はひらがな「ふたとき」と Latin「Futatoki」に絞り、旧カタカナ
+ * 短縮「フタトキ」は entries に含めない。旧カタカナ主表記「フタトキ時計」
+ * は alias として残し、旧表記からの検索流入を取りこぼさない。
  *
  * 表記揺れ網羅 (連濁 / Latin / カナ混在) はアプリ側 APP_EXTRA_VARIANTS
  * に集約し、LP 側はクリーンな本体表記のみ保つ方針。Google は LP/アプリ
@@ -128,7 +128,7 @@ export const APP_EXTRA_VARIANTS: Record<string, readonly string[]> = {
  * する必要はない。
  */
 export const LP_BRAND_VARIANTS: Record<string, readonly string[]> = {
-  ja: ["フタトキ時計", "ふたとき時計", "フタトキ"],
+  ja: ["ふたとき時計", "フタトキ時計", "ふたとき"],
   en: ["Futatoki the Clock"],
   "zh-CN": ["Futatoki 双面时钟"],
   "zh-TW": ["Futatoki 雙面時鐘"],

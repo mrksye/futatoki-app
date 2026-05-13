@@ -10,7 +10,7 @@ const APP_URL = "https://play.futatoki.app/";
  * - name は APP_BRAND[locale] (アプリ版表記)。
  * - alternateName は LP_BRAND_VARIANTS と APP_EXTRA_VARIANTS を全 locale 分
  *   flatten + "Futatoki" 短縮形、ただし name と重複する値は除外し、配列内の
- *   重複も除く。これにより Google が「フタトキ時計 / Futatoki the Clock /
+ *   重複も除く。これにより Google が「ふたとき時計 / Futatoki the Clock /
  *   各国語の本体表記 / アプリ独自の表記揺れ」を全部このアプリの別名として
  *   認識する (LP との SEO 整合 + 表記揺れ網羅)。
  * - description は resources の meta.description を流用。
