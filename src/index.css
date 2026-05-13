@@ -123,12 +123,6 @@ body.chronostasis .star-twinkle {
   animation-play-state: paused;
 }
 
-/* View Transitions: ルート全体の cross-fade は切り、名前付き要素だけを動かす */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-}
-
 /* ClockLayout / SettingsPanel の transition 群を class 化。inline style だと @media query で消せず
    prefers-reduced-motion 対応ができないため class に切り出して body.motion-reduce 側で上書きする。 */
 /* AM/PM wrapper は opacity フェードを使わず visibility 切替にする。理由:
@@ -180,6 +174,35 @@ body.chronostasis .star-twinkle {
               transform 150ms ease,
               opacity 100ms ease;
 }
+
+/* スロットクロスフェード基底。位置 transition は常に 560ms bouncy。opacity transition は
+   既定で fast (100ms no-delay) で、free ↔ auto 切替時の単純なフェードに使う。 */
+.slot-crossfade {
+  transition: opacity 100ms ease,
+              top 560ms cubic-bezier(.34, 1.56, .64, 1),
+              left 560ms cubic-bezier(.34, 1.56, .64, 1),
+              right 560ms cubic-bezier(.34, 1.56, .64, 1),
+              bottom 560ms cubic-bezier(.34, 1.56, .64, 1);
+}
+
+/* とけい/かいてん 切替・かさねる/わける 切替時の dim + swap。
+   body.slot-transitioning が JS 側 (toggleRotate / toggleLayoutDimmed) で 560ms だけ付与され、
+   その間だけ filter: opacity() で全 slot ボタンを 0.25 まで薄くして子どもの視線を時計の合体
+   アニメに集中させる (UX 設計: 移動するボタンは目を引くため意図的に dim させる)。
+   bouncy easing の overshoot 折返し付近 (t≈0.582 ≒ 326ms) に 100ms の短いクロスフェードを
+   挟んで内容を入れ替える。delay 280ms + duration 100ms で 280-380ms に opacity が交差する。 */
+body.slot-transitioning .slot-crossfade {
+  transition: opacity 100ms ease 280ms,
+              top 560ms cubic-bezier(.34, 1.56, .64, 1),
+              left 560ms cubic-bezier(.34, 1.56, .64, 1),
+              right 560ms cubic-bezier(.34, 1.56, .64, 1),
+              bottom 560ms cubic-bezier(.34, 1.56, .64, 1);
+  animation: slot-dim 560ms ease;
+}
+@keyframes slot-dim {
+  0%, 100% { filter: opacity(1); }
+  18%, 82% { filter: opacity(0.25); }
+}
 /* selection dim (AM/PM どちら側が「いま」か) の opacity transition。ClockLayout 側で ClockFace /
    HandsLayer を包む div、ScheduleLayer 内の各 EventIcon の <g> に付与。親 wrapper に
    .selection-dim-instant が付いている時は子側も 0ms 即時切替に上書き
@@ -197,11 +220,8 @@ body.chronostasis .star-twinkle {
 body.motion-reduce .clock-wrapper-transition,
 body.motion-reduce .clock-merged-container-transition,
 body.motion-reduce .settings-button-transition,
+body.motion-reduce .slot-crossfade,
 body.motion-reduce .fade-on-dim,
 body.motion-reduce .selection-dim-instant .fade-on-dim {
   transition: none;
-}
-body.motion-reduce ::view-transition-old(*),
-body.motion-reduce ::view-transition-new(*) {
-  animation: none;
 }

@@ -27,7 +27,6 @@ import {
 } from "../features/free-rotation/merge-animation";
 import { useAmPmPreviewHold } from "../features/debug/am-pm-preview-lock";
 import { computeVisibleMinutes, useReleaseSnap } from "../features/free-rotation/release-snap";
-import { MORPHING_SLOT } from "../features/view-transition";
 import { useI18n } from "../i18n";
 import { dragStart, dragAdvance, type DragDragState } from "../features/free-rotation/drag";
 import { wheelAdvance, newWheelVelocityState, resetWheelVelocity } from "../features/free-rotation/wheel";
@@ -567,30 +566,35 @@ export const ClockLayout: Component = () => {
         </div>
       </Show>
 
-      {/* AM/PM バッジ。MORPHING_SLOT.LEFT を freeRotate の予定ボタンと共有してモード遷移時に
-          ブラウザがモーフィング描画する (slot 一覧は features/view-transition.ts)。 */}
-      <Show when={!isRotating()}>
-        <div
-          class={
-            "absolute z-20 px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-black shadow-md cursor-pointer " +
-            (isLandscape()
-              ? "left-1/2 top-2 -translate-x-1/2"
-              : "left-2 top-1/2 -translate-y-1/2")
-          }
-          style={{
-            "background-color": isAm() ? "#0080D8" : "#E02068",
-            color: "#ffffff",
-            "touch-action": "none",
-            "view-transition-name": MORPHING_SLOT.LEFT,
-          }}
-          onPointerDown={startHold}
-          onPointerUp={clearHold}
-          onPointerLeave={clearHold}
-          onPointerCancel={clearHold}
-        >
-          {isAm() ? t("badge.am") : t("badge.pm")}
-        </div>
-      </Show>
+      {/* AM/PM バッジ。とけい/かいてん 切替で freeRotate 側の予定追加ボタンとスロット位置を
+          共有し、560ms の bouncy 位置 transition でスライドしつつ、overshoot 折返し付近
+          (280-380ms) で 100ms の短いクロスフェードで予定追加ボタンと入れ替わる。always-mount で
+          opacity 0/1 を切り替えることで View Transitions API を使わず CSS 完結。 */}
+      <div
+        class={
+          "absolute z-20 px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-black shadow-md cursor-pointer slot-crossfade " +
+          (isLandscape()
+            ? (mergedVisible()
+                ? "left-[82%] top-2 -translate-x-1/2"
+                : "left-1/2 top-2 -translate-x-1/2")
+            : (mergedVisible()
+                ? "left-2 top-[80%] -translate-y-1/2"
+                : "left-2 top-1/2 -translate-y-1/2"))
+        }
+        style={{
+          "background-color": isAm() ? "#0080D8" : "#E02068",
+          color: "#ffffff",
+          "touch-action": "none",
+          opacity: !isRotating() ? 1 : 0,
+          "pointer-events": !isRotating() ? "auto" : "none",
+        }}
+        onPointerDown={startHold}
+        onPointerUp={clearHold}
+        onPointerLeave={clearHold}
+        onPointerCancel={clearHold}
+      >
+        {isAm() ? t("badge.am") : t("badge.pm")}
+      </div>
 
       <SettingsPanel />
 

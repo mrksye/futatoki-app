@@ -17,7 +17,6 @@ import {
 import { useRewindHold } from "../features/free-rotation/rewind";
 import { randomizeRotate } from "../features/free-rotation/random-time";
 import { useButtonsDimmedDuringMergeFlip } from "../features/free-rotation/merge-animation";
-import { MORPHING_SLOT } from "../features/view-transition";
 import { openPickerAtElement } from "../features/schedule/picker";
 
 const SettingsPanel: Component = () => {
@@ -26,8 +25,18 @@ const SettingsPanel: Component = () => {
   const { start: startRewind, stop: stopRewind } = useRewindHold();
   const buttonsDimmed = useButtonsDimmedDuringMergeFlip();
 
-  const toggleRotate = () =>
-    transition(isRotating() ? "clock" : "freeRotate");
+  /** Slot ボタンの dim animation (slot-crossfade) を 560ms だけ走らせる。とけい/かいてん や
+   *  かさねる/わける で時計が大きく動くタイミングでスロットボタンを薄くし、子どもの視線を時計の
+   *  合体アニメに集中させる UX 設計。merge animation の duration (560ms) と完全同期。 */
+  const withSlotDim = (fn: () => void) => () => {
+    document.body.classList.add("slot-transitioning");
+    setTimeout(() => document.body.classList.remove("slot-transitioning"), 560);
+    fn();
+  };
+
+  const toggleRotate = withSlotDim(() =>
+    transition(isRotating() ? "clock" : "freeRotate"));
+  const toggleLayoutDimmed = withSlotDim(toggleLayout);
 
   /** 子どもの指でも押しやすいサイズ (WCAG 最小 44px を大きく上回る、タブレットでさらに大きく)。
    *  whitespace-nowrap は left+translate で右端寄せするボタン (1ふんもどす) が shrink-to-fit で
@@ -63,58 +72,8 @@ const SettingsPanel: Component = () => {
           {/* 左上: かさねる/わける (表示は切替先) */}
           <button
             class={`fixed top-2 left-2 z-50 ${btnClass}`}
-            onPointerDown={toggleLayout}
+            onPointerDown={toggleLayoutDimmed}
             aria-label={mergedVisible() ? t("settings.splitToTwo") : t("settings.mergeToSingle")}
-          />
-
-          {/* よてい (予定追加): MORPHING_SLOT.LEFT を AM/PM バッジ (通常モード) と共有して
-              モード遷移時にブラウザがモーフィング描画する。
-              picker 起点はこのボタン中心。e.currentTarget でその場の要素を渡すことで let-ref を持たず
-              済ませている (parent SettingsPanel が unmount されない一方この button は <Show> で
-              出入りするため、let-ref 方式だと unmount 後に detached button が retain される)。 */}
-          <button
-            class={
-              "settings-button-transition fixed z-50 " +
-              (isLandscape()
-                ? (mergedVisible()
-                    ? "left-[82%] top-2 -translate-x-1/2"
-                    : "left-1/2 top-2 -translate-x-1/2")
-                : (mergedVisible()
-                    ? "left-2 top-[80%] -translate-y-1/2"
-                    : "left-2 top-1/2 -translate-y-1/2")) +
-              " " + btnClass
-            }
-            style={{
-              opacity: buttonsDimmed() ? 0.08 : 1,
-              "view-transition-name": MORPHING_SLOT.LEFT,
-            }}
-            onPointerDown={(e) => openPickerAtElement(e.currentTarget as HTMLButtonElement)}
-            aria-label={t("schedule.add")}
-          />
-
-          {/* 1 ふんもどす: 通常モードのパレット切替と MORPHING_SLOT.RIGHT を共有 (slot 一覧は
-              features/view-transition.ts)。長押しで連続。 */}
-          <button
-            class={
-              "settings-button-transition fixed z-50 " +
-              (isLandscape()
-                ? (mergedVisible()
-                    ? "left-[82%] top-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-full"
-                    : "left-1/2 top-[calc(100%-0.5rem)] -translate-x-1/2 -translate-y-full")
-                : (mergedVisible()
-                    ? "left-[calc(100%-0.5rem)] top-[80%] -translate-x-full -translate-y-1/2"
-                    : "left-[calc(100%-0.5rem)] top-1/2 -translate-x-full -translate-y-1/2")) +
-              " " + btnClass
-            }
-            style={{
-              "touch-action": "none",
-              opacity: buttonsDimmed() ? 0.08 : 1,
-              "view-transition-name": MORPHING_SLOT.RIGHT,
-            }}
-            onPointerDown={startRewind}
-            onPointerUp={stopRewind}
-            onPointerCancel={stopRewind}
-            aria-label={t("settings.rewindMinute")}
           />
 
           {/* 右下: らんだむ (押すたびに 15 分刻みの別時刻へ) */}
@@ -147,21 +106,96 @@ const SettingsPanel: Component = () => {
           onPointerDown={toggleColorMode}
           aria-label={colorMode() === "sector" ? t("settings.badge") : t("settings.sector")}
         />
-
-        {/* 次パレット名: portrait = 右センター / landscape = 下センター */}
-        <button
-          class={
-            "fixed z-50 " +
-            (isLandscape()
-              ? "bottom-2 left-1/2 -translate-x-1/2"
-              : "right-2 top-1/2 -translate-y-1/2") +
-            " " + btnClass
-          }
-          style={{ "view-transition-name": "clock-right-slot" }}
-          onPointerDown={cyclePalette}
-          aria-label={t(`palette.${getNextPalette(paletteId()).id}` as never)}
-        />
       </Show>
+
+      {/* スロットペアボタン群 (always-mount, opacity でクロスフェード)。とけい/かいてん 切替時に
+          AM/PM バッジ ↔ 予定追加、パレット ↔ 1ふんもどす が同じスロット位置を共有して 560ms の
+          bouncy 位置 transition でスライドしつつ、overshoot 折返し付近 (280-380ms) で 100ms の
+          短いクロスフェードで内容を入れ替える。AM/PM バッジ側は ClockLayout に居る (z-20)。
+          freeRotate 内 かさねる/わける でも位置 (top/left) が動くので、両モードで共通の position
+          式を使う。 */}
+
+      {/* LEFT スロット 予定追加: freeRotate 中だけ可視 */}
+      <div
+        class={
+          "fixed z-50 slot-crossfade " +
+          (isLandscape()
+            ? (mergedVisible()
+                ? "left-[82%] top-2 -translate-x-1/2"
+                : "left-1/2 top-2 -translate-x-1/2")
+            : (mergedVisible()
+                ? "left-2 top-[80%] -translate-y-1/2"
+                : "left-2 top-1/2 -translate-y-1/2"))
+        }
+        style={{
+          opacity: clockMode() === "freeRotate" ? 1 : 0,
+          "pointer-events": clockMode() === "freeRotate" ? "auto" : "none",
+        }}
+      >
+        {/* 内側 button の opacity は useButtonsDimmedDuringMergeFlip 用 (merge transition 中だけ
+            0.08 に dim)。slot 可視性 (outer opacity) とは別レイヤーなので timing 干渉なし。 */}
+        <button
+          class={btnClass}
+          style={{
+            opacity: buttonsDimmed() ? 0.08 : 1,
+            transition: "opacity 100ms ease",
+          }}
+          onPointerDown={(e) => openPickerAtElement(e.currentTarget as HTMLButtonElement)}
+          aria-label={t("schedule.add")}
+        />
+      </div>
+
+      {/* RIGHT スロット パレット: clock モード中だけ可視 */}
+      <button
+        class={
+          "fixed z-50 slot-crossfade " +
+          (isLandscape()
+            ? (mergedVisible()
+                ? "bottom-2 left-[82%] -translate-x-1/2"
+                : "bottom-2 left-1/2 -translate-x-1/2")
+            : (mergedVisible()
+                ? "right-2 top-[80%] -translate-y-1/2"
+                : "right-2 top-1/2 -translate-y-1/2")) +
+          " " + btnClass
+        }
+        style={{
+          opacity: !isRotating() ? 1 : 0,
+          "pointer-events": !isRotating() ? "auto" : "none",
+        }}
+        onPointerDown={cyclePalette}
+        aria-label={t(`palette.${getNextPalette(paletteId()).id}` as never)}
+      />
+
+      {/* RIGHT スロット 1ふんもどす: freeRotate 中だけ可視 */}
+      <div
+        class={
+          "fixed z-50 slot-crossfade " +
+          (isLandscape()
+            ? (mergedVisible()
+                ? "bottom-2 left-[82%] -translate-x-1/2"
+                : "bottom-2 left-1/2 -translate-x-1/2")
+            : (mergedVisible()
+                ? "right-2 top-[80%] -translate-y-1/2"
+                : "right-2 top-1/2 -translate-y-1/2"))
+        }
+        style={{
+          opacity: clockMode() === "freeRotate" ? 1 : 0,
+          "pointer-events": clockMode() === "freeRotate" ? "auto" : "none",
+        }}
+      >
+        <button
+          class={btnClass}
+          style={{
+            "touch-action": "none",
+            opacity: buttonsDimmed() ? 0.08 : 1,
+            transition: "opacity 100ms ease",
+          }}
+          onPointerDown={startRewind}
+          onPointerUp={stopRewind}
+          onPointerCancel={stopRewind}
+          aria-label={t("settings.rewindMinute")}
+        />
+      </div>
     </>
   );
 };
