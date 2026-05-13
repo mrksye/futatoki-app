@@ -17,7 +17,7 @@ import {
 import { useRewindHold } from "../features/free-rotation/rewind";
 import { randomizeRotate } from "../features/free-rotation/random-time";
 import { useButtonsDimmedDuringMergeFlip } from "../features/free-rotation/merge-animation";
-import { withViewTransition, MORPHING_SLOT } from "../features/view-transition";
+import { MORPHING_SLOT } from "../features/view-transition";
 import { openPickerAtElement } from "../features/schedule/picker";
 
 const SettingsPanel: Component = () => {
@@ -27,7 +27,7 @@ const SettingsPanel: Component = () => {
   const buttonsDimmed = useButtonsDimmedDuringMergeFlip();
 
   const toggleRotate = () =>
-    withViewTransition(() => transition(isRotating() ? "clock" : "freeRotate"));
+    transition(isRotating() ? "clock" : "freeRotate");
 
   /** 子どもの指でも押しやすいサイズ (WCAG 最小 44px を大きく上回る、タブレットでさらに大きく)。
    *  whitespace-nowrap は left+translate で右端寄せするボタン (1ふんもどす) が shrink-to-fit で
