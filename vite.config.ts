@@ -26,7 +26,7 @@ export default defineConfig({
       // デフォルト manifest は英語。日本語ブラウザでは index.html の inline JS が
       // /manifest.ja.webmanifest(public/ 配下に手書き)へ link[rel=manifest] を差し替える。
       manifest: {
-        name: "Futatoki the Clock",
+        name: "Futatoki the Learning Clock",
         short_name: "Futatoki",
         description: "A kids' educational analog clock app — each hour gets its own color.",
         lang: "en",
