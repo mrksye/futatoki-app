@@ -335,26 +335,32 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
         </Show>
 
         {/* monotone × badge 専用の円盤縁メモリ。i=0..59 の 60 本 (12 の真上にも置く)。
-         *  5 の倍数 (= 12 時方向と 1〜11 時の方向) は太く 2.75x 長く描いて時方向の手がかりにする。 */}
+         *  外端を OUTER_RING (R+3) まで延伸して外側リングに沿わせ、外側 cap は flat (butt)。
+         *  内端は元位置 (major R-12 / minor R-5) で、stroke 半径ぶんの円を重ねて丸める
+         *  (SVG line は 2 端で異なる linecap を持てないので、line+circle で内側だけ丸を実装)。 */}
         <Show when={isMonotoneBadge()}>
           <For each={Array.from({ length: 60 })}>
             {(_, idx) => {
               const i = () => idx();
               const angle = () => (i() * 6 * Math.PI) / 180 - Math.PI / 2;
               const isMajor = () => i() % 5 === 0;
-              const length = () => isMajor() ? 11 : 4;
-              const outer = () => R() - 1;
-              const inner = () => outer() - length();
+              const outer = () => R();
+              const inner = () => isMajor() ? R() - 12 : R() - 5;
+              const sw = () => isMajor() ? 3 : 1.8;
+              const ix = () => CX + inner() * Math.cos(angle());
+              const iy = () => CY + inner() * Math.sin(angle());
               return (
-                <line
-                  x1={CX + inner() * Math.cos(angle())}
-                  y1={CY + inner() * Math.sin(angle())}
-                  x2={CX + outer() * Math.cos(angle())}
-                  y2={CY + outer() * Math.sin(angle())}
-                  stroke="#1a1a1a"
-                  stroke-width={isMajor() ? 3 : 1.8}
-                  stroke-linecap="square"
-                />
+                <g>
+                  <line
+                    x1={ix()} y1={iy()}
+                    x2={CX + outer() * Math.cos(angle())}
+                    y2={CY + outer() * Math.sin(angle())}
+                    stroke="#1a1a1a"
+                    stroke-width={sw()}
+                    stroke-linecap="butt"
+                  />
+                  <circle cx={ix()} cy={iy()} r={sw() / 2} fill="#1a1a1a" />
+                </g>
               );
             }}
           </For>
@@ -391,23 +397,22 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
         <Index each={POSITIONS}>
           {(_pos, position) => {
             const angle = () => (position * 30 * Math.PI) / 180 - Math.PI / 2;
-            /** monotone-badge の縦方向 cardinal (12 と 6/18 = position 0, 6) は font の縦潰し
-             *  (scale Y < 1) で他の cardinal より中心寄りに見えるので、半径を少し増やして光学的に揃える。 */
-            const verticalCardinalOffset = () =>
-              isMonotoneBadge() && (position === 0 || position === 6) ? 2 : 0;
-            const numR = () => NUM_R() + verticalCardinalOffset();
-            /** monotone-badge の PM 24h 数字は "1" を含むペアで digit weight asymmetry が出る:
-             *  "15" は "5" が右に重い → 左 nudge、"21" は "2" が左に重い → 右 nudge、で光学的に揃える。 */
-            const numNudgeX = () => {
-              if (!isMonotoneBadge()) return 0;
-              if (num() === 15) return -4;
-              if (num() === 21) return 3;
-              return 0;
-            };
-            const x = () => CX + numR() * Math.cos(angle()) + numNudgeX();
-            const y = () => CY + numR() * Math.sin(angle());
             const color = () => colors()[position];
             const num = createMemo(() => numberAt(position));
+            /** monotone × badge の横サイド (position 3/9) は表示数字幅に応じて radial 補正する:
+             *  - 単桁 "3"/"9" は半幅が狭く tick まで間延びして見えるので +4 外寄せ
+             *  - 2 桁 "15"/"21" は半幅が広く tick にぶつかりがちなので -4 内寄せ
+             *  12/6/18 は上下なので縦方向の余白で十分、shift 不要。 */
+            const radialNudge = () => {
+              if (!isMonotoneBadge()) return 0;
+              const n = num();
+              if (n === 3 || n === 9) return 4;
+              if (n === 15 || n === 21) return -4;
+              return 0;
+            };
+            const effectiveR = () => NUM_R() + radialNudge();
+            const x = () => CX + effectiveR() * Math.cos(angle());
+            const y = () => CY + effectiveR() * Math.sin(angle());
 
             let groupRef: SVGGElement | undefined;
             let textRef: SVGTextElement | undefined;
@@ -416,15 +421,6 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
             setupTwelveDun(() => props.period, position, () => groupRef, () => textRef);
 
             const isCardinal = isCardinalPosition(position);
-            /** monotone-badge の cardinal 数字は font を縦に潰して横長に (個別 badge 円が無い分の
-             *  視覚的存在感を文字の太さ/横幅で稼ぐ)。SVG transform 属性で translate-scale-translate
-             *  パターンを使うことで text の視覚的中心 (x, y) を pivot に scale する。CSS の
-             *  transform-box: fill-box は iOS Safari の SVG <text> 要素で正しく解釈されず、scale が
-             *  SVG 原点基準になって全 cardinal が右上にずれる症状が出るため使えない。 */
-            const cardinalStretchTransform = () =>
-              isMonotoneBadge() && isCardinal
-                ? `translate(${x()} ${y()}) scale(1.05 0.88) translate(${-x()} ${-y()})`
-                : undefined;
 
             return (
               <g
@@ -447,7 +443,6 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   font-size={numberFontSize(colorMode(), paletteId(), isKuwashiku(), num(), isCardinal)}
                   font-weight="900"
                   font-family="Nunito, sans-serif"
-                  letter-spacing={isMonotoneBadge() && isCardinal ? "-1.4" : "0"}
                   fill={
                     isMonotoneBadge()
                       ? (isCardinal ? "#111111" : "#ffffff")
@@ -462,7 +457,6 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                       : "0"
                   }
                   paint-order="stroke"
-                  transform={cardinalStretchTransform()}
                 >
                   {num()}
                 </text>
