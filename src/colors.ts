@@ -174,7 +174,7 @@ export const palettes: Palette[] = [
       { bg: "#20C997", badge: "#30D9A7", text: "#2a2a2a" }, // 8時  ミントグリーン
       { bg: "#18A2D9", badge: "#28B2E9", text: "#ffffff" }, // 9時  みずいろ
       { bg: "#2563C8", badge: "#3573D8", text: "#ffffff" }, // 10時 あお
-      { bg: "#7E57C2", badge: "#8E67D2", text: "#ffffff" }, // 11時 むらさき
+      { bg: "#6A5ACD", badge: "#7A6ADD", text: "#ffffff" }, // 11時 青紫
     ],
     pm: [
       { bg: "#D63384", badge: "#E64394", text: "#ffffff" }, // 12時 ローズ
@@ -188,7 +188,7 @@ export const palettes: Palette[] = [
       { bg: "#20C997", badge: "#30D9A7", text: "#2a2a2a" }, // 20時 ミントグリーン
       { bg: "#18A2D9", badge: "#28B2E9", text: "#ffffff" }, // 21時 みずいろ
       { bg: "#2563C8", badge: "#3573D8", text: "#ffffff" }, // 22時 あお
-      { bg: "#7E57C2", badge: "#8E67D2", text: "#ffffff" }, // 23時 むらさき
+      { bg: "#6A5ACD", badge: "#7A6ADD", text: "#ffffff" }, // 23時 青紫
     ],
   },
 
