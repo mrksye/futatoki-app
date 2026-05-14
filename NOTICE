@@ -4,13 +4,15 @@ The source code of this project is MIT-licensed — fork, modify, ship, sell, go
 
 Two small asks, though:
 
-1. **Pick a different name for your fork.** "Futatoki" / "Futatoki the Clock" is
-how people find the original. A fork under the same name just confuses users.
+1. **Pick a different name for your fork.** "Futatoki" / "Futatoki the Learning
+Clock" (affectionately, "Futatoki the Clock") is how people find the original.
+A fork under the same name just confuses users.
 
 2. **Don't hold the original author responsible for other people's forks.**
-Anything shipped under the "Futatoki" or "Futatoki the Clock" name by someone
-other than Mrksye isn't endorsed, supported, or vouched for. If someone else's
-"Futatoki" misbehaves, that's on them — not on the original project.
+Anything shipped under "Futatoki", "Futatoki the Learning Clock", or
+"Futatoki the Clock" by someone other than Mrksye isn't endorsed, supported,
+or vouched for. If someone else's "Futatoki" misbehaves, that's on them — not
+on the original project.
 
 ---
 
@@ -19,9 +21,12 @@ MIT-licensed "Software":
 
 ## Names and branding
 
-- "Futatoki" / "Futatoki the Clock" / "ふたとき時計" / "フタトキ時計" /
-  "Futatoki 双面时钟" and any other localized brand names (including prior
-  spellings used by this project)
+- "Futatoki" / "Futatoki the Learning Clock" / "Futatoki the Clock" /
+  "知育時計ふたときアプリ" / "ふたとき時計" / "フタトキ時計" /
+  "Futatoki 教学时钟" / "Futatoki 双面时钟" and any other localized brand
+  names (including prior spellings used by this project — "Futatoki the Clock"
+  was the project's primary name before being renamed to "Futatoki the
+  Learning Clock", and remains in use as the affectionate short form)
 - All logos, icons, and brand assets in any format (PNG, SVG, WebP, ICO,
   or otherwise), including but not limited to:
     - `public/icon-*.png` (PWA icons, all sizes)

@@ -1,4 +1,4 @@
-# Contributing to Futatoki the Clock
+# Contributing to Futatoki the Learning Clock
 
 Thanks for your interest! Contributions are welcome — especially translations, since they're how this app reaches new families.
 
@@ -140,7 +140,7 @@ Open an issue describing the idea. Before suggesting:
 
 ## Philosophy
 
-Futatoki was built to help young children learn time. Keep in mind:
+Futatoki the Learning Clock was built to help young children learn time. Keep in mind:
 
 - **Simple is better.** If a feature adds complexity for an edge case, it might not belong.
 - **No tracking, ever.** User privacy is non-negotiable.
@@ -151,4 +151,4 @@ Futatoki was built to help young children learn time. Keep in mind:
 
 By contributing, you agree that your contributions will be licensed under the MIT License (see [LICENSE](./LICENSE)).
 
-The names "Futatoki" / "Futatoki the Clock" and the project's branding are not part of the MIT-licensed code — see [NOTICE](./NOTICE) for details.
+The names "Futatoki" / "Futatoki the Learning Clock" / "Futatoki the Clock" and the project's branding are not part of the MIT-licensed code — see [NOTICE](./NOTICE) for details.
