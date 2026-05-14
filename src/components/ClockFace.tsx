@@ -61,7 +61,9 @@ const PULSE_SCALE_KEYFRAMES: Keyframe[] = [
 /** 時間の数字 font-size。ばっじ×すっきり×ものとーんだけバッジの円が白で消えるので数字を少し大きく。
  *  ばっじモードでも すっきり/くわしく で差別化 (くぎりモードと同じ流儀)。
  *  monotone × badge × cardinal (12/3/6/9 と PM 24h の 12/15/18/21) は「文字盤自体がバッジ化」する
- *  特別仕様で、くぎりモードと同じ font-size に揃える。non-cardinal は invisible 想定で従来サイズ。 */
+ *  特別仕様で、くぎりモードと同じ font-size に揃える。non-cardinal は invisible 想定で従来サイズ。
+ *  monotone × sector は font を +1、白フチ stroke-width を -2 して白盤面に対する黒インクの
+ *  存在感を強める (視覚総幅は -1 まで許容)。 */
 const numberFontSize = (
   colorModeValue: "sector" | "badge",
   paletteIdValue: string,
@@ -77,6 +79,10 @@ const numberFontSize = (
     if (paletteIdValue === "monotone" && !kuwashiku) return num >= 10 ? "24" : "30";
     if (!kuwashiku) return num >= 10 ? "22" : "28";
     return num >= 10 ? "18" : "24";
+  }
+  if (paletteIdValue === "monotone") {
+    if (kuwashiku) return num >= 10 ? "25" : "29";
+    return num >= 10 ? "33" : "37";
   }
   if (kuwashiku) return num >= 10 ? "24" : "28";
   return num >= 10 ? "32" : "36";
@@ -448,7 +454,13 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                       : (colorMode() === "badge" ? color()!.text : "#111111")
                   }
                   stroke={colorMode() === "sector" ? "#ffffff" : "none"}
-                  stroke-width={colorMode() === "sector" ? (isKuwashiku() ? "4" : "5") : "0"}
+                  stroke-width={
+                    colorMode() === "sector"
+                      ? (paletteId() === "monotone"
+                          ? (isKuwashiku() ? "2" : "3")
+                          : (isKuwashiku() ? "4" : "5"))
+                      : "0"
+                  }
                   paint-order="stroke"
                   transform={cardinalStretchTransform()}
                 >
