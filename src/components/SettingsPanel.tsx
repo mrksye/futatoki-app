@@ -19,7 +19,7 @@ import { randomizeRotate } from "../features/free-rotation/random-time";
 import { openPickerAtElement } from "../features/schedule/picker";
 
 const SettingsPanel: Component = () => {
-  const { t } = useI18n();
+  const { t, numeralTogglePreview, toggleNumeralSystem } = useI18n();
   const isLandscape = useOrientation();
   const { start: startRewind, stop: stopRewind } = useRewindHold();
 
@@ -80,6 +80,19 @@ const SettingsPanel: Component = () => {
             onPointerDown={randomizeRotate}
             aria-label={t("settings.random")}
           />
+        </Show>
+
+        {/* 左上: 数字体系トグル (autoRotate 中 & locale が alternate を持つときのみ)。
+         *  ラベルは次のアクション = 切替先の数字グリフ。bn なら "123…" ⇄ "১২৩…"、hi なら
+         *  "१२३…" ⇄ "123…" のように locale ごとに default の方向が逆でも整合する。 */}
+        <Show when={clockMode() === "autoRotate" && numeralTogglePreview()}>
+          {(preview) => (
+            <button
+              class={`fixed top-2 left-2 z-50 ${btnClass}`}
+              onPointerDown={toggleNumeralSystem}
+              aria-label={`${preview()}…`}
+            />
+          )}
         </Show>
       </Show>
 
