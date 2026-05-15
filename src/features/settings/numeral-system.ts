@@ -75,10 +75,8 @@ export function toggleNumeralSystem(localeCode: string): void {
   setNumeralSystemChoice(next);
 }
 
-/** numeral 選択をリセットして「現在 locale の default」に戻す。locale 切替時に呼んで、
- *  過去 locale で alternate を選んでた履歴が新 locale の default を上書きするのを防ぐ
- *  (例: 過去に bn で western に toggle 済 → 他 locale 経由 → bn 復帰時に default の bengali
- *  に戻したい)。 */
+/** locale 切替時に呼んで「現在 locale の default」に戻す。過去 locale で alternate を選んだ履歴
+ *  (例: bn で western に toggle 済) が新 locale の default を上書きするのを防ぐ。 */
 export function resetNumeralSystemChoice(): void {
   setNumeralSystemChoice(null);
 }

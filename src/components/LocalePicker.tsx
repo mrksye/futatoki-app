@@ -18,71 +18,52 @@ import { useI18n } from "../i18n";
 import { animateMotion, motionAllowed } from "../lib/motion";
 
 /**
- * 言語選択用リングメニュー。SchedulePicker の円形 ring を「角丸四角形 ring」に置き換えた版で、
- * trigger ボタン (= 左上の国旗ボタン) を中心に角丸四角の周囲に SUPPORTED_LOCALES (現在 20) を
- * 等間隔配置する。drag / wheel で path 上の length offset を進めるとアイテムが角丸四角の周りを
- * 自転車のチェーンのように回る。可視範囲は viewport 内に入った position のみ (= origin が画面
- * 左上にあるので ring の右下 quadrant が visible)。
- *
- * Landscape は ring を横長、Portrait は縦長にして viewport 縦横比に合わせる。SchedulePicker と
- * 同じ chronostasis 配下で動くため、open 中は時計の動的副作用が全停止 (App.tsx 側)。
- *
- * For は SUPPORTED_LOCALES (固定配列) を each に渡して全 N 個を 1 度だけ mount する。位置は各 Icon の
- * createMemo が path 上の point を毎フレーム再計算して left/top に書き戻す。可視範囲外は display:none
- * で paint をスキップ (unmount しないので drag 中も identity 保持)。
+ * 言語選択リングメニュー。trigger (= 左上の国旗ボタン) を起点に、SUPPORTED_LOCALES を角丸四角
+ * (stadium) path 上に等間隔配置する。drag / wheel / 慣性で path 上の length offset が進み、
+ * アイテムが自転車のチェーンのように回る。SchedulePicker (円形) と同型の操作系を stadium 形に
+ * 置き換えた構造。
  */
 
 const ICON_SIZE_MOBILE = 52;
 const ICON_SIZE_TABLET = 72;
 const ICON_FONT_MOBILE = 30;
 const ICON_FONT_TABLET = 42;
-/** アイテム同士の隙間 (px)。アイコン端から次アイコン端までの path 上距離。 */
 const ICON_GAP_MOBILE = 8;
 const ICON_GAP_TABLET = 12;
-/** ring 長辺 = 短辺 * これ。1.0 だと正方形、1.5 で「角丸の細長い stadium 形」。 */
 const RING_LONG_RATIO = 1.5;
-/** 角丸 = ring 短辺 * これ。0.5 で短辺方向は完全な半円 = stadium / pill 形になり、
- *  長辺方向のみ直線を残す。自転車のチェーンっぽい滑らかな曲線で回転する。 */
+/** 0.5 で短辺方向が完全な半円 = stadium / pill 形になり、自転車のチェーンっぽい滑らかな曲線で
+ *  回転する。 */
 const CORNER_RATIO = 0.5;
-/** ring center を origin (= トリガーボタン位置) から押し出す距離 (ring 長辺 * これ)。
- *  push 方向は viewport 向きと一致した長辺軸: portrait なら上方向 (-y)、landscape なら左方向 (-x)。
- *  これで visible 範囲は viewport の長辺と直交する短い帯になり、current locale が画面の長辺中央
- *  に近い位置 (画面の上寄り or 左寄り) に来る。値を大きくするほど ring が更に画面外に押し出され
- *  visible 範囲が狭くなる。 */
+/** ring center を origin から viewport 長辺方向に push する量 (ring 長辺 * これ)。値を上げるほど
+ *  ring が画面外に押し出されて visible 範囲が狭まる。 */
 const RING_CENTER_OUTSET_RATIO = 0.15;
-/** stadium 形 (CORNER_RATIO = 0.5) の周長公式: perimeter = short * (2 * longRatio + π - 2)。
- *  ring 短辺をこの divisor で割って item 間隔 * N から逆算する。 */
+/** stadium 形 (CORNER_RATIO=0.5) の周長 = short * (2*longRatio + π - 2)。item 間隔から ring 短辺
+ *  を逆算するための divisor。 */
 const RING_PERIMETER_DIVISOR = 2 * RING_LONG_RATIO + Math.PI - 2;
 
 const STAGGER_MS = 30;
 const APPEAR_DURATION_MS = 280;
-/** 現在 locale より前 (= path 上で CCW 側) に確保する近隣 locale 数。SUPPORTED_LOCALES の
- *  自然順だと先頭付近の locale (en, ja, es...) で開いた時に「自分より前」がほぼ無く、CW 一方向
- *  stagger で path 上の手前側がスカスカになる。配列を末尾から先頭に rotate して必要数を確保する。 */
+/** SUPPORTED_LOCALES の先頭付近 (en, ja, ...) で開いた時に「自分より前」がほぼ無く CW stagger の
+ *  手前側がスカスカになるので、配列を末尾から rotate して常にこの数だけ前置近隣を確保する。 */
 const REQUIRED_LEFT_NEIGHBORS = 5;
-/** 現在 locale が stagger で出る順番の手前 (= 現在より前に出る locale 数)。4 にすると現在 locale
- *  が 5 番目に出る。0 だと現在 locale が真っ先に出てしまい、ユーザは「自分はわかってるから先に
- *  周りの locale を見たい」感がない。 */
+/** stagger 起点を現在 locale より前にずらす数。現在 locale を真っ先に出すと「自分を再選択する」
+ *  ような不自然感が出るので少し後ろに置き、周囲を先に見せる。4 で現在 locale が 5 番目に登場。 */
 const CURRENT_STAGGER_PRECEDING = 4;
 
-/** drag 閾値 (SchedulePicker と同じ感覚)。 */
 const DRAG_THRESHOLD_FAST_PX = 2;
 const DRAG_THRESHOLD_SLOW_PX = 6;
 const DRAG_FAST_WINDOW_MS = 80;
 
-/** wheel deltaY 1 単位 → length px。Chrome のデフォルト 1 ノッチ deltaY ≈ 100 なので、0.4 で
- *  1 ノッチ ≈ 40px (step 60 の 2/3 ≒ 0.66 アイテム移動)。1.0 だと 1 アイテム以上飛んで速すぎ、
- *  0.2 だと遅い。SchedulePicker (deg / radius) と体感を揃える目安。 */
+/** Chrome デフォルト 1 ノッチ deltaY ≈ 100 なので 0.4 で 1 ノッチ ≈ 0.66 アイテム移動。1.0 だと
+ *  1 ノッチで 1 アイテム以上飛んで速すぎる。 */
 const WHEEL_LENGTH_PER_DELTA = 0.4;
 const WHEEL_TWEEN_DURATION_MS = 200;
 const WHEEL_IDLE_TRIGGER_MS = 100;
-/** 慣性発火に必要な「直近窓内の累積 length」(px)。1 ノッチ程度では発火させず、フリック級だけ。 */
+/** 1 ノッチ程度では発火させずフリック級のみで慣性を起こす閾値 (直近窓内の累積 length px)。 */
 const WHEEL_INERTIA_MIN_TOTAL_PX = 80;
 
 const VELOCITY_WINDOW_MS = 80;
-/** 慣性減衰率 (exp 減衰 / ms)。SchedulePicker と同じ値。 */
 const INERTIA_DECAY_PER_MS = 0.003;
-/** 慣性停止閾値 (px/ms)。 */
 const INERTIA_VELOCITY_MIN = 0.05;
 
 const LocalePicker: Component = () => {
@@ -101,8 +82,8 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
   const iconSize = () => isTablet() ? ICON_SIZE_TABLET : ICON_SIZE_MOBILE;
   const iconFont = () => isTablet() ? ICON_FONT_TABLET : ICON_FONT_MOBILE;
 
-  /** ring 寸法。item 間隔 (icon size + gap) * N が周長になるよう短辺を逆算するので、gap を変えれば
-   *  ring も自動で伸び縮みする。viewport の向きに追従して長辺/短辺を決める。 */
+  /** item 間隔 (icon + gap) * N が周長になるよう ring 短辺を逆算するので、gap を変えれば ring が
+   *  自動で伸び縮みする。viewport 向きに追従して長辺/短辺を割り当てる。 */
   const itemSpacing = () => iconSize() + (isTablet() ? ICON_GAP_TABLET : ICON_GAP_MOBILE);
   const ringShort = () => SUPPORTED_LOCALES.length * itemSpacing() / RING_PERIMETER_DIVISOR;
   const ringLong = () => ringShort() * RING_LONG_RATIO;
@@ -110,15 +91,14 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
   const ringH = () => isLandscape() ? ringShort() : ringLong();
   const cornerR = () => ringShort() * CORNER_RATIO;
 
-  /** ring center 位置 (viewport 座標)。origin から viewport の長辺方向 (landscape=横 -x、portrait=縦
-   *  -y) に push して ring を画面外に押し出す。push 量は ring の長辺 * RATIO。位置参照する側は
-   *  この値を使うこと (origin は出現アニメ起点として別に保持)。 */
+  /** ring center を viewport 長辺方向 (landscape=-x、portrait=-y) に push して画面外に押し出し、
+   *  可視範囲を短辺方向の細い帯に絞る。 */
   const outsetPx = () => ringLong() * RING_CENTER_OUTSET_RATIO;
   const ringCx = () => isLandscape() ? props.origin.x - outsetPx() : props.origin.x;
   const ringCy = () => isLandscape() ? props.origin.y : props.origin.y - outsetPx();
 
-  /** SVG path d 文字列 (CW 順、左上 corner 角丸の終点 = (R, 0) から開始)。path-local 座標は
-   *  (0, 0) - (ringW, ringH)。viewport 座標への変換は origin - (ringW/2, ringH/2) を加える。 */
+  /** path-local 座標 (0,0)-(W,H) で CW 順に描く stadium path。length 0 = 左上 corner 角丸の終点
+   *  なので、length 0.5L = 開始点の対角 ≈ 右下 corner となり initial offset の基準に使える。 */
   const pathD = createMemo(() => {
     const W = ringW();
     const H = ringH();
@@ -137,9 +117,8 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
     ].join(" ");
   });
 
-  /** 計測専用 path 要素を detached SVG namespace で生成。Solid の <path> ref を width=0 SVG 内に
-   *  置くと Chromium で getTotalLength = 0 になる既知挙動があるため、DOM mount しない detached path
-   *  を使う (geometry 計算は d 属性のみ依存)。 */
+  /** detached SVG path 要素を計測専用に作る。Solid の <path> ref を width=0 SVG 内に置くと
+   *  Chromium で getTotalLength = 0 になる既知挙動の回避 (geometry は d 属性のみ依存)。 */
   const measurePath = createMemo(() => {
     const NS = "http://www.w3.org/2000/svg";
     const el = document.createElementNS(NS, "path") as SVGPathElement;
@@ -149,12 +128,11 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
 
   const totalLength = createMemo(() => measurePath().getTotalLength());
 
-  /** SUPPORTED_LOCALES における現在 locale の index。 */
   const rawCurrentIndex = SUPPORTED_LOCALES.findIndex(l => l.code === locale().code);
 
   /** 現在 locale より前に REQUIRED_LEFT_NEIGHBORS 個の近隣を確保するため、必要なら配列末尾を
-   *  先頭に rotate した順序を作る。en (idx 0) なら末尾 5 個 (id, bn, hi, ur, fa) が先頭に来て、
-   *  en は新 idx 5 になる。これにより stagger と path 配置が「現在 locale を中央」に揃う。 */
+   *  先頭に rotate する。en (idx 0) なら末尾 5 個 (fa, ur, hi, bn, id) が先頭に来て en は新 idx 5。
+   *  これで stagger・initial offset を index 単位で素直に扱える。 */
   const orderedLocales = (() => {
     if (rawCurrentIndex < 0) return SUPPORTED_LOCALES;
     const shortage = REQUIRED_LEFT_NEIGHBORS - rawCurrentIndex;
@@ -166,15 +144,13 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
     ];
   })();
 
-  /** rotate 後の配列における現在 locale の index。stagger 起点と initial offset の両方で使う。 */
   const currentLocaleIndex = rawCurrentIndex < 0
     ? -1
     : orderedLocales.findIndex(l => l.code === locale().code);
 
-  /** 開いた瞬間に「現在 locale」が画面内 visible 範囲の中央に来るよう length offset を初期化。
-   *  setup phase (= 子 LocaleIcon の onMount より前) で set するので、子の出現アニメ起動時には
-   *  position が確定済み = end keyframe が正しい位置で固定される。L * 0.5 = path 半周 = 開始
-   *  (上辺左) の対角 ≈ 右下 corner で、ring center が画面外左上にある今の配置では visible 中央。 */
+  /** 現在 locale を visible 範囲中央に揃える length offset を setup phase で set する。子 LocaleIcon
+   *  の onMount より前に確定させないと、出現アニメの end keyframe が古い position で固定されて
+   *  しまう (Solid の onMount で rotate しても間に合わない)。 */
   if (currentLocaleIndex >= 0) {
     const L = totalLength();
     if (L > 0) {
@@ -192,7 +168,7 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
   let inertiaCanceledByTap = false;
   let pointerDownOnOverlay = false;
 
-  /** rAF 間引き用 (SchedulePicker と同型)。 */
+  /** rAF 間引き: 120Hz 端末で 1 frame 内に複数 pointermove が来ても 1 回だけ commit する。 */
   let pendingDelta = 0;
   let rotateRaf: number | null = null;
   const flushRotation = () => {
@@ -249,10 +225,9 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
     inertiaRaf = requestAnimationFrame(tick);
   };
 
-  /** pointer の displacement を path 進行方向 length に変換。ring 中心から pointer までの
-   *  ベクトル v = (vx, vy) の CCW 接線方向 (-vy, vx) / |v| に displacement を投影する。
-   *  CCW を選ぶ理由は「pointer の動く方向にアイテムが追従する (= chain conveyor で指を引っ張った
-   *  方向にチェーンが流れる)」直感に揃えるため。CW 接線にすると見た目逆に動く。 */
+  /** pointer の displacement を、ring 中心から pointer へのベクトル v の CCW 接線方向
+   *  (-vy, vx)/|v| に投影して length 増分に変換する。chain conveyor を「指を引いた方向に流す」
+   *  直感に揃えるため CCW 接線を選んでいる (CW にすると見た目逆に動く)。 */
   const pointerDeltaToLength = (px: number, py: number, dx: number, dy: number): number => {
     const vx = px - ringCx();
     const vy = py - ringCy();
@@ -342,6 +317,7 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
     }
   };
 
+  /** 各 wheel event の回転を ease-out tween で連続加算。連射時は前 tween 途中値から新目標へ追従。 */
   let wheelTweenTarget: number | null = null;
   let wheelTweenStartTime = 0;
   let wheelTweenStartLength = 0;
@@ -353,6 +329,8 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
     }
     wheelTweenTarget = null;
   };
+  /** tween 進行中の未消化回転は、慣性開始や drag 開始時に位置を乖離させるので終端まで瞬時 jump で
+   *  整合を取る。 */
   const flushWheelTweenToTarget = () => {
     if (wheelTweenTarget !== null) {
       rotateLocalePicker(wheelTweenTarget - localePickerLengthOffset());
@@ -466,7 +444,6 @@ const LocaleIcon: Component<{
   origin: LocalePickerOrigin;
   locale: LocaleMeta;
   index: number;
-  /** 現在 locale の index。stagger 起点として使う (-1 で見つからない時は 0 起点に fallback)。 */
   currentLocaleIndex: number;
   totalCount: number;
   iconSize: number;
@@ -482,8 +459,7 @@ const LocaleIcon: Component<{
 }> = (props) => {
   let buttonRef: HTMLButtonElement | undefined;
 
-  /** path 上の (x, y) を viewport 座標へ変換。path-local 座標 (0,0)-(W,H) の中心 (W/2, H/2) が
-   *  ring center (= 画面外左上) と一致するように offset 加算。 */
+  /** path-local 座標 (0,0)-(W,H) の中心 (W/2, H/2) を ring center に揃えて viewport 座標に変換。 */
   const position = createMemo(() => {
     const L = props.totalLength();
     if (L === 0) return null;
@@ -496,8 +472,8 @@ const LocaleIcon: Component<{
     };
   });
 
-  /** viewport 内 (icon size ぶんの margin 込み) なら true。画面端で半切れ render を避けるため、
-   *  完全に画面外になるまで非表示 (半 → 全 fade ではなく on/off)。 */
+  /** 画面端で半切れ render を避けるため、icon size ぶんの margin を取って完全に画面外になるまで
+   *  非表示にする (半 → 全 fade ではなく on/off)。 */
   const visible = createMemo(() => {
     const p = position();
     if (!p) return false;
@@ -507,11 +483,10 @@ const LocaleIcon: Component<{
     return p.x >= -margin && p.x <= W + margin && p.y >= -margin && p.y <= H + margin;
   });
 
-  /** 初回 mount 時に visible なものだけ stagger で出現アニメ。drag で後から visible に変わった
-   *  icon は無アニメで pop-in (出現アニメを毎回鳴らすとリングが「光のループ」みたいに点滅して
-   *  目障り)。stagger 起点は「現在 locale より CURRENT_STAGGER_PRECEDING 個 CCW 側」、進行方向は
-   *  CW (path length 増加 = 配列上で後方) でユーザ視点の「右回り」。これで現在 locale は stagger
-   *  順序で 3 番目あたりに登場する。 */
+  /** 初回 mount 時に visible なものだけ stagger で出現アニメを起動。drag で後から visible に
+   *  なった icon は無アニメで pop-in する (毎回鳴らすとリングが「光のループ」みたいに点滅して
+   *  目障り)。stagger 起点は現在 locale より CURRENT_STAGGER_PRECEDING 個 CCW 側、進行は CW で
+   *  ユーザ視点の「右回り」と一致する。 */
   onMount(() => {
     if (!buttonRef) return;
     if (!visible()) return;
@@ -552,8 +527,6 @@ const LocaleIcon: Component<{
       ref={buttonRef}
       class="fixed rounded-full bg-white shadow-lg flex items-center justify-center before:hidden"
       style={{
-        // visible でない時は display:none で paint をスキップ。mount は維持されるので drag 中も
-        // ref/state を失わない。
         display: visible() ? "flex" : "none",
         left: `${position()?.x ?? props.origin.x}px`,
         top: `${position()?.y ?? props.origin.y}px`,
