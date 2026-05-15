@@ -32,6 +32,7 @@ import { dragStart, dragAdvance, type DragDragState } from "../features/free-rot
 import { wheelAdvance, newWheelVelocityState, resetWheelVelocity } from "../features/free-rotation/wheel";
 import { resistTrigger, notifyResistance } from "../features/free-rotation/resistance";
 import { interaction, enterWarning, cancelWarning } from "../features/schedule/interaction";
+import { playTapPulse } from "../lib/motion";
 
 /** freeRotate 中の長押し warning 検出パラメータ。clock モードの EventIcon が持つ LONG_PRESS_MS と
  *  揃える。 */
@@ -63,18 +64,32 @@ const DimOverlay: ParentComponent<{ opacity: number }> = (props) => (
  *
  * floating な palette ボタンが時計と被る locale で時計の最大寸法を制限する用途。size の決定は
  * features/layout/palette-clearance の computeMaxClockSize を参照。
+ *
+ * 時計モード (= !isRotating) で素タップしたらピカッ。pointerdown 即発火で指の接触瞬間に反応させる
+ * (clock 面側は長押しタイマー無いので up を待つ必要がない)。予定アイコンの pointerdown は
+ * ScheduleLayer 側で clock モード時 stopPropagation してるのでここには上がってこず、icon と slot の
+ * 反応は独立。
  */
-const ClockSlot: ParentComponent<{ size: number }> = (props) => (
-  <div
-    class="relative"
-    style={{
-      width: `${props.size}px`,
-      height: `${props.size}px`,
-    }}
-  >
-    {props.children}
-  </div>
-);
+const ClockSlot: ParentComponent<{ size: number }> = (props) => {
+  let ref: HTMLDivElement | undefined;
+  const onPointerDown = () => {
+    if (isRotating()) return;
+    if (ref) playTapPulse(ref);
+  };
+  return (
+    <div
+      ref={(el) => (ref = el)}
+      class="relative"
+      style={{
+        width: `${props.size}px`,
+        height: `${props.size}px`,
+      }}
+      onPointerDown={onPointerDown}
+    >
+      {props.children}
+    </div>
+  );
+};
 
 /** floating な palette ボタンの内側 margin (CSS の `right-2` / `bottom-2` = 0.5rem = 8px)。 */
 const PALETTE_BTN_EDGE_MARGIN_PX = 8;
@@ -380,7 +395,14 @@ export const ClockLayout: Component = () => {
 
   const { mergedVisible, transitioning, mergedRevealed } = useMergeAnimation();
   let mergedContainerRef: HTMLDivElement | undefined;
+  let mergedInnerRef: HTMLDivElement | undefined;
   useMergeImpactWobble(() => mergedContainerRef, mergedRevealed);
+
+  /** かさね β の中身を素タップした時のピカッ。AM/PM split は ClockSlot 側に同等の handler がある。 */
+  const onMergedClockPointerDown = () => {
+    if (isRotating()) return;
+    if (mergedInnerRef) playTapPulse(mergedInnerRef);
+  };
   useAutoRotateTick();
   useIdleExitTimer();
 
@@ -529,10 +551,15 @@ export const ClockLayout: Component = () => {
           onPointerCancel={onDragEnd}
         >
           <div
+            ref={(el) => (mergedInnerRef = el)}
             class={
               "relative flex items-center justify-center " +
               (isLandscape() ? "w-1/2 h-full" : "w-full h-1/2")
             }
+            style={{
+              "pointer-events": "auto",
+            }}
+            onPointerDown={onMergedClockPointerDown}
           >
             <ClockFace period="merged" hours={displayed().hours} />
             {/* 重ね表示: 現在 period を前 + 不透明、反対側を dimOpacity=0.15 で後ろに重ねる。

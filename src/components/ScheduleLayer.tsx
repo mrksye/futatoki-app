@@ -14,7 +14,7 @@ import { isRotating } from "../features/free-rotation/state";
 import { detailMode } from "../features/settings/detail-mode";
 import { colorMode } from "../features/settings/color-mode";
 import { paletteId } from "../features/settings/palette";
-import { animateMotion } from "../lib/motion";
+import { animateMotion, playPoyon3 } from "../lib/motion";
 
 /**
  * 時計の上に予定アイコンを描画するレイヤー。ClockFace を包む div の中に絶対配置で重ねる
@@ -79,18 +79,6 @@ const LONG_PRESS_MS = 500;
 const ICON_TOUCH_BUFFER = 16;
 /** ✕ボタンのタップ判定半径。視認可能な赤円 (DELETE_BUTTON_RADIUS=7) より大きめに取る。 */
 const DELETE_BUTTON_TOUCH_RADIUS = 26;
-
-/** ポヨン3 (3 段の高速バウンス)。タップ + マッチ window 入り口の one-shot で共通使用。 */
-const POYON3_DURATION_MS = 400;
-const POYON3_KEYFRAMES: Keyframe[] = [
-  { transform: "scale(1)",    offset: 0 },
-  { transform: "scale(1.22)", offset: 0.13 },
-  { transform: "scale(0.90)", offset: 0.26 },
-  { transform: "scale(1.16)", offset: 0.43 },
-  { transform: "scale(0.94)", offset: 0.56 },
-  { transform: "scale(1.10)", offset: 0.74 },
-  { transform: "scale(1)",    offset: 1 },
-];
 
 /** マッチ中の continuous loop。0..42% にバウンス + わずかな rotation で躍動感、42..100% は scale 1 で rest。 */
 const MATCH_LOOP_DURATION_MS = 1500;
@@ -536,7 +524,7 @@ const setupMatchEnterAnim = (
     const g = groupRef();
     if (!g || !matched) return;
     if (isWobbling() || isDeleting()) return;
-    animateMotion(g, POYON3_KEYFRAMES, { duration: POYON3_DURATION_MS, easing: "ease-out" });
+    playPoyon3(g);
   }));
 };
 
@@ -613,10 +601,7 @@ const EventIcon: Component<EventIconProps> = (props) => {
 
   const triggerPoyon3 = () => {
     if (!groupRef) return;
-    animateMotion(groupRef, POYON3_KEYFRAMES, {
-      duration: POYON3_DURATION_MS,
-      easing: "ease-out",
-    });
+    playPoyon3(groupRef);
   };
 
   const triggerShakeNo = () => {
