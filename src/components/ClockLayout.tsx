@@ -73,16 +73,18 @@ const DimOverlay: ParentComponent<{ opacity: number }> = (props) => (
  * floating な palette ボタンが時計と被る locale で時計の最大寸法を制限する用途。size の決定は
  * features/layout/palette-clearance の computeMaxClockSize を参照。
  *
- * 時計モード (= !isRotating) のインタラクション:
- *  - 素タップ (pointerdown 即時): ピカッと一瞬光る (TAP_PULSE, 260ms)。指の接触瞬間に反応。
- *  - 長押し 500ms: イヤイヤと首を振る (SHAKE_NO, amplitude 5px / 600ms)。EventIcon の長押し拒否と
- *    同モーション (削除不可表明)。pulse は 260ms で終わるので shake (500ms 後発火) と時間的に被らない。
+ * 時計モード (= !isRotating) のインタラクション。EventIcon の反応機構と同型:
+ *  - pointerdown: 500ms 長押しタイマー始動 (pulse はここで発火させない)。
+ *  - 長押し 500ms 経過: イヤイヤと首を振る (SHAKE_NO, amplitude 5px / 600ms)。longPressed フラグ
+ *    が立ち、続く pointerup での pulse は抑止される (削除不可を伝えた後に「タップ確認」が出ると変)。
+ *  - pointerup (短タップ): pulse がピカッと光る (TAP_PULSE, 260ms)。
  * 予定アイコンの pointerdown は ScheduleLayer 側で clock モード時 stopPropagation してるのでここには
  * 上がってこず、icon と slot の反応は独立。
  */
 const ClockSlot: ParentComponent<{ size: number }> = (props) => {
   let ref: HTMLDivElement | undefined;
   let pressTimer: ReturnType<typeof setTimeout> | undefined;
+  let longPressed = false;
 
   const cancelPress = () => {
     if (pressTimer) {
@@ -93,12 +95,19 @@ const ClockSlot: ParentComponent<{ size: number }> = (props) => {
 
   const onPointerDown = () => {
     if (isRotating()) return;
-    if (ref) playTapPulse(ref);
     cancelPress();
+    longPressed = false;
     pressTimer = setTimeout(() => {
       pressTimer = undefined;
+      longPressed = true;
       if (ref) playShakeNo(ref, CLOCK_FACE_SHAKE_AMPLITUDE_PX);
     }, CLOCK_FACE_LONG_PRESS_MS);
+  };
+
+  const onPointerUp = () => {
+    if (isRotating()) return;
+    cancelPress();
+    if (!longPressed && ref) playTapPulse(ref);
   };
 
   onCleanup(cancelPress);
@@ -112,7 +121,7 @@ const ClockSlot: ParentComponent<{ size: number }> = (props) => {
         height: `${props.size}px`,
       }}
       onPointerDown={onPointerDown}
-      onPointerUp={cancelPress}
+      onPointerUp={onPointerUp}
       onPointerCancel={cancelPress}
     >
       {props.children}
@@ -426,6 +435,7 @@ export const ClockLayout: Component = () => {
   let mergedContainerRef: HTMLDivElement | undefined;
   let mergedInnerRef: HTMLDivElement | undefined;
   let mergedPressTimer: ReturnType<typeof setTimeout> | undefined;
+  let mergedLongPressed = false;
   useMergeImpactWobble(() => mergedContainerRef, mergedRevealed);
 
   const cancelMergedPress = () => {
@@ -436,16 +446,24 @@ export const ClockLayout: Component = () => {
   };
   onCleanup(cancelMergedPress);
 
-  /** かさね β の中身インタラクション。挙動は ClockSlot と同じ (素タップ=ピカッ / 長押し=イヤイヤ)。
-   *  split AM/PM とは別 ref のため timer / handler を独立に持つ。 */
+  /** かさね β の中身インタラクション。反応機構は ClockSlot / EventIcon と同型 (pointerdown でタイマー、
+   *  500ms で shake + longPressed=true、pointerup で gate 越えたら pulse)。split AM/PM とは別 ref のため
+   *  timer / フラグを独立に持つ。 */
   const onMergedClockPointerDown = () => {
     if (isRotating()) return;
-    if (mergedInnerRef) playTapPulse(mergedInnerRef);
     cancelMergedPress();
+    mergedLongPressed = false;
     mergedPressTimer = setTimeout(() => {
       mergedPressTimer = undefined;
+      mergedLongPressed = true;
       if (mergedInnerRef) playShakeNo(mergedInnerRef, CLOCK_FACE_SHAKE_AMPLITUDE_PX);
     }, CLOCK_FACE_LONG_PRESS_MS);
+  };
+
+  const onMergedClockPointerUp = () => {
+    if (isRotating()) return;
+    cancelMergedPress();
+    if (!mergedLongPressed && mergedInnerRef) playTapPulse(mergedInnerRef);
   };
   useAutoRotateTick();
   useIdleExitTimer();
@@ -604,7 +622,7 @@ export const ClockLayout: Component = () => {
               "pointer-events": "auto",
             }}
             onPointerDown={onMergedClockPointerDown}
-            onPointerUp={cancelMergedPress}
+            onPointerUp={onMergedClockPointerUp}
             onPointerCancel={cancelMergedPress}
           >
             <ClockFace period="merged" hours={displayed().hours} />
