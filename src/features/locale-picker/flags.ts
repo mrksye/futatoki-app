@@ -33,13 +33,14 @@ export const LOCALE_FLAG: Readonly<Record<string, string>> = {
   id: "🇮🇩",
 };
 
-/** ?lang=xx に書き換えて full reload する (i18n/detect.ts が起動時に URL から拾い、同 key で
- *  localStorage 永続化)。reload 前に numeralSystemChoice を reset するのは、過去に別 locale で
- *  alternate を選んだ履歴 (例: bn で western に toggle 済) が新 locale の default を上書きするのを
- *  防ぐため。 */
+/** ?lang=xx に書き換えて navigation を replace で行う (i18n/detect.ts が起動時に URL から拾い、
+ *  同 key で localStorage 永続化)。location.href 代入は history に新エントリを積むので戻るボタン
+ *  で言語切替前に戻れてしまう = 子供向け UI として不適切。replace で現エントリを上書きする。
+ *  reset 前提は、過去に別 locale で alternate を選んだ履歴 (例: bn で western に toggle 済) が
+ *  新 locale の default を上書きするのを防ぐため。 */
 export const switchLocaleByReload = (code: string): void => {
   resetNumeralSystemChoice();
   const url = new URL(window.location.href);
   url.searchParams.set("lang", code);
-  window.location.href = url.toString();
+  window.location.replace(url.toString());
 };
