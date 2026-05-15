@@ -45,6 +45,11 @@ const SettingsPanel: Component = () => {
   const btnClass =
     "px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-bold shadow-md active:scale-90 transition-all bg-white/80 text-gray-700 whitespace-nowrap";
 
+  /** autoRotate 左上の言語・数字体系ボタン専用の縮小版。padding と font-size を一段下げて
+   *  「子どもが触ってはいけない設定」として存在感を抑える。font-size は call site で個別指定。 */
+  const compactBtnClass =
+    "px-2 py-0.5 tablet:px-4 tablet:py-2 rounded-full font-bold shadow-md active:scale-90 transition-all bg-white/80 text-gray-700 whitespace-nowrap";
+
   // 全 palette ラベルの max ボタン寸法を測って ClockLayout に渡す。floating な palette ボタンが
   // 時計と被る locale (fr 等) では、その寸法ぶん時計 SVG の max size を縮める用途。
   usePaletteClearance(
@@ -88,13 +93,11 @@ const SettingsPanel: Component = () => {
         {/* 左上: 言語選択 + 数字体系トグル (autoRotate 中のみ)。国旗ボタンは現在 locale の flag を
          *  直接描画 (before:hidden で aria-label の ::before 描画を抑制) し、タップで言語ピッカーを
          *  起動する。数字体系トグルは alternate を持つ locale でのみ表示し、ラベル "123…" ⇄
-         *  "১২৩…" のように切替先の数字グリフを出して default の方向が逆でも整合する。
-         *  両ボタンとも btnClass の base から font-size を一段下げる: 子どもが触ってはいけない
-         *  設定なので存在感を抑える、かつ 🇧🇩 の glyph 幅が他国旗より広く見えるのを抑える。 */}
+         *  "১২৩…" のように切替先の数字グリフを出して default の方向が逆でも整合する。 */}
         <Show when={clockMode() === "autoRotate"}>
           <div class="fixed top-2 left-2 z-50 flex gap-2">
             <button
-              class={`${btnClass} before:hidden text-xl tablet:text-2xl leading-none`}
+              class={`${compactBtnClass} before:hidden text-lg tablet:text-xl leading-none`}
               onPointerDown={(e) => openLocalePickerAtElement(e.currentTarget as HTMLButtonElement)}
               aria-label={locale().endonym}
             >
@@ -103,7 +106,7 @@ const SettingsPanel: Component = () => {
             <Show when={numeralTogglePreview()}>
               {(preview) => (
                 <button
-                  class={`${btnClass} text-sm tablet:text-base`}
+                  class={`${compactBtnClass} text-xs tablet:text-sm`}
                   onPointerDown={toggleNumeralSystem}
                   aria-label={`${preview()}…`}
                 />
