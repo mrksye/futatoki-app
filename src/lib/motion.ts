@@ -56,3 +56,26 @@ export const TAP_PULSE_KEYFRAMES: Keyframe[] = [
 
 export const playTapPulse = (el: Element): Animation | null =>
   animateMotion(el, TAP_PULSE_KEYFRAMES, { duration: TAP_PULSE_DURATION_MS, easing: "ease-out" });
+
+/** イヤイヤ (左右ダブルシェイク + 一拍休 + 2 周目早め)。長押し時の「アカン」拒否表現。
+ *  amplitudePx は呼び出し側の要素サイズに応じて指定する: 小要素 (event icon ~30px) は default 8px で
+ *  「ブンブン首を振る」感、大面積 (時計面 ~600px) は 5px 前後で「小さく速く首を振る」感に下げる。
+ *  同じ 8px を時計に使うと振りの絶対量は同じでも、巨大オブジェクト全体がガクッと寄るので
+ *  「イヤイヤ」じゃなく「ぐらつき」になってしまう。
+ *  将来的には rotateY との組み合わせで顔を振る奥行きを足したい (現状は translateX のみで暫定)。 */
+export const SHAKE_NO_DURATION_MS = 600;
+const buildShakeNoKeyframes = (amplitudePx: number): Keyframe[] => [
+  { transform: "translateX(0)",                  offset: 0 },
+  { transform: `translateX(-${amplitudePx}px)`,  offset: 0.20 },  // 1 周目 左
+  { transform: `translateX(${amplitudePx}px)`,   offset: 0.45 },  // 1 周目 右
+  { transform: "translateX(0)",                  offset: 0.55 },  // 一拍休
+  { transform: `translateX(-${amplitudePx}px)`,  offset: 0.65 },  // 2 周目 左 (テンポ早い)
+  { transform: `translateX(${amplitudePx}px)`,   offset: 0.80 },  // 2 周目 右
+  { transform: "translateX(0)",                  offset: 1 },
+];
+
+export const playShakeNo = (el: Element, amplitudePx = 8): Animation | null =>
+  animateMotion(el, buildShakeNoKeyframes(amplitudePx), {
+    duration: SHAKE_NO_DURATION_MS,
+    easing: "ease-in-out",
+  });
