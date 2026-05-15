@@ -4,6 +4,7 @@ import ClockFace from "./ClockFace";
 import HandsLayer from "./HandsLayer";
 import ScheduleLayer from "./ScheduleLayer";
 import SchedulePicker from "./SchedulePicker";
+import LocalePicker from "./LocalePicker";
 import SecondsBar from "./SecondsBar";
 import SettingsPanel from "./SettingsPanel";
 import SkyBackground from "./SkyBackground";
@@ -690,6 +691,8 @@ export const ClockLayout: Component = () => {
       <SettingsPanel />
 
       <SchedulePicker />
+
+      <LocalePicker />
     </div>
   );
 };
