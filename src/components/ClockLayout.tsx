@@ -32,7 +32,15 @@ import { dragStart, dragAdvance, type DragDragState } from "../features/free-rot
 import { wheelAdvance, newWheelVelocityState, resetWheelVelocity } from "../features/free-rotation/wheel";
 import { resistTrigger, notifyResistance } from "../features/free-rotation/resistance";
 import { interaction, enterWarning, cancelWarning } from "../features/schedule/interaction";
-import { playTapPulse } from "../lib/motion";
+import { playTapPulse, playShakeNo } from "../lib/motion";
+
+/** 時計面長押し (= 削除拒否の「イヤイヤ」発火) の閾値。EventIcon の LONG_PRESS_MS と意図的に揃える
+ *  (1 つの ms 感覚を全 long-press UI で共有)。 */
+const CLOCK_FACE_LONG_PRESS_MS = 500;
+/** 時計面 shake の左右振幅。EventIcon の default 8px より小さく抑える: clock 面 (~600px) は大面積なので
+ *  同 amplitude だと首振りでなく「全体がガクッと寄る」見え方になる。3〜6px で「小さく速く首を振る」
+ *  感が出る。 */
+const CLOCK_FACE_SHAKE_AMPLITUDE_PX = 5;
 
 /** freeRotate 中の長押し warning 検出パラメータ。clock モードの EventIcon が持つ LONG_PRESS_MS と
  *  揃える。 */
@@ -65,17 +73,36 @@ const DimOverlay: ParentComponent<{ opacity: number }> = (props) => (
  * floating な palette ボタンが時計と被る locale で時計の最大寸法を制限する用途。size の決定は
  * features/layout/palette-clearance の computeMaxClockSize を参照。
  *
- * 時計モード (= !isRotating) で素タップしたらピカッ。pointerdown 即発火で指の接触瞬間に反応させる
- * (clock 面側は長押しタイマー無いので up を待つ必要がない)。予定アイコンの pointerdown は
- * ScheduleLayer 側で clock モード時 stopPropagation してるのでここには上がってこず、icon と slot の
- * 反応は独立。
+ * 時計モード (= !isRotating) のインタラクション:
+ *  - 素タップ (pointerdown 即時): ピカッと一瞬光る (TAP_PULSE, 260ms)。指の接触瞬間に反応。
+ *  - 長押し 500ms: イヤイヤと首を振る (SHAKE_NO, amplitude 5px / 600ms)。EventIcon の長押し拒否と
+ *    同モーション (削除不可表明)。pulse は 260ms で終わるので shake (500ms 後発火) と時間的に被らない。
+ * 予定アイコンの pointerdown は ScheduleLayer 側で clock モード時 stopPropagation してるのでここには
+ * 上がってこず、icon と slot の反応は独立。
  */
 const ClockSlot: ParentComponent<{ size: number }> = (props) => {
   let ref: HTMLDivElement | undefined;
+  let pressTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const cancelPress = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = undefined;
+    }
+  };
+
   const onPointerDown = () => {
     if (isRotating()) return;
     if (ref) playTapPulse(ref);
+    cancelPress();
+    pressTimer = setTimeout(() => {
+      pressTimer = undefined;
+      if (ref) playShakeNo(ref, CLOCK_FACE_SHAKE_AMPLITUDE_PX);
+    }, CLOCK_FACE_LONG_PRESS_MS);
   };
+
+  onCleanup(cancelPress);
+
   return (
     <div
       ref={(el) => (ref = el)}
@@ -85,6 +112,8 @@ const ClockSlot: ParentComponent<{ size: number }> = (props) => {
         height: `${props.size}px`,
       }}
       onPointerDown={onPointerDown}
+      onPointerUp={cancelPress}
+      onPointerCancel={cancelPress}
     >
       {props.children}
     </div>
@@ -396,12 +425,27 @@ export const ClockLayout: Component = () => {
   const { mergedVisible, transitioning, mergedRevealed } = useMergeAnimation();
   let mergedContainerRef: HTMLDivElement | undefined;
   let mergedInnerRef: HTMLDivElement | undefined;
+  let mergedPressTimer: ReturnType<typeof setTimeout> | undefined;
   useMergeImpactWobble(() => mergedContainerRef, mergedRevealed);
 
-  /** かさね β の中身を素タップした時のピカッ。AM/PM split は ClockSlot 側に同等の handler がある。 */
+  const cancelMergedPress = () => {
+    if (mergedPressTimer) {
+      clearTimeout(mergedPressTimer);
+      mergedPressTimer = undefined;
+    }
+  };
+  onCleanup(cancelMergedPress);
+
+  /** かさね β の中身インタラクション。挙動は ClockSlot と同じ (素タップ=ピカッ / 長押し=イヤイヤ)。
+   *  split AM/PM とは別 ref のため timer / handler を独立に持つ。 */
   const onMergedClockPointerDown = () => {
     if (isRotating()) return;
     if (mergedInnerRef) playTapPulse(mergedInnerRef);
+    cancelMergedPress();
+    mergedPressTimer = setTimeout(() => {
+      mergedPressTimer = undefined;
+      if (mergedInnerRef) playShakeNo(mergedInnerRef, CLOCK_FACE_SHAKE_AMPLITUDE_PX);
+    }, CLOCK_FACE_LONG_PRESS_MS);
   };
   useAutoRotateTick();
   useIdleExitTimer();
@@ -560,6 +604,8 @@ export const ClockLayout: Component = () => {
               "pointer-events": "auto",
             }}
             onPointerDown={onMergedClockPointerDown}
+            onPointerUp={cancelMergedPress}
+            onPointerCancel={cancelMergedPress}
           >
             <ClockFace period="merged" hours={displayed().hours} />
             {/* 重ね表示: 現在 period を前 + 不透明、反対側を dimOpacity=0.15 で後ろに重ねる。
