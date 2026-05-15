@@ -684,7 +684,7 @@ const EventIcon: Component<EventIconProps> = (props) => {
         <text
           x={props.pos.x}
           y={props.pos.y}
-          font-size={props.iconFontSize}
+          font-size={String(props.iconFontSize)}
           text-anchor="middle"
           dominant-baseline="central"
         >
