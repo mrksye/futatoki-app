@@ -61,6 +61,15 @@ const ICON_SIZE_SUKKIRI = 24;
 /** font-size に対する白背景円の半径比 (em-box 外接円 √2/2 ≈ 0.707 より少し小さく抑える)。 */
 const ICON_BG_RADIUS_RATIO = 0.70;
 
+/** 予定アイコンのシール感影。シャープな contact (面に密着している根元の濃さ) + 柔らかい ambient
+ *  (浮いた厚みの広がり) の 2 段で「ペタッと貼ってある」立体感を作る。default はばっじ / monotone
+ *  (文字盤が白系で影がハッキリ落ちる) 用。_SECTOR は色付き扇形が背景に乗る分強く見えるので alpha を
+ *  1 段下げた版 (monotone は扇形モードでも文字盤白なので default を使う)。 */
+const STICKER_SHADOW =
+  "drop-shadow(0 0.5px 0.5px rgba(0,0,0,0.16)) drop-shadow(0 1.5px 2.5px rgba(0,0,0,0.09))";
+const STICKER_SHADOW_SECTOR =
+  "drop-shadow(0 0.5px 0.5px rgba(0,0,0,0.14)) drop-shadow(0 1.5px 2.5px rgba(0,0,0,0.08))";
+
 /** 矢印三角形 (白)。底辺の両端が白円周上にぴったり乗るよう sqrt(bgR² - baseHalf²) で算出。 */
 const TRI_BASE_HALF = 1.5;
 const TRI_HEIGHT = 2.5;
@@ -263,18 +272,11 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
     return props.dimOpacity ?? 0.25;
   };
 
-  /** ばっじモードでは文字盤が白円なので白アイコンが浮く。シール感を出すため group シルエット
-   *  (白円 + 三角ポインタ) に 2 段 drop-shadow を落とす (シャープな contact shadow + 柔らかい
-   *  ambient shadow で「面にペタッと貼ってある」立体感を作る)。くぎりモード × カラーパレットは
-   *  色背景に白シールでコントラストが出るので影なし。monotone (ばっじ/くぎり共に文字盤が #ffffff)
-   *  は白シールが同化するため、くぎり側でも同じシール影を入れて視認性を確保する。 */
-  const stickerShadow = () => {
-    const STICKER_SHADOW =
-      "drop-shadow(0 0.5px 0.5px rgba(0,0,0,0.16)) drop-shadow(0 1.5px 2.5px rgba(0,0,0,0.09))";
-    if (paletteId() === "monotone") return STICKER_SHADOW;
-    if (colorMode() === "badge") return STICKER_SHADOW;
-    return undefined;
-  };
+  /** くぎり × カラーパレットのみ弱め影、それ以外は default。 */
+  const stickerShadow = () =>
+    colorMode() === "sector" && paletteId() !== "monotone"
+      ? STICKER_SHADOW_SECTOR
+      : STICKER_SHADOW;
 
   return (
     <div
@@ -431,8 +433,8 @@ interface EventIconProps {
   /** ScheduleLayer が決めたこの event 単体の表示 opacity (0..1)。
    *  .fade-on-dim class で 380ms transition (親 .selection-dim-instant 中は 0ms)。 */
   opacity: number;
-  /** CSS filter 文字列 (drop-shadow 等)。ばっじモードでシール感を出す用。undefined で影なし。 */
-  dropShadow: string | undefined;
+  /** CSS filter 文字列 (シール影 drop-shadow chain)。くぎり × カラーパレットは弱め、それ以外は default。 */
+  dropShadow: string;
 }
 
 /** WAAPI の Animation.id (getAnimations() からの識別用)。setupPoofAnim が wobble を狙って cancel する。 */
