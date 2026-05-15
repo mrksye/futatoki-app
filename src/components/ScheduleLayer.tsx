@@ -54,8 +54,8 @@ const ICON_RADIUS_KUWASHIKU = 84;
 const ICON_RADIUS_SUKKIRI = 94;
 /** monotone × badge は cardinal 数字 (12/3/6/9 と PM の 12/15/18/21) を内側に大きく配置する特別仕様で、
  *  通常半径ではアイコンと数字が radial に被る。アイコンを cardinal 内端より中心側へ寄せる。 */
-const ICON_RADIUS_KUWASHIKU_MONOTONE_BADGE = 64;
-const ICON_RADIUS_SUKKIRI_MONOTONE_BADGE = 72;
+const ICON_RADIUS_KUWASHIKU_MONOTONE_BADGE = 68;
+const ICON_RADIUS_SUKKIRI_MONOTONE_BADGE = 76;
 const ICON_SIZE_KUWASHIKU = 18;
 const ICON_SIZE_SUKKIRI = 24;
 /** font-size に対する白背景円の半径比 (em-box 外接円 √2/2 ≈ 0.707 より少し小さく抑える)。 */
@@ -264,12 +264,18 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
   };
 
   /** ばっじモードでは文字盤が白円なので白アイコンが浮く。シール感を出すため group シルエット
-   *  (白円 + 三角ポインタ) に薄い drop-shadow を落とす。くぎりモードは色背景なので不要、
-   *  monotone はミニマル基調なので影を入れない (cardinal 大文字盤化との相性も悪い)。 */
-  const stickerShadow = () =>
-    colorMode() === "badge" && paletteId() !== "monotone"
-      ? "drop-shadow(0 1px 1.4px rgba(0,0,0,0.13))"
-      : undefined;
+   *  (白円 + 三角ポインタ) に薄い drop-shadow を落とす。くぎりモード × カラーパレットは色背景に
+   *  白シールでコントラストが出るので影なし。monotone (ばっじ/くぎり共に文字盤が #ffffff) は
+   *  白シールが同化するため、くぎり側でも同じ薄影を入れて視認性を確保する。 */
+  const stickerShadow = () => {
+    if (paletteId() === "monotone") {
+      return "drop-shadow(0 1px 1.4px rgba(0,0,0,0.13))";
+    }
+    if (colorMode() === "badge") {
+      return "drop-shadow(0 1px 1.4px rgba(0,0,0,0.13))";
+    }
+    return undefined;
+  };
 
   return (
     <div
