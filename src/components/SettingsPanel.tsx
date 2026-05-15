@@ -17,9 +17,12 @@ import {
 import { useRewindHold } from "../features/free-rotation/rewind";
 import { randomizeRotate } from "../features/free-rotation/random-time";
 import { openPickerAtElement } from "../features/schedule/picker";
+import { openLocalePickerAtElement } from "../features/locale-picker/state";
+import { LOCALE_FLAG } from "../features/locale-picker/flags";
 
 const SettingsPanel: Component = () => {
-  const { t, numeralTogglePreview, toggleNumeralSystem } = useI18n();
+  const { t, locale, numeralTogglePreview, toggleNumeralSystem } = useI18n();
+  const currentFlag = () => LOCALE_FLAG[locale().code] ?? locale().code;
   const isLandscape = useOrientation();
   const { start: startRewind, stop: stopRewind } = useRewindHold();
 
@@ -82,17 +85,31 @@ const SettingsPanel: Component = () => {
           />
         </Show>
 
-        {/* 左上: 数字体系トグル (autoRotate 中 & locale が alternate を持つときのみ)。
-         *  ラベルは次のアクション = 切替先の数字グリフ。bn なら "123…" ⇄ "১২৩…"、hi なら
-         *  "१२३…" ⇄ "123…" のように locale ごとに default の方向が逆でも整合する。 */}
-        <Show when={clockMode() === "autoRotate" && numeralTogglePreview()}>
-          {(preview) => (
+        {/* 左上: 言語選択 + 数字体系トグル (autoRotate 中のみ)。
+         *  flex 横並び: 左に国旗ボタン、右に数字体系トグル (alternate を持つ locale のみ)。
+         *  国旗ボタンは現在 locale の flag emoji を直接描画 (before:hidden で aria-label の
+         *  ::before 描画を抑制)。タップで言語ピッカーを起動。
+         *  数字体系トグルのラベルは次のアクション = 切替先の数字グリフ。bn なら "123…" ⇄ "১২৩…"、
+         *  hi なら "१२३…" ⇄ "123…" のように locale ごとに default の方向が逆でも整合する。 */}
+        <Show when={clockMode() === "autoRotate"}>
+          <div class="fixed top-2 left-2 z-50 flex gap-2">
             <button
-              class={`fixed top-2 left-2 z-50 ${btnClass}`}
-              onPointerDown={toggleNumeralSystem}
-              aria-label={`${preview()}…`}
-            />
-          )}
+              class={`${btnClass} before:hidden text-2xl tablet:text-3xl leading-none`}
+              onPointerDown={(e) => openLocalePickerAtElement(e.currentTarget as HTMLButtonElement)}
+              aria-label={locale().endonym}
+            >
+              {currentFlag()}
+            </button>
+            <Show when={numeralTogglePreview()}>
+              {(preview) => (
+                <button
+                  class={btnClass}
+                  onPointerDown={toggleNumeralSystem}
+                  aria-label={`${preview()}…`}
+                />
+              )}
+            </Show>
+          </div>
         </Show>
       </Show>
 
