@@ -70,8 +70,10 @@ const DRAG_THRESHOLD_FAST_PX = 2;
 const DRAG_THRESHOLD_SLOW_PX = 6;
 const DRAG_FAST_WINDOW_MS = 80;
 
-/** wheel deltaY 1 単位 → length px。SchedulePicker は deg だがこちらは length 直接。 */
-const WHEEL_LENGTH_PER_DELTA = 1.0;
+/** wheel deltaY 1 単位 → length px。Chrome のデフォルト 1 ノッチ deltaY ≈ 100 なので、0.4 で
+ *  1 ノッチ ≈ 40px (step 60 の 2/3 ≒ 0.66 アイテム移動)。1.0 だと 1 アイテム以上飛んで速すぎ、
+ *  0.2 だと遅い。SchedulePicker (deg / radius) と体感を揃える目安。 */
+const WHEEL_LENGTH_PER_DELTA = 0.4;
 const WHEEL_TWEEN_DURATION_MS = 200;
 const WHEEL_IDLE_TRIGGER_MS = 100;
 /** 慣性発火に必要な「直近窓内の累積 length」(px)。1 ノッチ程度では発火させず、フリック級だけ。 */
