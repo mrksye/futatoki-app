@@ -264,16 +264,15 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
   };
 
   /** ばっじモードでは文字盤が白円なので白アイコンが浮く。シール感を出すため group シルエット
-   *  (白円 + 三角ポインタ) に薄い drop-shadow を落とす。くぎりモード × カラーパレットは色背景に
-   *  白シールでコントラストが出るので影なし。monotone (ばっじ/くぎり共に文字盤が #ffffff) は
-   *  白シールが同化するため、くぎり側でも同じ薄影を入れて視認性を確保する。 */
+   *  (白円 + 三角ポインタ) に 2 段 drop-shadow を落とす (シャープな contact shadow + 柔らかい
+   *  ambient shadow で「面にペタッと貼ってある」立体感を作る)。くぎりモード × カラーパレットは
+   *  色背景に白シールでコントラストが出るので影なし。monotone (ばっじ/くぎり共に文字盤が #ffffff)
+   *  は白シールが同化するため、くぎり側でも同じシール影を入れて視認性を確保する。 */
   const stickerShadow = () => {
-    if (paletteId() === "monotone") {
-      return "drop-shadow(0 1px 1.4px rgba(0,0,0,0.13))";
-    }
-    if (colorMode() === "badge") {
-      return "drop-shadow(0 1px 1.4px rgba(0,0,0,0.13))";
-    }
+    const STICKER_SHADOW =
+      "drop-shadow(0 0.5px 0.5px rgba(0,0,0,0.16)) drop-shadow(0 1.5px 2.5px rgba(0,0,0,0.09))";
+    if (paletteId() === "monotone") return STICKER_SHADOW;
+    if (colorMode() === "badge") return STICKER_SHADOW;
     return undefined;
   };
 
