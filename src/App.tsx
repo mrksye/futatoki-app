@@ -9,7 +9,7 @@ import { I18nProvider } from "./i18n";
 
 /** ピッカー open 中は chronostasis を発動させて時計画面の動的副作用を全停止する。
  *  backdrop-filter: blur が下層 cache を効かせて低スペック端末でも実用負荷で動く。
- *  schedule / locale どちらの picker でも同じ扱い (両方 open になることは UI 上ない)。 */
+ *  schedule / locale どちらの picker でも同じ扱い。 */
 const usePickerHoldsChronostasis = () => {
   createEffect(() => {
     if (!pickerOpen() && !localePickerOpen()) return;
