@@ -189,7 +189,7 @@ function annularSectorPath(
 }
 
 const ClockFace: Component<ClockFaceProps> = (props) => {
-  const { t } = useI18n();
+  const { t, formatNumeral } = useI18n();
   const isKuwashiku = () => detailMode() === "kuwashiku";
   /** monotone × badge は「文字盤自体がバッジ化」する特別仕様。個別 badge 円を出さず、cardinal 数字のみ
    *  くぎりモード流儀の大きなサイズで描き、円盤縁に 59 個の分メモリを置く。 */
@@ -385,7 +385,7 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   font-family="Nunito, sans-serif"
                   fill={is5() ? "#444444" : "#666666"}
                 >
-                  {min()}
+                  {formatNumeral(min())}
                 </text>
               );
             }}
@@ -458,7 +458,7 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   }
                   paint-order="stroke"
                 >
-                  {num()}
+                  {formatNumeral(num())}
                 </text>
               </g>
             );
