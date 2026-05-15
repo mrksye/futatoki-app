@@ -88,11 +88,13 @@ const SettingsPanel: Component = () => {
         {/* 左上: 言語選択 + 数字体系トグル (autoRotate 中のみ)。国旗ボタンは現在 locale の flag を
          *  直接描画 (before:hidden で aria-label の ::before 描画を抑制) し、タップで言語ピッカーを
          *  起動する。数字体系トグルは alternate を持つ locale でのみ表示し、ラベル "123…" ⇄
-         *  "১২৩…" のように切替先の数字グリフを出して default の方向が逆でも整合する。 */}
+         *  "১২৩…" のように切替先の数字グリフを出して default の方向が逆でも整合する。
+         *  両ボタンとも btnClass の base から font-size を一段下げる: 子どもが触ってはいけない
+         *  設定なので存在感を抑える、かつ 🇧🇩 の glyph 幅が他国旗より広く見えるのを抑える。 */}
         <Show when={clockMode() === "autoRotate"}>
           <div class="fixed top-2 left-2 z-50 flex gap-2">
             <button
-              class={`${btnClass} before:hidden text-2xl tablet:text-3xl leading-none`}
+              class={`${btnClass} before:hidden text-xl tablet:text-2xl leading-none`}
               onPointerDown={(e) => openLocalePickerAtElement(e.currentTarget as HTMLButtonElement)}
               aria-label={locale().endonym}
             >
@@ -101,7 +103,7 @@ const SettingsPanel: Component = () => {
             <Show when={numeralTogglePreview()}>
               {(preview) => (
                 <button
-                  class={btnClass}
+                  class={`${btnClass} text-sm tablet:text-base`}
                   onPointerDown={toggleNumeralSystem}
                   aria-label={`${preview()}…`}
                 />
