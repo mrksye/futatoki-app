@@ -15,7 +15,13 @@
  * locale は各文化圏の教育語彙 (Educational / 学習 / Lern など) を選定。
  */
 
-export const OFFICIAL_BRAND: Record<string, string> = {
+/** locale → 表示文字列のマップ。ja は SOURCE として全マップで必須なので known property として
+ *  型に出す。`map[localeCode]` は noUncheckedIndexedAccess で string | undefined、`map["ja"]` は
+ *  literal type "ja" 経由で known property hit → string で取れる ( `?? map[SOURCE]` の fallback が
+ *  型上も string に確定する)。 */
+type LocalizedBrand = { ja: string; [key: string]: string };
+
+export const OFFICIAL_BRAND: LocalizedBrand = {
   ja: "知育時計ふたときアプリ",
   en: "Futatoki the Learning Clock",
   "zh-CN": "Futatoki 教学时钟",
@@ -38,7 +44,7 @@ export const OFFICIAL_BRAND: Record<string, string> = {
   bn: "Futatoki শিক্ষামূলক ঘড়ি",
 };
 
-export const LP_BRAND: Record<string, string> = {
+export const LP_BRAND: LocalizedBrand = {
   ja: "ふたとき時計",
   en: "Futatoki the Clock",
   "zh-CN": "Futatoki 双面时钟",
@@ -61,7 +67,7 @@ export const LP_BRAND: Record<string, string> = {
   bn: "Futatoki ঘড়ি",
 };
 
-export const APP_BRAND: Record<string, string> = {
+export const APP_BRAND: LocalizedBrand = {
   ja: "ふたときアプリ",
   en: "Futatoki App",
   "zh-CN": "Futatoki 应用",
@@ -89,12 +95,12 @@ export const APP_BRAND: Record<string, string> = {
  * "Futatoki" Latin (固有名詞) 統一。LP の各 locale でも本文中の固有名は
  * Futatoki Latin 表記なので整合する。
  */
-export const APPLE_TITLE: Record<string, string> = {
+export const APPLE_TITLE: LocalizedBrand = {
   ja: "ふたとき",
 };
 
 /** og:locale (Open Graph 形式 = BCP47 を underscore + 大文字 region に)。 */
-export const OG_LOCALE: Record<string, string> = {
+export const OG_LOCALE: LocalizedBrand = {
   ja: "ja_JP",
   en: "en_US",
   "zh-CN": "zh_CN",
