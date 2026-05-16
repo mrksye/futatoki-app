@@ -19,7 +19,7 @@
     "autoStop": "stop",
     "random": "acak"
   },
-  "schedule": {
+  "activity": {
     "add": "Kegiatan",
     "reset": "hapus",
     "icon": {

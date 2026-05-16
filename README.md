@@ -14,7 +14,7 @@ Targets kids who read digital clocks fluently but can't yet parse analog ones. T
 
 * Clockwise-only hand motion — no backward rotation
 * Two parallel 12-hour faces (AM / PM) — same hour mapped to two distinct positions
-* Schedule icons placed on dial positions — clock time anchored to a child's daily routine
+* Activity icons placed on dial positions — clock time anchored to a child's daily routine
 * Color rings as an optional helper layer — disable-able once not needed
 
 ## Features

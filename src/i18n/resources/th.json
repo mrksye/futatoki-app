@@ -19,7 +19,7 @@
     "autoStop": "หยุด",
     "random": "สุ่ม"
   },
-  "schedule": {
+  "activity": {
     "add": "กิจกรรม",
     "reset": "ล้าง",
     "icon": {

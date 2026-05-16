@@ -19,7 +19,7 @@
     "autoStop": "停下來",
     "random": "隨機"
   },
-  "schedule": {
+  "activity": {
     "add": "活動",
     "reset": "清空",
     "icon": {

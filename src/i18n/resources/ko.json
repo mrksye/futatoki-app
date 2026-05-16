@@ -19,7 +19,7 @@
     "autoStop": "멈춤",
     "random": "랜덤"
   },
-  "schedule": {
+  "activity": {
     "add": "활동",
     "reset": "리셋",
     "icon": {

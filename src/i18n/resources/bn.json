@@ -19,7 +19,7 @@
     "autoStop": "থামাও",
     "random": "এলোমেলো"
   },
-  "schedule": {
+  "activity": {
     "add": "কাজ",
     "reset": "রিসেট",
     "icon": {

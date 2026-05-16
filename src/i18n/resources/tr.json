@@ -19,7 +19,7 @@
     "autoStop": "durdur",
     "random": "rastgele"
   },
-  "schedule": {
+  "activity": {
     "add": "Etkinlik",
     "reset": "sıfırla",
     "icon": {

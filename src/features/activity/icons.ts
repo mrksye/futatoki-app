@@ -1,10 +1,10 @@
 /**
- * 予定モードで使えるプリセットアイコン定義。子どもが日常で使う 12 種類で、順序は picker の表示順
+ * できごとモードで使えるプリセットアイコン定義。子どもが日常で使う 12 種類で、順序は picker の表示順
  * (4 段 3 列で過不足なく埋まる)。差し替え / 追加は配列を編集するだけ。
- * ラベルは i18n キー (`schedule.icon.<id>`) で参照されるので src/i18n/resources/*.json 側に集約。
+ * ラベルは i18n キー (`activity.icon.<id>`) で参照されるので src/i18n/resources/*.json 側に集約。
  */
 
-export type ScheduleIconId =
+export type ActivityIconId =
   | "breakfast"
   | "lunch"
   | "dinner"
@@ -18,13 +18,13 @@ export type ScheduleIconId =
   | "music"
   | "special";
 
-export interface ScheduleIconDef {
-  id: ScheduleIconId;
+export interface ActivityIconDef {
+  id: ActivityIconId;
   /** picker / 時計上の絵文字グリフ。 */
   emoji: string;
 }
 
-export const SCHEDULE_ICONS: readonly ScheduleIconDef[] = [
+export const ACTIVITY_ICONS: readonly ActivityIconDef[] = [
   { id: "breakfast", emoji: "🥐" }, // 朝食。クロワッサンはヨーロッパ枠。ただし形が三日月。
   { id: "lunch",     emoji: "🍙" }, // 昼食。日本発のプロダクトなので。日本、東アジア枠。
   { id: "dinner",    emoji: "🍔" }, // 夕食。アメリカ・グローバル枠。
@@ -39,10 +39,10 @@ export const SCHEDULE_ICONS: readonly ScheduleIconDef[] = [
   { id: "special",   emoji: "⭐️" }, // 自分や家族にとっての特別な時間を表す枠。誕生日・記念日・お祝いなど、子ども本人が意味を込めて使えるよう中立的にした。当初は 🕯 (静寂シンボル) だったが、ろうそくは宗教色が強く出るため避けて ⭐️ に変更。
 ];
 
-const ICON_BY_ID: Record<ScheduleIconId, ScheduleIconDef> = Object.fromEntries(
-  SCHEDULE_ICONS.map(def => [def.id, def]),
-) as Record<ScheduleIconId, ScheduleIconDef>;
+const ICON_BY_ID: Record<ActivityIconId, ActivityIconDef> = Object.fromEntries(
+  ACTIVITY_ICONS.map(def => [def.id, def]),
+) as Record<ActivityIconId, ActivityIconDef>;
 
 /** id から icon 定義を引く。存在しない id は undefined。 */
-export const getScheduleIcon = (id: ScheduleIconId): ScheduleIconDef | undefined =>
+export const getActivityIcon = (id: ActivityIconId): ActivityIconDef | undefined =>
   ICON_BY_ID[id];

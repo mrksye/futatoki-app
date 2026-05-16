@@ -27,7 +27,7 @@ html, body, #root {
  * になる。 印刷時だけ lock を解除し、操作系 UI を消し、background gradient を紙にも焼き付ける。
  *
  * `.fixed` は Tailwind の `position: fixed` utility。 SettingsPanel の各ボタン
- * (`fixed top-2 right-2 ...`) と SchedulePicker の overlay (`fixed inset-0 z-[100] ...`) は
+ * (`fixed top-2 right-2 ...`) と ActivityPicker の overlay (`fixed inset-0 z-[100] ...`) は
  * 全て `.fixed` を通るので、ここ一箇所で UI chrome を一括非表示にできる
  * (ClockLayout 側の AM/PM バッジ等は `absolute` なので残る)。 */
 @media print {
