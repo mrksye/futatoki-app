@@ -89,11 +89,30 @@ bun run build
 
 ### Deploy (Cloudflare Workers)
 
-```sh
-bun run deploy
-```
+This repository is set up for [Cloudflare Workers Builds](https://developers.cloudflare.com/workers/ci-cd/builds/)
+(push-to-deploy). The actual `wrangler.jsonc` is gitignored; instead a
+`wrangler.jsonc.template` ships with `__XXX__` placeholders that are filled in
+at build time from environment variables.
 
-This runs `vite build` followed by `wrangler deploy`. Requires a Cloudflare account and `wrangler login`.
+To deploy your own instance:
+
+1. Create a Cloudflare Worker and connect this repository under **Workers &
+   Pages → your project → Settings → Build**.
+2. Set the build command to:
+   ```
+   bun run build:wrangler && bun run build
+   ```
+3. Add the following **Build Variables** (Secret type recommended):
+   - `WORKER_NAME` — your Cloudflare Worker name
+   - `DATASET_NAME` — your Analytics Engine dataset name
+   - `ROUTE_DOMAIN` — your custom domain (e.g. `play.example.com`)
+4. Push to `main`; CF Workers Builds regenerates `wrangler.jsonc` from the
+   template and runs `wrangler deploy` automatically.
+
+For a one-off manual deploy from your machine, copy
+`wrangler.jsonc.template` to `wrangler.jsonc`, replace the `__XXX__`
+placeholders by hand (or export the env vars and run `bun run build:wrangler`),
+then `bun run deploy`.
 
 ## Contributing
 
