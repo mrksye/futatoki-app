@@ -162,10 +162,10 @@ async function main() {
     generated.push(locale.code);
   }
 
-  console.log(
+  console.info(
     `[generate-locale-html] wrote ${generated.length} locale HTMLs to dist/locales/`,
   );
-  console.log(`[generate-locale-html]   generated: ${generated.join(", ")}`);
+  console.info(`[generate-locale-html]   generated: ${generated.join(", ")}`);
   if (skipped.length > 0) {
     console.warn(
       `[generate-locale-html]   skipped (missing meta.*): ${skipped.join(", ")}`,
