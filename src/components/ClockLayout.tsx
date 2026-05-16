@@ -11,6 +11,7 @@ import SkyBackground from "./SkyBackground";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { useOrientation } from "../hooks/useOrientation";
 import { useViewport } from "../hooks/useViewport";
+import { useSafeAreaInsets } from "../hooks/useSafeAreaInsets";
 import {
   paletteMaxBtnWidth,
   paletteMaxBtnHeight,
@@ -130,8 +131,10 @@ const ClockSlot: ParentComponent<{ size: number }> = (props) => {
   );
 };
 
-/** floating な palette ボタンの内側 margin (CSS の `right-2` / `bottom-2` = 0.5rem = 8px)。 */
-const PALETTE_BTN_EDGE_MARGIN_PX = 8;
+/** floating な palette ボタンの基準内側 margin (CSS の `right-2` / `bottom-2` = 0.5rem = 8px)。
+ *  iOS PWA では env(safe-area-inset-*) のほうが大きい場合がある (landscape 下端 ~21px 等) ので、
+ *  実際の edgeMargin は max(BASE, safeArea) で都度計算する。 */
+const PALETTE_BTN_BASE_EDGE_MARGIN_PX = 8;
 /** ボタン rect と clock circle の最低視覚 clearance。0 にすると edge が touch するので少し空ける。 */
 const PALETTE_BTN_SAFETY_GAP_PX = 4;
 
@@ -139,6 +142,7 @@ export const ClockLayout: Component = () => {
   const time = useCurrentTime();
   const isLandscape = useOrientation();
   const viewport = useViewport();
+  const safeArea = useSafeAreaInsets();
   const { t } = useI18n();
 
   /** 各 AM/PM 半盤の clock SVG が取れる最大寸法 (diameter)。floating palette ボタンと交差しない
@@ -153,13 +157,20 @@ export const ClockLayout: Component = () => {
     const halfH = land ? h : h / 2;
     const naturalSize = Math.min(halfW, halfH);
     if (isRotating()) return naturalSize;
+    // landscape の palette は bottom-center, portrait は right-center に floating する。
+    // ボタンと viewport 端の実距離は CSS の var(--safe-edge-*) と一致 = max(BASE, safeArea)。
+    const sa = safeArea();
+    const edgeMargin = Math.max(
+      PALETTE_BTN_BASE_EDGE_MARGIN_PX,
+      land ? sa.bottom : sa.right,
+    );
     return computeMaxClockSize(
       w,
       h,
       land,
       paletteMaxBtnWidth(),
       paletteMaxBtnHeight(),
-      PALETTE_BTN_EDGE_MARGIN_PX,
+      edgeMargin,
       PALETTE_BTN_SAFETY_GAP_PX,
     );
   });
@@ -667,11 +678,11 @@ export const ClockLayout: Component = () => {
           "absolute z-20 px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-black shadow-md cursor-pointer slot-crossfade " +
           (isLandscape()
             ? (mergedVisible()
-                ? "left-[82%] top-2 -translate-x-1/2"
-                : "left-1/2 top-2 -translate-x-1/2")
+                ? "left-[82%] top-[var(--safe-edge-top)] -translate-x-1/2"
+                : "left-1/2 top-[var(--safe-edge-top)] -translate-x-1/2")
             : (mergedVisible()
-                ? "left-2 top-[80%] -translate-y-1/2"
-                : "left-2 top-1/2 -translate-y-1/2"))
+                ? "left-[var(--safe-edge-left)] top-[80%] -translate-y-1/2"
+                : "left-[var(--safe-edge-left)] top-1/2 -translate-y-1/2"))
         }
         style={{
           "background-color": isAm() ? "#0080D8" : "#E02068",

@@ -32,6 +32,18 @@
    min-height は iPhone 14 Pro Max ランドスケープ (430px) から十分離れる 32rem (512px) に設定。 */
 @custom-variant tablet (@media (min-width: 48rem) and (min-height: 32rem));
 
+/* iOS PWA (apple-mobile-web-app-capable=yes + viewport-fit=cover) では notch / home indicator が
+   viewport 内側に被さるので、コーナー UI は env(safe-area-inset-*) ぶん内側へ逃がす必要がある。
+   max(0.5rem, ...) で fallback して env() が 0 の環境 (Android / desktop / 通常 Safari) では
+   Tailwind の `-2` (0.5rem) と同じ値に縮退する。component 側は `top-2` の代わりに
+   `top-[var(--safe-edge-top)]` で参照する。 */
+:root {
+  --safe-edge-top: max(0.5rem, env(safe-area-inset-top));
+  --safe-edge-right: max(0.5rem, env(safe-area-inset-right));
+  --safe-edge-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  --safe-edge-left: max(0.5rem, env(safe-area-inset-left));
+}
+
 /* position: fixed / inset: 0 / overflow: hidden / touch-action / overscroll-behavior の
    kiosk lock は src/lib/kiosk-bootstrap (.ts + .css) 側に分離。 ここでは generic な
    margin/padding/font-family のリセットだけを残す。 */
@@ -73,7 +85,11 @@ button[aria-label]::before {
   content: attr(aria-label);
 }
 
-#root {
+/* gradient は html / body / #root の 3 階層に重ねて塗る。iOS PWA で `#root` の `inset:0` が
+   home indicator 領域まで届かず、地の body 白が透けて画面下に白帯が出る quirk への保険。
+   3 階層全部に塗っておけば一番外側が必ず gradient で埋まる。同じ画像を 3 回 paint しても
+   composite cost は実質ゼロ (重なる pixel は最前面の `#root` で完結)。 */
+html, body, #root {
   background: linear-gradient(160deg, #fef6e4 0%, #fce4ec 35%, #e8eaf6 65%, #e0f7fa 100%);
 }
 

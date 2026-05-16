@@ -61,7 +61,7 @@ const SettingsPanel: Component = () => {
     <>
       {/* 右上: じゆうかいてん / もどる。aria-label を ::before で描画 (iOS 長押し callout 対策)。 */}
       <button
-        class={`fixed top-2 right-2 z-50 ${btnClass}`}
+        class={`fixed top-[var(--safe-edge-top)] right-[var(--safe-edge-right)] z-50 ${btnClass}`}
         onPointerDown={toggleRotate}
         aria-label={isRotating() ? t("settings.rotateExit") : t("settings.rotateEnter")}
       />
@@ -69,7 +69,7 @@ const SettingsPanel: Component = () => {
       <Show when={isRotating()}>
         {/* 左下: じどうかいてん 開始/停止 (autoRotate/freeRotate 問わず常時表示) */}
         <button
-          class={`fixed bottom-2 left-2 z-50 ${btnClass}`}
+          class={`fixed bottom-[var(--safe-edge-bottom)] left-[var(--safe-edge-left)] z-50 ${btnClass}`}
           onPointerDown={() => transition(clockMode() === "autoRotate" ? "freeRotate" : "autoRotate")}
           aria-label={clockMode() === "autoRotate" ? t("settings.autoStop") : t("settings.autoStart")}
         />
@@ -77,14 +77,14 @@ const SettingsPanel: Component = () => {
         <Show when={clockMode() === "freeRotate"}>
           {/* 左上: かさねる/わける (表示は切替先) */}
           <button
-            class={`fixed top-2 left-2 z-50 ${btnClass}`}
+            class={`fixed top-[var(--safe-edge-top)] left-[var(--safe-edge-left)] z-50 ${btnClass}`}
             onPointerDown={toggleLayoutDimmed}
             aria-label={mergedVisible() ? t("settings.splitToTwo") : t("settings.mergeToSingle")}
           />
 
           {/* 右下: らんだむ (押すたびに 15 分刻みの別時刻へ) */}
           <button
-            class={`fixed bottom-2 right-2 z-50 ${btnClass}`}
+            class={`fixed bottom-[var(--safe-edge-bottom)] right-[var(--safe-edge-right)] z-50 ${btnClass}`}
             onPointerDown={randomizeRotate}
             aria-label={t("settings.random")}
           />
@@ -95,7 +95,7 @@ const SettingsPanel: Component = () => {
          *  起動する。数字体系トグルは alternate を持つ locale でのみ表示し、ラベル "123…" ⇄
          *  "১২৩…" のように切替先の数字グリフを出して default の方向が逆でも整合する。 */}
         <Show when={clockMode() === "autoRotate"}>
-          <div class="fixed top-2 left-2 z-50 flex gap-2">
+          <div class="fixed top-[var(--safe-edge-top)] left-[var(--safe-edge-left)] z-50 flex gap-2">
             <button
               class={`${compactBtnClass} before:hidden text-lg tablet:text-xl leading-none`}
               onPointerDown={(e) => openLocalePickerAtElement(e.currentTarget as HTMLButtonElement)}
@@ -119,21 +119,21 @@ const SettingsPanel: Component = () => {
       <Show when={!isRotating()}>
         {/* 左上: 24h / 12h */}
         <button
-          class={`fixed top-2 left-2 z-50 ${btnClass}`}
+          class={`fixed top-[var(--safe-edge-top)] left-[var(--safe-edge-left)] z-50 ${btnClass}`}
           onPointerDown={toggleTimeFormat}
           aria-label={timeFormat() === "24h" ? t("settings.hour12") : t("settings.hour24")}
         />
 
         {/* 左下: くわしく / すっきり */}
         <button
-          class={`fixed bottom-2 left-2 z-50 ${btnClass}`}
+          class={`fixed bottom-[var(--safe-edge-bottom)] left-[var(--safe-edge-left)] z-50 ${btnClass}`}
           onPointerDown={toggleDetailMode}
           aria-label={detailMode() === "kuwashiku" ? t("settings.sukkiri") : t("settings.kuwashiku")}
         />
 
         {/* 右下: くぎり / ばっじ */}
         <button
-          class={`fixed bottom-2 right-2 z-50 ${btnClass}`}
+          class={`fixed bottom-[var(--safe-edge-bottom)] right-[var(--safe-edge-right)] z-50 ${btnClass}`}
           onPointerDown={toggleColorMode}
           aria-label={colorMode() === "sector" ? t("settings.badge") : t("settings.sector")}
         />
@@ -152,11 +152,11 @@ const SettingsPanel: Component = () => {
           "fixed z-50 slot-crossfade " +
           (isLandscape()
             ? (mergedVisible()
-                ? "left-[82%] top-2 -translate-x-1/2"
-                : "left-1/2 top-2 -translate-x-1/2")
+                ? "left-[82%] top-[var(--safe-edge-top)] -translate-x-1/2"
+                : "left-1/2 top-[var(--safe-edge-top)] -translate-x-1/2")
             : (mergedVisible()
-                ? "left-2 top-[80%] -translate-y-1/2"
-                : "left-2 top-1/2 -translate-y-1/2")) +
+                ? "left-[var(--safe-edge-left)] top-[80%] -translate-y-1/2"
+                : "left-[var(--safe-edge-left)] top-1/2 -translate-y-1/2")) +
           " " + btnClass
         }
         style={{
@@ -173,11 +173,11 @@ const SettingsPanel: Component = () => {
           "fixed z-50 slot-crossfade " +
           (isLandscape()
             ? (mergedVisible()
-                ? "bottom-2 left-[82%] -translate-x-1/2"
-                : "bottom-2 left-1/2 -translate-x-1/2")
+                ? "bottom-[var(--safe-edge-bottom)] left-[82%] -translate-x-1/2"
+                : "bottom-[var(--safe-edge-bottom)] left-1/2 -translate-x-1/2")
             : (mergedVisible()
-                ? "right-2 top-[80%] -translate-y-1/2"
-                : "right-2 top-1/2 -translate-y-1/2")) +
+                ? "right-[var(--safe-edge-right)] top-[80%] -translate-y-1/2"
+                : "right-[var(--safe-edge-right)] top-1/2 -translate-y-1/2")) +
           " " + btnClass
         }
         style={{
@@ -194,11 +194,11 @@ const SettingsPanel: Component = () => {
           "fixed z-50 slot-crossfade " +
           (isLandscape()
             ? (mergedVisible()
-                ? "bottom-2 left-[82%] -translate-x-1/2"
-                : "bottom-2 left-1/2 -translate-x-1/2")
+                ? "bottom-[var(--safe-edge-bottom)] left-[82%] -translate-x-1/2"
+                : "bottom-[var(--safe-edge-bottom)] left-1/2 -translate-x-1/2")
             : (mergedVisible()
-                ? "right-2 top-[80%] -translate-y-1/2"
-                : "right-2 top-1/2 -translate-y-1/2")) +
+                ? "right-[var(--safe-edge-right)] top-[80%] -translate-y-1/2"
+                : "right-[var(--safe-edge-right)] top-1/2 -translate-y-1/2")) +
           " " + btnClass
         }
         style={{
