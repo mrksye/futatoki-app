@@ -21,11 +21,13 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
+// .trim() でダッシュボード側で混入しがちな末尾改行・余分な空白を落とす。
+// 入ったまま JSON に埋め込むと closing quote 前で行が割れて UnexpectedEndOfString になる。
 const template = readFileSync("wrangler.jsonc.template", "utf-8");
 const result = template
-  .replaceAll("__WORKER_NAME__", process.env["WORKER_NAME"]!)
-  .replaceAll("__DATASET_NAME__", process.env["DATASET_NAME"]!)
-  .replaceAll("__ROUTE_DOMAIN__", process.env["ROUTE_DOMAIN"]!);
+  .replaceAll("__WORKER_NAME__", process.env["WORKER_NAME"]!.trim())
+  .replaceAll("__DATASET_NAME__", process.env["DATASET_NAME"]!.trim())
+  .replaceAll("__ROUTE_DOMAIN__", process.env["ROUTE_DOMAIN"]!.trim());
 
 writeFileSync("wrangler.jsonc", result);
 console.log("Generated wrangler.jsonc from template");
