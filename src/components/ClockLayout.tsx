@@ -525,10 +525,12 @@ export const ClockLayout: Component = () => {
         onPointerUp={onDragEnd}
         onPointerCancel={onDragEnd}
       >
-        {/* 負マージンで中央へオーバーラップ → 盤面サイズを保ちつつ四隅にボタン余白を作る */}
+        {/* 負マージンで中央へオーバーラップ → 盤面サイズを保ちつつ四隅にボタン余白を作る。
+            AM wrapper を z-10 にすることでかさね/わけ transition の overlap 中に AM (表) が PM (裏) の
+            手前に来る。DOM 順だけだと後ろの PM が手前になり、表/裏が逆転する。 */}
         <div
           ref={amWrapperRef}
-          class="clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
+          class="clock-wrapper-transition relative z-10 flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
           classList={{
             "-mr-3": isLandscape(),
             "-mb-3": !isLandscape(),
@@ -607,7 +609,7 @@ export const ClockLayout: Component = () => {
             別 subtree なので touch-action が継承されない)。 */}
         <div
           ref={mergedContainerRef}
-          class="clock-merged-container-transition absolute inset-0 flex items-center justify-center pointer-events-none"
+          class="clock-merged-container-transition absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
           classList={{
             "flex-row": isLandscape(),
             "flex-col": !isLandscape(),
