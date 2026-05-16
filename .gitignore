@@ -9,6 +9,13 @@ dist
 .DS_Store
 .wrangler
 .dev.vars*
+
+# Deployment config (not in OSS repo; see wrangler.jsonc.template)
+wrangler.jsonc
+
+# npm lockfile (project uses bun.lock; package-lock.json shows up when
+# someone accidentally runs npm install)
+package-lock.json
 .idea/
 
 # Dependencies

@@ -1,6 +1,10 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "futatoki-the-clock-app",
+
+  // __XXX__ placeholders are substituted by build-tools/build-wrangler.ts
+  // from environment variables. Required: WORKER_NAME, DATASET_NAME, ROUTE_DOMAIN.
+  "name": "__WORKER_NAME__",
+
   "compatibility_date": "2026-04-19",
   "main": "src/worker/index.ts",
   "assets": {
@@ -15,8 +19,11 @@
     // 内部 fetch なので extension-less rewrite は不要、none に倒す。
     "html_handling": "none"
   },
+  "analytics_engine_datasets": [
+    { "binding": "ANALYTICS", "dataset": "__DATASET_NAME__" }
+  ],
   "routes": [
-    { "pattern": "play.futatoki.app", "custom_domain": true }
+    { "pattern": "__ROUTE_DOMAIN__", "custom_domain": true }
   ],
   "workers_dev": false,
   "observability": {
