@@ -137,11 +137,11 @@ for (const loc of SUPPORTED_LOCALES) {
 }
 
 if (issues.length === 0) {
-  console.log(`✓ all ${SUPPORTED_LOCALES.length - 1} locales passed the audit`);
+  console.info(`✓ all ${SUPPORTED_LOCALES.length - 1} locales passed the audit`);
   process.exit(0);
 }
 
-console.log(`✗ ${issues.length} issue(s) found:`);
+console.error(`✗ ${issues.length} issue(s) found:`);
 const byLocale = new Map<string, Issue[]>();
 for (const i of issues) {
   const arr = byLocale.get(i.locale) ?? [];
@@ -149,7 +149,7 @@ for (const i of issues) {
   byLocale.set(i.locale, arr);
 }
 for (const [loc, list] of byLocale) {
-  console.log(`\n[${loc}]`);
-  for (const i of list) console.log(`  ${i.kind}: ${i.detail}`);
+  console.error(`\n[${loc}]`);
+  for (const i of list) console.error(`  ${i.kind}: ${i.detail}`);
 }
 process.exit(1);

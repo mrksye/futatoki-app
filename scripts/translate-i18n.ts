@@ -139,7 +139,7 @@ async function translateOne(client: Anthropic, targetCode: string, targetName: s
 
   const cacheRead = response.usage.cache_read_input_tokens ?? 0;
   const cacheWrite = response.usage.cache_creation_input_tokens ?? 0;
-  console.log(
+  console.info(
     `  ✓ ${targetCode.padEnd(6)} (${targetName.padEnd(28)}) ` +
       `in=${response.usage.input_tokens} cacheR=${cacheRead} cacheW=${cacheWrite} out=${response.usage.output_tokens}`,
   );
@@ -166,13 +166,13 @@ async function main() {
   );
   const skipped = targets.length - pending.length;
 
-  console.log(`Source: ${SOURCE_LOCALE}.json`);
-  console.log(`Targets: ${targets.length} locales (skipping ${skipped} already generated, translating ${pending.length})`);
-  console.log(`Concurrency: ${CONCURRENCY}`);
-  console.log();
+  console.info(`Source: ${SOURCE_LOCALE}.json`);
+  console.info(`Targets: ${targets.length} locales (skipping ${skipped} already generated, translating ${pending.length})`);
+  console.info(`Concurrency: ${CONCURRENCY}`);
+  console.info();
 
   if (pending.length === 0) {
-    console.log("何もやることないで。全 locale 既に生成済み。");
+    console.info("何もやることないで。全 locale 既に生成済み。");
     return;
   }
 
@@ -195,13 +195,13 @@ async function main() {
     Array.from({ length: Math.min(CONCURRENCY, pending.length) }, worker),
   );
 
-  console.log();
+  console.info();
   if (failures.length > 0) {
     console.error(`${failures.length} 件失敗（もう一回実行すれば失敗分だけ再試行される）:`);
     for (const f of failures) console.error(`  ✗ ${f}`);
     process.exit(1);
   }
-  console.log(`${pending.length} locales 書き出し完了。`);
+  console.info(`${pending.length} locales 書き出し完了。`);
 }
 
 main().catch((err) => {
