@@ -2,7 +2,7 @@ import { createSignal, createEffect, createRoot, on } from "solid-js";
 import { rotateMinutes } from "../free-rotation/state";
 
 /**
- * 予定アイコン選択用リングメニューの状態。openPicker(origin) でタップ位置を中心に展開、
+ * できごとアイコン選択用リングメニューの状態。openPicker(origin) でタップ位置を中心に展開、
  * closePicker() で閉じる、rotatePicker(delta) でリング回転オフセット (deg) を加算。
  * 内部の生 setter は未 export (action 経由で書き換える)。
  */

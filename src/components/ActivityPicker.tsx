@@ -1,6 +1,6 @@
 import { For, Show, createSignal, onCleanup, onMount } from "solid-js";
 import type { Component } from "solid-js";
-import { SCHEDULE_ICONS, type ScheduleIconDef } from "../features/schedule/icons";
+import { ACTIVITY_ICONS, type ActivityIconDef } from "../features/activity/icons";
 import {
   pickerOpen,
   pickerOrigin,
@@ -8,9 +8,9 @@ import {
   closePicker,
   rotatePicker,
   type PickerOrigin,
-} from "../features/schedule/picker";
-import { setScheduleAt, schedule } from "../features/schedule/state";
-import { enterResetWarning } from "../features/schedule/interaction";
+} from "../features/activity/picker";
+import { setActivityAt, activity } from "../features/activity/state";
+import { enterResetWarning } from "../features/activity/interaction";
 import { rotateMinutes } from "../features/free-rotation/state";
 import { useIsTablet } from "../hooks/useIsTablet";
 import { useOrientation } from "../hooks/useOrientation";
@@ -18,11 +18,11 @@ import { useI18n, type TKey } from "../i18n";
 import { animateMotion, motionAllowed } from "../lib/motion";
 
 /**
- * 予定アイコン選択用リングメニュー。Overlay + 11 個のアイコンが半径 RING_RADIUS で円周配置。
+ * できごとアイコン選択用リングメニュー。Overlay + 11 個のアイコンが半径 RING_RADIUS で円周配置。
  * 開閉アニメは origin → 各アイコン位置に放射状にニュッと出る (stagger 30ms, CW 順)。
  * ドラッグは origin 中心の角度差をそのまま回転に渡す全域 angular 操作、ホイールは別枠で deltaY を回転に。
- * アイコンタップで rotateMinutes() に予定追加 + 閉じる、Overlay 空タップで閉じる。
- * リング中央には予定が 1 件以上ある時だけ「りせっと」ボタンが出て、押すと全予定が削除警告に入る。
+ * アイコンタップで rotateMinutes() にできごと追加 + 閉じる、Overlay 空タップで閉じる。
+ * リング中央にはできごとが 1 件以上ある時だけ「りせっと」ボタンが出て、押すと全できごとが削除警告に入る。
  */
 
 /** SettingsPanel の四隅ボタンと同じ tablet ブレイクポイントで大きくする。 */
@@ -38,7 +38,7 @@ const APPEAR_DURATION_MS = 280;
 /** りせっとボタンを mount するまでの遅延。リング icon が全部出てから表示するのが目的。
  *  よていボタン押下→picker open の click 合成イベントが overlay/中央に届くタイミングと race して
  *  りせっとを誤発火するのを防ぐ意味も兼ねる (DOM に居なければ click は絶対に当たらない)。 */
-const RESET_BUTTON_MOUNT_DELAY_MS = (SCHEDULE_ICONS.length - 1) * STAGGER_MS + APPEAR_DURATION_MS;
+const RESET_BUTTON_MOUNT_DELAY_MS = (ACTIVITY_ICONS.length - 1) * STAGGER_MS + APPEAR_DURATION_MS;
 
 /** 「ドラッグ」と「タップ」を区別する閾値。タップの drift と意図的なドラッグを両取りするため
  *  時間軸を入れる: pointerdown 直後 (FAST_WINDOW_MS 以内) に動いたら swipe intent と判定して
@@ -69,7 +69,7 @@ const INERTIA_DECAY_PER_MS = 0.003;
 /** 慣性停止閾値 (deg/ms)。これ未満で停止。 */
 const INERTIA_VELOCITY_MIN = 0.015;
 
-const SchedulePicker: Component = () => {
+const ActivityPicker: Component = () => {
   return (
     <Show when={pickerOpen() && pickerOrigin()}>
       {(origin) => <RingMenu origin={origin()} />}
@@ -89,8 +89,8 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
   const iconSize = () => isTablet() ? ICON_SIZE_TABLET : ICON_SIZE_MOBILE;
   const iconFont = () => isTablet() ? ICON_FONT_TABLET : ICON_FONT_MOBILE;
 
-  /** 予定が 1 件以上ある時だけ中央のりせっとボタンを出す (空のときは押せても何も起きないので隠す)。 */
-  const hasAnyEvent = () => Object.keys(schedule()).length > 0;
+  /** できごとが 1 件以上ある時だけ中央のりせっとボタンを出す (空のときは押せても何も起きないので隠す)。 */
+  const hasAnyEvent = () => Object.keys(activity()).length > 0;
 
   /** リング icon が全部出てから true。reduce-motion 時は即時 true (アニメ無し = 待つ意味無し)。 */
   const [resetButtonMounted, setResetButtonMounted] = createSignal(!motionAllowed());
@@ -264,13 +264,13 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
       const innerRadius = ringRadius() - iconSize();
       const outerRadius = ringRadius() + iconSize();
       if (dist >= innerRadius && dist <= outerRadius) {
-        const N = SCHEDULE_ICONS.length;
+        const N = ACTIVITY_ICONS.length;
         const ringRotRad = pickerRotation() * Math.PI / 180;
         // RingIcon は angleRad = (i/N)*2π - π/2 で配置されるので逆算で nearest index を求める。
         // 親 ring の rotation を打ち消してからベース角度を i に戻す。
         const rawIdx = ((Math.atan2(dy, dx) - ringRotRad + Math.PI / 2) / (2 * Math.PI)) * N;
         const nearest = ((Math.round(rawIdx) % N) + N) % N;
-        setScheduleAt(rotateMinutes(), SCHEDULE_ICONS[nearest]!.id);
+        setActivityAt(rotateMinutes(), ACTIVITY_ICONS[nearest]!.id);
         closePicker();
         return;
       }
@@ -408,7 +408,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
           "will-change": "transform",
         }}
       >
-        <For each={SCHEDULE_ICONS}>
+        <For each={ACTIVITY_ICONS}>
           {(icon, i) => (
             <RingIcon
               icon={icon}
@@ -423,7 +423,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
       </div>
 
       {/* 中央のりせっとボタン。よていボタンに被さる位置 (origin = よていボタン中心) に同じ pill 形で
-          配置。回転リングの外に置いて回転に巻き込まれないようにする。予定 0 件のときは disabled で
+          配置。回転リングの外に置いて回転に巻き込まれないようにする。できごと 0 件のときは disabled で
           表示 (押せないし見た目もグレー)。
           リング icon が全部出るまで mount 自体を遅延 (Show で DOM に居ない) させて、よていボタン押下
           → picker open の click 合成イベントが中央に届いてりせっとを誤発火する race を防ぐ。 */}
@@ -438,7 +438,7 @@ const RingMenu: Component<{ origin: PickerOrigin }> = (props) => {
 };
 
 const RingIcon: Component<{
-  icon: ScheduleIconDef;
+  icon: ActivityIconDef;
   index: number;
   /** Stagger 起点 index。この index の icon が delay 0 で最初に出現し、CW 順に続く。 */
   staggerStartIndex: number;
@@ -450,7 +450,7 @@ const RingIcon: Component<{
   const { t } = useI18n();
 
   /** 角度位置 (mount 時 1 回計算)。i=0 を 12 時 (-90°) からスタートして CW 並び。 */
-  const angleRad = (props.index / SCHEDULE_ICONS.length) * 2 * Math.PI - Math.PI / 2;
+  const angleRad = (props.index / ACTIVITY_ICONS.length) * 2 * Math.PI - Math.PI / 2;
   const x = props.ringRadius * Math.cos(angleRad);
   const y = props.ringRadius * Math.sin(angleRad);
   const offsetX = x - props.iconSize / 2;
@@ -467,7 +467,7 @@ const RingIcon: Component<{
    *  許容。reduce-motion 中は animateMotion が null を返してアニメスキップ → 即最終位置に出現。 */
   onMount(() => {
     if (!buttonRef) return;
-    const N = SCHEDULE_ICONS.length;
+    const N = ACTIVITY_ICONS.length;
     const staggerOffset = (props.index - props.staggerStartIndex + N) % N;
     const startTransform =
       `translate(${-props.iconSize / 2}px, ${-props.iconSize / 2}px) scale(0)`;
@@ -489,7 +489,7 @@ const RingIcon: Component<{
 
   const onClick = (e: MouseEvent) => {
     e.stopPropagation();
-    setScheduleAt(rotateMinutes(), props.icon.id);
+    setActivityAt(rotateMinutes(), props.icon.id);
     closePicker();
   };
 
@@ -507,7 +507,7 @@ const RingIcon: Component<{
         "will-change": "transform",
       }}
       onClick={onClick}
-      aria-label={t(`schedule.icon.${props.icon.id}` as TKey)}
+      aria-label={t(`activity.icon.${props.icon.id}` as TKey)}
     >
       {props.icon.emoji}
     </button>
@@ -517,7 +517,7 @@ const RingIcon: Component<{
 /**
  * リング中央のりせっとボタン。よていボタンと同じ pill 形 (横長、改行なし) で同じ位置に重ねる。
  * aria-label の文字をグローバル ::before で描画 (index.css の `button[aria-label]::before` 参照)。
- * クリックで全予定を warning 状態に入れて picker を閉じる。disabled (予定 0 件) のときはグレーで
+ * クリックで全できごとを warning 状態に入れて picker を閉じる。disabled (できごと 0 件) のときはグレーで
  * 表示し click も無効。padding/text-size は SettingsPanel の btnClass と揃える。
  */
 const ResetButton: Component<{
@@ -577,9 +577,9 @@ const ResetButton: Component<{
       onPointerDown={onPointerDown}
       onClick={onClick}
       disabled={props.disabled}
-      aria-label={t("schedule.reset")}
+      aria-label={t("activity.reset")}
     />
   );
 };
 
-export default SchedulePicker;
+export default ActivityPicker;

@@ -19,7 +19,7 @@
     "autoStop": "стоп",
     "random": "случайно"
   },
-  "schedule": {
+  "activity": {
     "add": "Занятие",
     "reset": "сброс",
     "icon": {

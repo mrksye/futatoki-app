@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 
 /**
- * 言語選択リングメニューの状態。SchedulePicker が angle (deg) で回転を表すのに対し、こちらは
+ * 言語選択リングメニューの状態。ActivityPicker が angle (deg) で回転を表すのに対し、こちらは
  * 角丸四角 path 上を進む length offset (px) で表現する。
  */
 

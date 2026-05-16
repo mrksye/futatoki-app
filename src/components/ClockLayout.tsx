@@ -2,8 +2,8 @@ import { createEffect, createMemo, createSignal, on, onCleanup, onMount, Show } 
 import type { Component, ParentComponent } from "solid-js";
 import ClockFace from "./ClockFace";
 import HandsLayer from "./HandsLayer";
-import ScheduleLayer from "./ScheduleLayer";
-import SchedulePicker from "./SchedulePicker";
+import ActivityLayer from "./ActivityLayer";
+import ActivityPicker from "./ActivityPicker";
 import LocalePicker from "./LocalePicker";
 import SecondsBar from "./SecondsBar";
 import SettingsPanel from "./SettingsPanel";
@@ -33,7 +33,7 @@ import { useI18n } from "../i18n";
 import { dragStart, dragAdvance, type DragDragState } from "../features/free-rotation/drag";
 import { wheelAdvance, newWheelVelocityState, resetWheelVelocity } from "../features/free-rotation/wheel";
 import { resistTrigger, notifyResistance } from "../features/free-rotation/resistance";
-import { interaction, enterWarning, cancelWarning } from "../features/schedule/interaction";
+import { interaction, enterWarning, cancelWarning } from "../features/activity/interaction";
 import { playTapPulse, playShakeNo } from "../lib/motion";
 
 /** 時計面長押し (= 削除拒否の「イヤイヤ」発火) の閾値。EventIcon の LONG_PRESS_MS と意図的に揃える
@@ -55,8 +55,8 @@ type DragState = DragDragState;
 /**
  * dim 用 absolute オーバーレイ。
  *
- * pointer-events-none は構造的に必須: ScheduleLayer の上に absolute inset-0 で乗るため、
- * デフォルトの auto のままだと予定アイコンへの pointer がこの空 box で止まる。
+ * pointer-events-none は構造的に必須: ActivityLayer の上に absolute inset-0 で乗るため、
+ * デフォルトの auto のままだとできごとアイコンへの pointer がこの空 box で止まる。
  */
 const DimOverlay: ParentComponent<{ opacity: number }> = (props) => (
   <div
@@ -68,7 +68,7 @@ const DimOverlay: ParentComponent<{ opacity: number }> = (props) => (
 );
 
 /**
- * AM/PM 半盤の中央に置く正方形コンテナ。中の ClockFace / ScheduleLayer / HandsLayer (いずれも
+ * AM/PM 半盤の中央に置く正方形コンテナ。中の ClockFace / ActivityLayer / HandsLayer (いずれも
  * absolute inset-0) はこの slot を containing block として位置取りするので、slot のサイズを
  * 制限すれば 3 layer まとめて縮む (= 時計中心は変わらず半径だけ縮む)。
  *
@@ -80,7 +80,7 @@ const DimOverlay: ParentComponent<{ opacity: number }> = (props) => (
  *  - 長押し 500ms 経過: イヤイヤと首を振る (SHAKE_NO, amplitude 5px / 600ms)。longPressed フラグ
  *    が立ち、続く pointerup での pulse は抑止される (削除不可を伝えた後に「タップ確認」が出ると変)。
  *  - pointerup (短タップ): pulse がピカッと光る (TAP_PULSE, 260ms)。
- * 予定アイコンの pointerdown は ScheduleLayer 側で clock モード時 stopPropagation してるのでここには
+ * できごとアイコンの pointerdown は ActivityLayer 側で clock モード時 stopPropagation してるのでここには
  * 上がってこず、icon と slot の反応は独立。
  */
 const ClockSlot: ParentComponent<{ size: number }> = (props) => {
@@ -250,12 +250,12 @@ export const ClockLayout: Component = () => {
     }
   };
 
-  const schedule = (m: number) => {
+  const queueSeek = (m: number) => {
     pendingMinutes = m;
     if (rafId === null) rafId = requestAnimationFrame(commitPending);
   };
 
-  /** freeRotate 中、pointerdown が予定アイコン上で起きた時の長押し warning 検出 state。container が
+  /** freeRotate 中、pointerdown ができごとアイコン上で起きた時の長押し warning 検出 state。container が
    *  pointer をキャプチャすると icon は pointerup を受け取れないので、icon でなく container 側で
    *  タイマーと movement 判定を持つ。clock モードの長押し (EventIcon 内) とは独立した経路。 */
   let longPressTimer: ReturnType<typeof setTimeout> | undefined;
@@ -309,7 +309,7 @@ export const ClockLayout: Component = () => {
   const onDragStart = (e: PointerEvent) => {
     if (!isRotating()) return;
     // warning / resetWarning 中の周辺タップは drag や autoRotate 切替より先にキャンセルを優先。
-    // (ScheduleLayer の透明 rect は SVG 領域だけ覆ってるので、地の余白タップはここで拾う)。
+    // (ActivityLayer の透明 rect は SVG 領域だけ覆ってるので、地の余白タップはここで拾う)。
     const it = interaction().type;
     if (it === "warning" || it === "resetWarning") {
       cancelWarning();
@@ -324,7 +324,7 @@ export const ClockLayout: Component = () => {
     // やらないと dragStart が float の startMinutes を capture してしまい、commit が後から
     // 書き戻されて drag 中に逆回転が混じる。
     flushPendingCommit();
-    // pointer が予定アイコン上で押された場合の長押し warning 検出を仕込む
+    // pointer ができごとアイコン上で押された場合の長押し warning 検出を仕込む
     // (drag と並行: 8px 動いたら drag 確定で warning は出さない、500ms 静止なら warning に入る)。
     startLongPressWarning(e);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -336,7 +336,7 @@ export const ClockLayout: Component = () => {
     checkLongPressWarningMove(e);
     const s = dragRef;
     if (!s || e.pointerId !== s.pointerId) return;
-    schedule(dragAdvance(e, s));
+    queueSeek(dragAdvance(e, s));
   };
 
   const onDragEnd = (e: PointerEvent) => {
@@ -545,16 +545,16 @@ export const ClockLayout: Component = () => {
               <DimOverlay opacity={amSelectionOpacity()}>
                 <ClockFace period="am" hours={amTime().hours} />
               </DimOverlay>
-              {/* ScheduleLayer は dim 階層の外。merge transition 中 / autoRotate 中は外す
+              {/* ActivityLayer は dim 階層の外。merge transition 中 / autoRotate 中は外す
                   (620ms 合成負荷 / autoRotate の高速回転による合成負荷を回避)。 */}
               <Show when={!transitioning() && clockMode() !== "autoRotate"}>
-                <ScheduleLayer
+                <ActivityLayer
                   period="am"
                   dimmed={!isAm()}
                   displayedMinutes={displayedMinutesTotal()}
                 />
               </Show>
-              {/* document order が後ろ → 予定アイコンの上に乗る */}
+              {/* document order が後ろ → できごとアイコンの上に乗る */}
               <DimOverlay opacity={amSelectionOpacity()}>
                 <HandsLayer hours={amTime().hours} minutes={amTime().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
               </DimOverlay>
@@ -582,7 +582,7 @@ export const ClockLayout: Component = () => {
                 <ClockFace period="pm" hours={pmTime().hours} />
               </DimOverlay>
               <Show when={!transitioning() && clockMode() !== "autoRotate"}>
-                <ScheduleLayer
+                <ActivityLayer
                   period="pm"
                   dimmed={isAm()}
                   displayedMinutes={displayedMinutesTotal()}
@@ -645,19 +645,19 @@ export const ClockLayout: Component = () => {
               <Show
                 when={displayed().hours < 12}
                 fallback={<>
-                  <ScheduleLayer period="am" dimmed dimOpacity={0.15} scale={0.85}
+                  <ActivityLayer period="am" dimmed dimOpacity={0.15} scale={0.85}
                     displayedMinutes={displayedMinutesTotal()} />
-                  <ScheduleLayer period="pm" showResetCancelRect={false}
+                  <ActivityLayer period="pm" showResetCancelRect={false}
                     displayedMinutes={displayedMinutesTotal()} />
                 </>}
               >
-                <ScheduleLayer period="pm" dimmed dimOpacity={0.15} scale={0.85}
+                <ActivityLayer period="pm" dimmed dimOpacity={0.15} scale={0.85}
                   displayedMinutes={displayedMinutesTotal()} />
-                <ScheduleLayer period="am" showResetCancelRect={false}
+                <ActivityLayer period="am" showResetCancelRect={false}
                   displayedMinutes={displayedMinutesTotal()} />
               </Show>
             </Show>
-            {/* document order が最後 = z-auto 最前面 → 予定アイコンの上に乗る */}
+            {/* document order が最後 = z-auto 最前面 → できごとアイコンの上に乗る */}
             <HandsLayer hours={displayed().hours} minutes={displayed().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
           </div>
         </div>
@@ -669,9 +669,9 @@ export const ClockLayout: Component = () => {
         </div>
       </Show>
 
-      {/* AM/PM バッジ。とけい/かいてん 切替で freeRotate 側の予定追加ボタンとスロット位置を
+      {/* AM/PM バッジ。とけい/かいてん 切替で freeRotate 側のできごと追加ボタンとスロット位置を
           共有し、560ms の bouncy 位置 transition でスライドしつつ、overshoot 折返し付近
-          (280-380ms) で 100ms の短いクロスフェードで予定追加ボタンと入れ替わる。always-mount で
+          (280-380ms) で 100ms の短いクロスフェードでできごと追加ボタンと入れ替わる。always-mount で
           opacity 0/1 を切り替えることで View Transitions API を使わず CSS 完結。 */}
       <div
         class={
@@ -701,7 +701,7 @@ export const ClockLayout: Component = () => {
 
       <SettingsPanel />
 
-      <SchedulePicker />
+      <ActivityPicker />
 
       <LocalePicker />
     </div>

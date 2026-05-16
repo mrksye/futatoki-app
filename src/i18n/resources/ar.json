@@ -19,7 +19,7 @@
     "autoStop": "إِيقَاف",
     "random": "عَشْوَائِيّ"
   },
-  "schedule": {
+  "activity": {
     "add": "نَشَاط",
     "reset": "مَسْح",
     "icon": {

@@ -19,7 +19,7 @@
     "autoStop": "parar",
     "random": "al azar"
   },
-  "schedule": {
+  "activity": {
     "add": "Actividad",
     "reset": "borrar",
     "icon": {

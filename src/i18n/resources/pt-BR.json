@@ -19,7 +19,7 @@
     "autoStop": "parar",
     "random": "sorteio"
   },
-  "schedule": {
+  "activity": {
     "add": "Atividade",
     "reset": "limpar",
     "icon": {

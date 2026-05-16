@@ -220,7 +220,7 @@ body.slot-transitioning .slot-crossfade {
   18%, 82% { filter: opacity(0.2); }
 }
 /* selection dim (AM/PM どちら側が「いま」か) の opacity transition。ClockLayout 側で ClockFace /
-   HandsLayer を包む div、ScheduleLayer 内の各 EventIcon の <g> に付与。親 wrapper に
+   HandsLayer を包む div、ActivityLayer 内の各 EventIcon の <g> に付与。親 wrapper に
    .selection-dim-instant が付いている時は子側も 0ms 即時切替に上書き
    (発動条件は ClockLayout 側を参照: AM/PM プレビュー押下中 / 自由回転 split で 12:00 跨ぎ時)。
    merge dim (かさね/わけ) は wrapper 自身の opacity transition が担うので、ここでは扱わない。 */

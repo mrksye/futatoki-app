@@ -20,7 +20,7 @@ import { animateMotion, motionAllowed } from "../lib/motion";
 /**
  * 言語選択リングメニュー。trigger (= 左上の国旗ボタン) を起点に、SUPPORTED_LOCALES を角丸四角
  * (stadium) path 上に等間隔配置する。drag / wheel / 慣性で path 上の length offset が進み、
- * アイテムが自転車のチェーンのように回る。SchedulePicker (円形) と同型の操作系を stadium 形に
+ * アイテムが自転車のチェーンのように回る。ActivityPicker (円形) と同型の操作系を stadium 形に
  * 置き換えた構造。
  */
 

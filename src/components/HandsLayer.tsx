@@ -5,7 +5,7 @@ import { paletteId } from "../features/settings/palette";
 
 /**
  * 時計の針 (時針・分針・中心ネジ) を描画するレイヤー。ClockFace を包む div の中に絶対配置で重ね、
- * ScheduleLayer の上に乗せて予定アイコンの上から針が指す形にする (z 順を独立に制御するため別レイヤー)。
+ * ActivityLayer の上に乗せてできごとアイコンの上から針が指す形にする (z 順を独立に制御するため別レイヤー)。
  *
  * shakeKey は「逆回転を試みた」イベントの incrementing counter (resistance.ts)。値が増えるたびに
  * minute hand を WAAPI で短時間 wobble させる (= hour hand と中心ネジは shake しない / 抵抗するのは

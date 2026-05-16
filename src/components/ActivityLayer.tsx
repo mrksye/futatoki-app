@@ -1,7 +1,7 @@
 import { For, Show, createEffect, createMemo, on, onCleanup } from "solid-js";
 import type { Component } from "solid-js";
-import { schedule, type ScheduleEvent } from "../features/schedule/state";
-import { getScheduleIcon } from "../features/schedule/icons";
+import { activity, type ActivityEvent } from "../features/activity/state";
+import { getActivityIcon } from "../features/activity/icons";
 import {
   interaction,
   cancelWarning,
@@ -9,7 +9,7 @@ import {
   triggerResetDelete,
   RESET_STAGGER_MS,
   DELETE_ANIMATION_MS,
-} from "../features/schedule/interaction";
+} from "../features/activity/interaction";
 import { isRotating } from "../features/free-rotation/state";
 import { detailMode } from "../features/settings/detail-mode";
 import { colorMode } from "../features/settings/color-mode";
@@ -17,17 +17,17 @@ import { paletteId } from "../features/settings/palette";
 import { animateMotion, playPoyon3, playShakeNo } from "../lib/motion";
 
 /**
- * 時計の上に予定アイコンを描画するレイヤー。ClockFace を包む div の中に絶対配置で重ねる
+ * 時計の上にできごとアイコンを描画するレイヤー。ClockFace を包む div の中に絶対配置で重ねる
  * (ClockFace SVG とは独立 SVG)。同じ viewBox (340x340) を使うので座標系が一致する。
  *
  * インタラクション:
  *  - 短押しで poyon、長押し 500ms で warning (右上に ✕ ボタン)、✕ タップで削除アニメ後にデータ削除
  *  - warning は外タップ or 3 秒経過でキャンセル
- *  - りせっと中 (resetWarning) は全アイコンが wobble + 各々に ✕ ボタンが出る。任意の予定 or ✕ タップで
+ *  - りせっと中 (resetWarning) は全アイコンが wobble + 各々に ✕ ボタンが出る。任意のできごと or ✕ タップで
  *    時刻順 50ms stagger でくるくる消える。外タップ or 3 秒で全体キャンセル
  */
 
-interface ScheduleLayerProps {
+interface ActivityLayerProps {
   period: "am" | "pm";
   /** レイヤー全体のスケール (1 で等倍)。merged β 表示の後ろレイヤーで奥行きを出す用。 */
   scale?: number;
@@ -61,7 +61,7 @@ const ICON_SIZE_SUKKIRI = 24;
 /** font-size に対する白背景円の半径比 (em-box 外接円 √2/2 ≈ 0.707 より少し小さく抑える)。 */
 const ICON_BG_RADIUS_RATIO = 0.70;
 
-/** 予定アイコンのシール感影。シャープな contact (面に密着している根元の濃さ) + 柔らかい ambient
+/** できごとアイコンのシール感影。シャープな contact (面に密着している根元の濃さ) + 柔らかい ambient
  *  (浮いた厚みの広がり) の 2 段で「ペタッと貼ってある」立体感を作る。default はばっじ / monotone
  *  (文字盤が白系で影がハッキリ落ちる) 用。_SECTOR は色付き扇形が背景に乗る分強く見えるので alpha を
  *  1 段下げた版 (monotone は扇形モードでも文字盤白なので default を使う)。 */
@@ -146,7 +146,7 @@ const isWithinVisibilityWindow = (displayed: number, eventM: number): boolean =>
 const DELETE_BUTTON_OFFSET = 10;
 const DELETE_BUTTON_RADIUS = 7;
 
-const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
+const ActivityLayer: Component<ActivityLayerProps> = (props) => {
   const isKuwashiku = () => detailMode() === "kuwashiku";
   const isMonotoneBadge = () => colorMode() === "badge" && paletteId() === "monotone";
   const iconRadius = () => {
@@ -158,17 +158,17 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
   const iconFontSize = () => isKuwashiku() ? ICON_SIZE_KUWASHIKU : ICON_SIZE_SUKKIRI;
   const iconBgRadius = () => iconFontSize() * ICON_BG_RADIUS_RATIO;
 
-  /** 全予定の時刻を昇順で持つ配列。EventIcon が自分の chronologicalRank を引くのに使う。 */
+  /** 全できごとの時刻を昇順で持つ配列。EventIcon が自分の chronologicalRank を引くのに使う。 */
   const sortedAllMinutes = createMemo(() => {
-    return Object.keys(schedule()).map(Number).sort((a, b) => a - b);
+    return Object.keys(activity()).map(Number).sort((a, b) => a - b);
   });
 
   /** この period に属する events を時刻降順で返す。降順にすることで SVG document order の末尾
    *  (= 最前面) に若い時刻が来て、同位置帯で重なった時に「早い時刻が手前」の stack 表示になる。 */
-  const eventsForPeriod = createMemo<ScheduleEvent[]>(() => {
+  const eventsForPeriod = createMemo<ActivityEvent[]>(() => {
     const isPm = props.period === "pm";
-    const result: ScheduleEvent[] = [];
-    for (const [m, id] of Object.entries(schedule())) {
+    const result: ActivityEvent[] = [];
+    for (const [m, id] of Object.entries(activity())) {
       const minutes = Number(m);
       if ((minutes >= 720) === isPm) {
         result.push({ minutes, iconId: id });
@@ -236,8 +236,8 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
   });
 
   /** event ごとの opacity 優先順:
-   *    1. dimmed && !visible — dimOpacity (薄い側で予告外の予定)
-   *    2. dimmed && visible  — 1.0 (薄い側でも「もうすぐ起きる予定」はハッキリ)
+   *    1. dimmed && !visible — dimOpacity (薄い側で予告外のできごと)
+   *    2. dimmed && visible  — 1.0 (薄い側でも「もうすぐ起きるできごと」はハッキリ)
    *    3. !dimmed            — 1.0
    *  merged 表示中は親 wrapper opacity=0 で全体が隠れるので event 単位で隠す必要は無い。 */
   const eventOpacity = (visibleInDim: boolean): number => {
@@ -300,7 +300,7 @@ const ScheduleLayer: Component<ScheduleLayerProps> = (props) => {
         </For>
 
         {/* 単発 warning の外タップキャンセル用透明 rect。warning event がこのレイヤーに属する時のみ
-            描画する (両レイヤーで描画すると merged β の dim 側予定の ✕ が上のレイヤーの cancel rect
+            描画する (両レイヤーで描画すると merged β の dim 側できごとの ✕ が上のレイヤーの cancel rect
             に覆われて押せなくなる)。アイコンより後に置くことでアイコンタップも cancel に倒す
             (= 単発 warning 中はアイコン本体タップでも cancel)。 */}
         <Show when={activeInThisLayer()?.type === "warning"}>
@@ -394,16 +394,16 @@ const DeleteButton: Component<{
 };
 
 interface EventIconProps {
-  event: ScheduleEvent;
+  event: ActivityEvent;
   pos: { x: number; y: number };
   triPoints: string;
   iconBgRadius: number;
   iconFontSize: number;
   /** 現在の displayed time がこのイベント時刻と一致しているか (連続ポヨポヨ用)。 */
   isMatched: boolean;
-  /** 全予定の中での時刻順位 (0 が最も早い)。りせっと削除時の poof アニメ stagger 算出に使う。 */
+  /** 全できごとの中での時刻順位 (0 が最も早い)。りせっと削除時の poof アニメ stagger 算出に使う。 */
   chronologicalRank: number;
-  /** ScheduleLayer が決めたこの event 単体の表示 opacity (0..1)。
+  /** ActivityLayer が決めたこの event 単体の表示 opacity (0..1)。
    *  .fade-on-dim class で 380ms transition (親 .selection-dim-instant 中は 0ms)。 */
   opacity: number;
   /** CSS filter 文字列 (シール影 drop-shadow chain)。くぎり × カラーパレットは弱め、それ以外は default。 */
@@ -411,7 +411,7 @@ interface EventIconProps {
 }
 
 /** WAAPI の Animation.id (getAnimations() からの識別用)。setupPoofAnim が wobble を狙って cancel する。 */
-const WOBBLE_ANIMATION_ID = "schedule-icon-wobble";
+const WOBBLE_ANIMATION_ID = "activity-icon-wobble";
 
 /** warning 中に ±7.5° の往復を継続させる wobble (ホワホワ) アニメ。resetDeleting 中も自分の poof が
  *  始まるまで wobble を続ける (poof 開始時に setupPoofAnim 側から明示 cancel される)。
@@ -551,7 +551,7 @@ const EventIcon: Component<EventIconProps> = (props) => {
   let pressTimer: ReturnType<typeof setTimeout> | undefined;
   let longPressed = false;
 
-  const def = () => getScheduleIcon(props.event.iconId);
+  const def = () => getActivityIcon(props.event.iconId);
 
   /** wobble (ホワホワ) を出す状態。単発 warning (自分が対象) / りせっと中の resetWarning / resetDeleting
    *  (自分の poof が delay 後に走るまでは wobble を継続させる)。 */
@@ -696,4 +696,4 @@ const EventIcon: Component<EventIconProps> = (props) => {
   );
 };
 
-export default ScheduleLayer;
+export default ActivityLayer;

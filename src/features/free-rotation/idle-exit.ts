@@ -1,6 +1,6 @@
 import { createEffect, onCleanup } from "solid-js";
 import { clockMode, transition } from "./state";
-import { pickerOpen, closePicker } from "../schedule/picker";
+import { pickerOpen, closePicker } from "../activity/picker";
 
 /**
  * freeRotate モードに入った後、IDLE_EXIT_MS ユーザー操作が無ければ transition("clock") で clock モードに戻す。

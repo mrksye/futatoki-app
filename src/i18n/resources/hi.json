@@ -19,7 +19,7 @@
     "autoStop": "रुको",
     "random": "कोई भी"
   },
-  "schedule": {
+  "activity": {
     "add": "गतिविधि",
     "reset": "रीसेट",
     "icon": {

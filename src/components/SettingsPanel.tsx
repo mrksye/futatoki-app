@@ -16,7 +16,7 @@ import {
 } from "../features/free-rotation/state";
 import { useRewindHold } from "../features/free-rotation/rewind";
 import { randomizeRotate } from "../features/free-rotation/random-time";
-import { openPickerAtElement } from "../features/schedule/picker";
+import { openPickerAtElement } from "../features/activity/picker";
 import { openLocalePickerAtElement } from "../features/locale-picker/state";
 import { LOCALE_FLAG } from "../features/locale-picker/flags";
 
@@ -164,7 +164,7 @@ const SettingsPanel: Component = () => {
           "pointer-events": clockMode() === "freeRotate" ? "auto" : "none",
         }}
         onPointerDown={(e) => openPickerAtElement(e.currentTarget as HTMLButtonElement)}
-        aria-label={t("schedule.add")}
+        aria-label={t("activity.add")}
       />
 
       {/* RIGHT スロット パレット: clock モード中だけ可視 */}
