@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build && bun run scripts/generate-locale-html.ts",
+    "build": "vite build && bun run build-tools/generate-locale-html.ts",
     "preview": "vite preview",
     "cf:preview": "bun run build && wrangler dev",
     "deploy": "bun run build && wrangler deploy"
