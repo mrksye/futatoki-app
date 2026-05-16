@@ -1,16 +1,16 @@
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import type { Component } from "solid-js";
 import { SUPPORTED_LOCALES, type LocaleMeta } from "../i18n/locales";
-import { LOCALE_FLAG, switchLocaleByReload } from "../features/locale-picker/flags";
+import { LANGUAGE_FLAG, switchLanguageByReload } from "../features/language-picker/flags";
 import {
-  localePickerOpen,
-  localePickerOrigin,
-  localePickerLengthOffset,
-  closeLocalePicker,
-  rotateLocalePicker,
-  setLocalePickerLengthOffset,
-  type LocalePickerOrigin,
-} from "../features/locale-picker/state";
+  languagePickerOpen,
+  languagePickerOrigin,
+  languagePickerLengthOffset,
+  closeLanguagePicker,
+  rotateLanguagePicker,
+  setLanguagePickerLengthOffset,
+  type LanguagePickerOrigin,
+} from "../features/language-picker/state";
 import { useIsTablet } from "../hooks/useIsTablet";
 import { useOrientation } from "../hooks/useOrientation";
 import { useViewport } from "../hooks/useViewport";
@@ -66,15 +66,15 @@ const VELOCITY_WINDOW_MS = 80;
 const INERTIA_DECAY_PER_MS = 0.003;
 const INERTIA_VELOCITY_MIN = 0.05;
 
-const LocalePicker: Component = () => {
+const LanguagePicker: Component = () => {
   return (
-    <Show when={localePickerOpen() && localePickerOrigin()}>
-      {(origin) => <LocaleRingMenu origin={origin()} />}
+    <Show when={languagePickerOpen() && languagePickerOrigin()}>
+      {(origin) => <LanguageRingMenu origin={origin()} />}
     </Show>
   );
 };
 
-const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
+const LanguageRingMenu: Component<{ origin: LanguagePickerOrigin }> = (props) => {
   const isTablet = useIsTablet();
   const isLandscape = useOrientation();
   const viewport = useViewport();
@@ -155,7 +155,7 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
     const L = totalLength();
     if (L > 0) {
       const stepLength = L / orderedLocales.length;
-      setLocalePickerLengthOffset(L * 0.5 - currentLocaleIndex * stepLength);
+      setLanguagePickerLengthOffset(L * 0.5 - currentLocaleIndex * stepLength);
     }
   }
 
@@ -174,7 +174,7 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
   const flushRotation = () => {
     rotateRaf = null;
     if (pendingDelta !== 0) {
-      rotateLocalePicker(pendingDelta);
+      rotateLanguagePicker(pendingDelta);
       pendingDelta = 0;
     }
   };
@@ -188,7 +188,7 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
       rotateRaf = null;
     }
     if (pendingDelta !== 0) {
-      rotateLocalePicker(pendingDelta);
+      rotateLanguagePicker(pendingDelta);
       pendingDelta = 0;
     }
   };
@@ -218,7 +218,7 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
         inertiaRaf = null;
         return;
       }
-      rotateLocalePicker(velocity * dt);
+      rotateLanguagePicker(velocity * dt);
       velocity *= Math.exp(-INERTIA_DECAY_PER_MS * dt);
       inertiaRaf = requestAnimationFrame(tick);
     };
@@ -305,7 +305,7 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
       dragHappened = false;
       return;
     }
-    closeLocalePicker();
+    closeLanguagePicker();
   };
 
   let wheelVelocityHistory: { time: number; deltaPx: number }[] = [];
@@ -333,7 +333,7 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
    *  整合を取る。 */
   const flushWheelTweenToTarget = () => {
     if (wheelTweenTarget !== null) {
-      rotateLocalePicker(wheelTweenTarget - localePickerLengthOffset());
+      rotateLanguagePicker(wheelTweenTarget - languagePickerLengthOffset());
     }
     cancelWheelTween();
   };
@@ -346,7 +346,7 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
     const t = Math.min(1, (now - wheelTweenStartTime) / WHEEL_TWEEN_DURATION_MS);
     const eased = 1 - (1 - t) * (1 - t);
     const targetL = wheelTweenStartLength + (wheelTweenTarget - wheelTweenStartLength) * eased;
-    rotateLocalePicker(targetL - localePickerLengthOffset());
+    rotateLanguagePicker(targetL - languagePickerLengthOffset());
     if (t >= 1) {
       wheelTweenTarget = null;
       wheelTweenRaf = null;
@@ -361,10 +361,10 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
     const sign = e.deltaY > 0 ? 1 : -1;
     const deltaPx = sign * Math.abs(e.deltaY) * WHEEL_LENGTH_PER_DELTA;
 
-    const baseTarget = wheelTweenTarget ?? localePickerLengthOffset();
+    const baseTarget = wheelTweenTarget ?? languagePickerLengthOffset();
     wheelTweenTarget = baseTarget + deltaPx;
     wheelTweenStartTime = performance.now();
-    wheelTweenStartLength = localePickerLengthOffset();
+    wheelTweenStartLength = languagePickerLengthOffset();
     if (wheelTweenRaf === null) {
       wheelTweenRaf = requestAnimationFrame(tickWheelTween);
     }
@@ -441,7 +441,7 @@ const LocaleRingMenu: Component<{ origin: LocalePickerOrigin }> = (props) => {
 };
 
 const LocaleIcon: Component<{
-  origin: LocalePickerOrigin;
+  origin: LanguagePickerOrigin;
   locale: LocaleMeta;
   index: number;
   currentLocaleIndex: number;
@@ -463,7 +463,7 @@ const LocaleIcon: Component<{
   const position = createMemo(() => {
     const L = props.totalLength();
     if (L === 0) return null;
-    const offset = localePickerLengthOffset();
+    const offset = languagePickerLengthOffset();
     const len = ((props.index * L / props.totalCount + offset) % L + L) % L;
     const p = props.measurePath().getPointAtLength(len);
     return {
@@ -518,8 +518,8 @@ const LocaleIcon: Component<{
 
   const onClick = (e: MouseEvent) => {
     e.stopPropagation();
-    closeLocalePicker();
-    switchLocaleByReload(props.locale.code);
+    closeLanguagePicker();
+    switchLanguageByReload(props.locale.code);
   };
 
   return (
@@ -540,9 +540,9 @@ const LocaleIcon: Component<{
       onClick={onClick}
       aria-label={props.locale.endonym}
     >
-      {LOCALE_FLAG[props.locale.code] ?? props.locale.code}
+      {LANGUAGE_FLAG[props.locale.code] ?? props.locale.code}
     </button>
   );
 };
 
-export default LocalePicker;
+export default LanguagePicker;

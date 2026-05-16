@@ -10,7 +10,7 @@ import { resetNumeralSystemChoice } from "../settings/numeral-system";
  * Windows Chromium は国旗絵文字を box でレンダする既知の制約あり (Segoe UI Emoji 未対応)。
  * 本アプリは絵文字で許容する設計判断。
  */
-export const LOCALE_FLAG: Readonly<Record<string, string>> = {
+export const LANGUAGE_FLAG: Readonly<Record<string, string>> = {
   en: "🇺🇸",
   ja: "🇯🇵",
   es: "🇪🇸",
@@ -38,7 +38,7 @@ export const LOCALE_FLAG: Readonly<Record<string, string>> = {
  *  で言語切替前に戻れてしまう = 子供向け UI として不適切。replace で現エントリを上書きする。
  *  reset 前提は、過去に別 locale で alternate を選んだ履歴 (例: bn で western に toggle 済) が
  *  新 locale の default を上書きするのを防ぐため。 */
-export const switchLocaleByReload = (code: string): void => {
+export const switchLanguageByReload = (code: string): void => {
   resetNumeralSystemChoice();
   const url = new URL(window.location.href);
   url.searchParams.set("lang", code);

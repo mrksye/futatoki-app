@@ -4,7 +4,7 @@ import ClockFace from "./ClockFace";
 import HandsLayer from "./HandsLayer";
 import ActivityLayer from "./ActivityLayer";
 import ActivityPicker from "./ActivityPicker";
-import LocalePicker from "./LocalePicker";
+import LanguagePicker from "./LanguagePicker";
 import SecondsBar from "./SecondsBar";
 import SettingsPanel from "./SettingsPanel";
 import SkyBackground from "./SkyBackground";
@@ -703,7 +703,7 @@ export const ClockLayout: Component = () => {
 
       <ActivityPicker />
 
-      <LocalePicker />
+      <LanguagePicker />
     </div>
   );
 };

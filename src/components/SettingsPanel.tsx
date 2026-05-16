@@ -17,12 +17,12 @@ import {
 import { useRewindHold } from "../features/free-rotation/rewind";
 import { randomizeRotate } from "../features/free-rotation/random-time";
 import { openPickerAtElement } from "../features/activity/picker";
-import { openLocalePickerAtElement } from "../features/locale-picker/state";
-import { LOCALE_FLAG } from "../features/locale-picker/flags";
+import { openLanguagePickerAtElement } from "../features/language-picker/state";
+import { LANGUAGE_FLAG } from "../features/language-picker/flags";
 
 const SettingsPanel: Component = () => {
   const { t, locale, numeralTogglePreview, toggleNumeralSystem } = useI18n();
-  const currentFlag = () => LOCALE_FLAG[locale().code] ?? locale().code;
+  const currentFlag = () => LANGUAGE_FLAG[locale().code] ?? locale().code;
   const isLandscape = useOrientation();
   const { start: startRewind, stop: stopRewind } = useRewindHold();
 
@@ -98,7 +98,7 @@ const SettingsPanel: Component = () => {
           <div class="fixed top-[var(--safe-edge-top)] left-[var(--safe-edge-left)] z-50 flex gap-2">
             <button
               class={`${compactBtnClass} before:hidden text-lg tablet:text-xl leading-none`}
-              onPointerDown={(e) => openLocalePickerAtElement(e.currentTarget as HTMLButtonElement)}
+              onPointerDown={(e) => openLanguagePickerAtElement(e.currentTarget as HTMLButtonElement)}
               aria-label={locale().endonym}
             >
               {currentFlag()}
