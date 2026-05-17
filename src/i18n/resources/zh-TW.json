@@ -53,6 +53,7 @@
   "a11y": {
     "clockFaceAm": "上午的指針時鐘",
     "clockFacePm": "下午的指針時鐘",
-    "clockFace": "指針時鐘"
+    "clockFace": "指針時鐘",
+    "languagePicker": "選擇語言"
   }
 }

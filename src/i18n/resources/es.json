@@ -53,6 +53,7 @@
   "a11y": {
     "clockFaceAm": "Reloj analógico de la mañana",
     "clockFacePm": "Reloj analógico de la tarde",
-    "clockFace": "Reloj analógico"
+    "clockFace": "Reloj analógico",
+    "languagePicker": "Elegir idioma"
   }
 }

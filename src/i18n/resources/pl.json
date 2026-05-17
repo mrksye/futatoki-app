@@ -53,6 +53,7 @@
   "a11y": {
     "clockFaceAm": "Zegar analogowy rano",
     "clockFacePm": "Zegar analogowy po południu",
-    "clockFace": "Zegar analogowy"
+    "clockFace": "Zegar analogowy",
+    "languagePicker": "Wybierz język"
   }
 }
