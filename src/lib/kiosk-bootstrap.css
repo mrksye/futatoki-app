@@ -51,6 +51,12 @@ html, body, #root {
   .fixed {
     display: none !important;
   }
+  /* 自動回転 + 印刷 = 子供が「指定された時刻」の針を書き込む練習帖用途。 HandsLayer は clockMode が
+   * autoRotate の間だけ .print-hands-hidden を付け、 ここで SVG 直下の <g> (時針 / 分針 wrapper) を
+   * 非表示にする。 中心ネジの 3 つの <circle> は <g> ではないので残る。 画面表示には一切影響しない。 */
+  .print-hands-hidden svg > g {
+    display: none;
+  }
   /* ClockSlot は JS が画面 viewport から算出した固定 px (例: 1920px monitor で ~800px) を inline
    * style で持つため、印刷の半幅 (~560 CSS px) に対して overflow して AM/PM が中央で重なる。
    * 印刷時だけ親 wrapper full size に上書きし、 SVG (viewBox + preserveAspectRatio="xMidYMid meet")
