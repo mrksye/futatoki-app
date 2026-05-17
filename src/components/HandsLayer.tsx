@@ -17,6 +17,9 @@ import { clockMode } from "../features/free-rotation/state";
  * 増えるたびに minute hand を進行方向にごく軽くオーバーシュートさせて減衰振動 (ビィィーンッ) を出す。
  * shake と同じ wrapper を共有するが、各 effect が独立した Animation ref を持って互いに干渉しないよう
  * 個別 cancel する。onCleanup で両方明示 cancel して unmount 時にメモリ解放を確実にする。
+ *
+ * autoRotate 中は root に `.print-hands-hidden` が付き、印刷時に SVG 直下の <g> (時針 / 分針) が消える。
+ * 中心ネジの <circle> は <g> 外なので残り、書き込み学習帳 (盤面 + ネジを見て針を書き込む) として刷れる。
  */
 
 interface HandsLayerProps {
