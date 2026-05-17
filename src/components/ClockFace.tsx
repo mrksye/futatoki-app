@@ -382,7 +382,7 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   dominant-baseline="central"
                   font-size={is5() ? "11" : "8"}
                   font-weight={is5() ? "900" : "700"}
-                  font-family="Nunito, sans-serif"
+                  font-family="Futatoki Bengali Digits, Nunito, sans-serif"
                   fill={is5() ? "#444444" : "#666666"}
                 >
                   {formatNumeral(min())}
@@ -442,7 +442,7 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   dominant-baseline="central"
                   font-size={numberFontSize(colorMode(), paletteId(), isKuwashiku(), num(), isCardinal)}
                   font-weight="900"
-                  font-family="Nunito, sans-serif"
+                  font-family="Futatoki Bengali Digits, Nunito, sans-serif"
                   fill={
                     isMonotoneBadge()
                       ? (isCardinal ? "#111111" : "#ffffff")
