@@ -14,7 +14,7 @@
     "rotateExit": "часы",
     "mergeToSingle": "вместе",
     "splitToTwo": "отдельно",
-    "rewindMinute": "-1 минута",
+    "rewindMinute": "-{n} минута",
     "autoStart": "авто",
     "autoStop": "стоп",
     "random": "случайно"

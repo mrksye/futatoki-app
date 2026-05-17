@@ -14,7 +14,7 @@
     "rotateExit": "時鐘",
     "mergeToSingle": "疊起來",
     "splitToTwo": "分開",
-    "rewindMinute": "倒退 1 分",
+    "rewindMinute": "倒退 {n} 分",
     "autoStart": "自動走",
     "autoStop": "停下來",
     "random": "隨機"

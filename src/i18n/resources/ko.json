@@ -14,7 +14,7 @@
     "rotateExit": "시계",
     "mergeToSingle": "겹치기",
     "splitToTwo": "나누기",
-    "rewindMinute": "1분 되돌리기",
+    "rewindMinute": "{n}분 되돌리기",
     "autoStart": "자동",
     "autoStop": "멈춤",
     "random": "랜덤"

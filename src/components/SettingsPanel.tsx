@@ -21,7 +21,7 @@ import { openLanguagePickerAtElement } from "../features/language-picker/state";
 import { LANGUAGE_FLAG } from "../features/language-picker/flags";
 
 const SettingsPanel: Component = () => {
-  const { t, locale, numeralTogglePreview, toggleNumeralSystem } = useI18n();
+  const { t, locale, formatNumeral, numeralTogglePreview, toggleNumeralSystem } = useI18n();
   const currentFlag = () => LANGUAGE_FLAG[locale().code] ?? locale().code;
   const isLandscape = useOrientation();
   const { start: startRewind, stop: stopRewind } = useRewindHold();
@@ -209,7 +209,7 @@ const SettingsPanel: Component = () => {
         onPointerDown={startRewind}
         onPointerUp={stopRewind}
         onPointerCancel={stopRewind}
-        aria-label={t("settings.rewindMinute")}
+        aria-label={t("settings.rewindMinute", { n: formatNumeral(1) })}
       />
     </>
   );

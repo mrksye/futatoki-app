@@ -14,7 +14,7 @@
     "rotateExit": "orologio",
     "mergeToSingle": "insieme",
     "splitToTwo": "dividi",
-    "rewindMinute": "indietro 1m",
+    "rewindMinute": "indietro {n}m",
     "autoStart": "auto",
     "autoStop": "stop",
     "random": "a caso"

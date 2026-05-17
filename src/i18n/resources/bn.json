@@ -14,7 +14,7 @@
     "rotateExit": "ঘড়ি",
     "mergeToSingle": "একসাথে",
     "splitToTwo": "আলাদা",
-    "rewindMinute": "1 মিনিট পিছে",
+    "rewindMinute": "{n} মিনিট পিছে",
     "autoStart": "অটো",
     "autoStop": "থামাও",
     "random": "এলোমেলো"

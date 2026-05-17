@@ -14,7 +14,7 @@
     "rotateExit": "zegar",
     "mergeToSingle": "złącz",
     "splitToTwo": "rozdziel",
-    "rewindMinute": "cofnij o 1 min",
+    "rewindMinute": "cofnij o {n} min",
     "autoStart": "auto",
     "autoStop": "stop",
     "random": "losowo"

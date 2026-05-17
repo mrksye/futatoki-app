@@ -14,7 +14,7 @@
     "rotateExit": "घड़ी",
     "mergeToSingle": "जोड़ो",
     "splitToTwo": "अलग",
-    "rewindMinute": "1 मिनट पीछे",
+    "rewindMinute": "{n} मिनट पीछे",
     "autoStart": "ऑटो",
     "autoStop": "रुको",
     "random": "कोई भी"
