@@ -14,7 +14,7 @@
     "rotateExit": "uhr",
     "mergeToSingle": "zusammen",
     "splitToTwo": "trennen",
-    "rewindMinute": "1 min zurück",
+    "rewindMinute": "{n} min zurück",
     "autoStart": "auto",
     "autoStop": "stopp",
     "random": "Zufall"

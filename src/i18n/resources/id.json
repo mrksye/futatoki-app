@@ -14,7 +14,7 @@
     "rotateExit": "jam",
     "mergeToSingle": "tumpuk",
     "splitToTwo": "pisah",
-    "rewindMinute": "mundur 1 menit",
+    "rewindMinute": "mundur {n} menit",
     "autoStart": "otomatis",
     "autoStop": "stop",
     "random": "acak"

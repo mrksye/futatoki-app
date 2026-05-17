@@ -14,7 +14,7 @@
     "rotateExit": "saat",
     "mergeToSingle": "birleştir",
     "splitToTwo": "ayır",
-    "rewindMinute": "1 dk geri",
+    "rewindMinute": "{n} dk geri",
     "autoStart": "otomatik",
     "autoStop": "durdur",
     "random": "rastgele"

@@ -14,7 +14,7 @@
     "rotateExit": "นาฬิกา",
     "mergeToSingle": "ซ้อนกัน",
     "splitToTwo": "แยกกัน",
-    "rewindMinute": "ถอย 1 นาที",
+    "rewindMinute": "ถอย {n} นาที",
     "autoStart": "ออโต้",
     "autoStop": "หยุด",
     "random": "สุ่ม"

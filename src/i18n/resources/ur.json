@@ -14,7 +14,7 @@
     "rotateExit": "گَھڑی",
     "mergeToSingle": "مِلا دو",
     "splitToTwo": "اَلَگ کَرو",
-    "rewindMinute": "1 مِنَٹ پِیچھے",
+    "rewindMinute": "{n} مِنَٹ پِیچھے",
     "autoStart": "خودکار",
     "autoStop": "بَند",
     "random": "کوئی بھی"

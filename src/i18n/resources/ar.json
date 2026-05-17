@@ -14,7 +14,7 @@
     "rotateExit": "سَاعَة",
     "mergeToSingle": "دَمْج",
     "splitToTwo": "فَصْل",
-    "rewindMinute": "رُجُوع 1 دَقِيقَة",
+    "rewindMinute": "رُجُوع {n} دَقِيقَة",
     "autoStart": "تِلْقَائِيّ",
     "autoStop": "إِيقَاف",
     "random": "عَشْوَائِيّ"

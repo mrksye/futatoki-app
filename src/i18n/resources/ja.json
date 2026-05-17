@@ -14,7 +14,7 @@
     "rotateExit": "とけい",
     "mergeToSingle": "かさねる",
     "splitToTwo": "わける",
-    "rewindMinute": "１ふんもどす",
+    "rewindMinute": "{n}ふんもどす",
     "autoStart": "じどう",
     "autoStop": "すとっぷ",
     "random": "らんだむ"

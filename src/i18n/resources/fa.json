@@ -14,7 +14,7 @@
     "rotateExit": "ساعَت",
     "mergeToSingle": "رویِ هَم",
     "splitToTwo": "جُدا",
-    "rewindMinute": "1 دَقیقه عَقَب",
+    "rewindMinute": "{n} دَقیقه عَقَب",
     "autoStart": "خودکار",
     "autoStop": "تَوَقُّف",
     "random": "تَصادُفی"
