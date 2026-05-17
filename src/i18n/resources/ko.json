@@ -53,6 +53,7 @@
   "a11y": {
     "clockFaceAm": "오전 아날로그 시계",
     "clockFacePm": "오후 아날로그 시계",
-    "clockFace": "아날로그 시계"
+    "clockFace": "아날로그 시계",
+    "languagePicker": "언어 선택"
   }
 }

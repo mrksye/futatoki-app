@@ -53,6 +53,7 @@
   "a11y": {
     "clockFaceAm": "सुबह की एनालॉग घड़ी",
     "clockFacePm": "दोपहर की एनालॉग घड़ी",
-    "clockFace": "एनालॉग घड़ी"
+    "clockFace": "एनालॉग घड़ी",
+    "languagePicker": "भाषा चुनें"
   }
 }

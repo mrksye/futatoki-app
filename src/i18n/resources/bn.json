@@ -53,6 +53,7 @@
   "a11y": {
     "clockFaceAm": "সকালের অ্যানালগ ঘড়ি",
     "clockFacePm": "বিকেলের অ্যানালগ ঘড়ি",
-    "clockFace": "অ্যানালগ ঘড়ি"
+    "clockFace": "অ্যানালগ ঘড়ি",
+    "languagePicker": "ভাষা নির্বাচন"
   }
 }

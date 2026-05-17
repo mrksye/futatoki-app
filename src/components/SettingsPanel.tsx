@@ -105,7 +105,7 @@ const SettingsPanel: Component = () => {
             <button
               class={`${compactBtnClass} before:hidden text-lg tablet:text-xl leading-none`}
               onPointerDown={(e) => openLanguagePickerAtElement(e.currentTarget as HTMLButtonElement)}
-              aria-label={locale().endonym}
+              aria-label={t("a11y.languagePicker")}
             >
               🌏
             </button>
