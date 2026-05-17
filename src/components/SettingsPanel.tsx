@@ -18,11 +18,9 @@ import { useRewindHold } from "../features/free-rotation/rewind";
 import { randomizeRotate } from "../features/free-rotation/random-time";
 import { openPickerAtElement } from "../features/activity/picker";
 import { openLanguagePickerAtElement } from "../features/language-picker/state";
-import { LANGUAGE_FLAG } from "../features/language-picker/flags";
 
 const SettingsPanel: Component = () => {
   const { t, locale, formatNumeral, numeralTogglePreview, toggleNumeralSystem } = useI18n();
-  const currentFlag = () => LANGUAGE_FLAG[locale().code] ?? locale().code;
   const isLandscape = useOrientation();
   const { start: startRewind, stop: stopRewind } = useRewindHold();
 
@@ -96,12 +94,20 @@ const SettingsPanel: Component = () => {
          *  "১২৩…" のように切替先の数字グリフを出して default の方向が逆でも整合する。 */}
         <Show when={clockMode() === "autoRotate"}>
           <div class="fixed top-[var(--safe-edge-top)] left-[var(--safe-edge-left)] z-50 flex gap-2">
+            {/* 言語選択ボタン: 「次のアクション」を表すアイコン (地球儀) で他のトグル系
+                ボタン (24h/12h、数字体系切替先 preview、かさね/わけ) と一貫させる。現在 locale を
+                表す国旗ではなく、言語選択モーダルへの入口記号として 🌏 (Earth Globe Asia-Australia)
+                を使う。中立な 🌐 (Globe with Meridians) も検討したが、緯度経度線がデザイン的に
+                重く採用見送り。それでも地球儀そのものは残したかったので大陸が見える Earth Globe 系
+                から選び、一旦 🌏 にしている (アジア発のプロダクトなのでアジア面、という以上の含意は
+                ない。将来見直す余地あり)。aria-label は引き続き locale().endonym (= "日本語" /
+                "English" など) でスクリーンリーダにも「今の言語」が伝わる。 */}
             <button
               class={`${compactBtnClass} before:hidden text-lg tablet:text-xl leading-none`}
               onPointerDown={(e) => openLanguagePickerAtElement(e.currentTarget as HTMLButtonElement)}
               aria-label={locale().endonym}
             >
-              {currentFlag()}
+              🌏
             </button>
             <Show when={numeralTogglePreview()}>
               {(preview) => (
