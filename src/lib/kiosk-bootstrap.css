@@ -29,7 +29,12 @@ html, body, #root {
  * `.fixed` は Tailwind の `position: fixed` utility。 SettingsPanel の各ボタン
  * (`fixed top-2 right-2 ...`) と ActivityPicker の overlay (`fixed inset-0 z-[100] ...`) は
  * 全て `.fixed` を通るので、ここ一箇所で UI chrome を一括非表示にできる
- * (ClockLayout 側の AM/PM バッジ等は `absolute` なので残る)。 */
+ * (ClockLayout 側の AM/PM バッジ等は `absolute` なので残る)。
+ *
+ * 高さは `vh` ではなく `%` を使う。 Safari / iOS / 一部 mobile browser は print mode でも `vh` を
+ * 元の screen viewport の高さで解決するため、 画面より縦長な A4 縦印刷では下半分が次ページに溢れる。
+ * `100%` なら html/body/#root が順に @page の印刷領域いっぱいまで縮み、 portrait/landscape どちらの
+ * 用紙でも 1 ページに収まる。 */
 @media print {
   @page {
     margin: 8mm;
@@ -39,7 +44,7 @@ html, body, #root {
     inset: auto;
     overflow: visible;
     width: 100%;
-    height: 100vh;
+    height: 100%;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
