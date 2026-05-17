@@ -21,20 +21,16 @@ html, body, #root {
   overscroll-behavior: none;
 }
 
-/* 印刷対応 (Ctrl+P 経由のみを想定、印刷ボタンは設けない)。
+/* 印刷対応 (Ctrl+P 経由のみ、印刷ボタンは設けない)。時計の読み取り / 書き込み学習帳を任意時刻で 1 枚刷る用途。
  *
- * 上の kiosk lock がそのままだと viewport 外が clip されて出力に何も載らない / ボタンが乗ったまま
- * になる。 印刷時だけ lock を解除し、操作系 UI を消し、background gradient を紙にも焼き付ける。
+ * - kiosk lock 解除: そのままだと viewport 外が clip されて出力に何も載らない
+ * - 高さは `vh` 不可: Safari / iOS が print mode の `vh` を元の screen viewport で解決する quirk で
+ *   A4 縦印刷が次ページに溢れるため `%` を使う
+ * - `.fixed` 一括 hide: SettingsPanel / ActivityPicker / LanguagePicker overlay 等の Tailwind
+ *   `position: fixed` utility を持つ UI chrome を一箇所で消す (`absolute` の AM/PM バッジ等は残る)
  *
- * `.fixed` は Tailwind の `position: fixed` utility。 SettingsPanel の各ボタン
- * (`fixed top-2 right-2 ...`) と ActivityPicker の overlay (`fixed inset-0 z-[100] ...`) は
- * 全て `.fixed` を通るので、ここ一箇所で UI chrome を一括非表示にできる
- * (ClockLayout 側の AM/PM バッジ等は `absolute` なので残る)。
- *
- * 高さは `vh` ではなく `%` を使う。 Safari / iOS / 一部 mobile browser は print mode でも `vh` を
- * 元の screen viewport の高さで解決するため、 画面より縦長な A4 縦印刷では下半分が次ページに溢れる。
- * `100%` なら html/body/#root が順に @page の印刷領域いっぱいまで縮み、 portrait/landscape どちらの
- * 用紙でも 1 ページに収まる。 */
+ * mode 依存の見え方 (autoRotate 中の針消し / 空グラデの白塗り) は HandsLayer / SkyBackground 側で
+ * 対応 class を生やし、@media print 内で受ける。詳細は各 component の DocComment。 */
 @media print {
   @page {
     margin: 8mm;
@@ -51,11 +47,17 @@ html, body, #root {
   .fixed {
     display: none !important;
   }
-  /* 自動回転 + 印刷 = 子供が「指定された時刻」の針を書き込む練習帖用途。 HandsLayer は clockMode が
-   * autoRotate の間だけ .print-hands-hidden を付け、 ここで SVG 直下の <g> (時針 / 分針 wrapper) を
-   * 非表示にする。 中心ネジの 3 つの <circle> は <g> ではないので残る。 画面表示には一切影響しない。 */
+  /* HandsLayer 参照 (autoRotate 中だけ root に付く)。SVG 直下の <g> = 時針 / 分針 wrapper。 */
   .print-hands-hidden svg > g {
     display: none;
+  }
+  /* SkyBackground 参照。画面で下のベースグラデを覆っている状態をそのまま紙に転写するため白塗り、
+   * 子要素 (太陽 / 月 / 星) は装飾の白紙化のため display:none。 */
+  .sky-background {
+    background: white !important;
+  }
+  .sky-background > * {
+    display: none !important;
   }
   /* ClockSlot は JS が画面 viewport から算出した固定 px (例: 1920px monitor で ~800px) を inline
    * style で持つため、印刷の半幅 (~560 CSS px) に対して overflow して AM/PM が中央で重なる。

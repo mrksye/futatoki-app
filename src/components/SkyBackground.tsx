@@ -11,6 +11,10 @@ import { isFullMoonActive } from "../features/full-moon-easter-egg";
  * - drop-shadow / box-shadow は不使用 (毎フレーム GPU 再計算で重い)
  * - 背景グラデーションは 2 分刻みに量子化して repaint 頻度を抑える
  * - 星は常時アニメだが数を絞る
+ *
+ * 印刷時は root の `.sky-background` を白で塗り潰し、子要素 (太陽 / 月 / 星) を display:none する。
+ * freeRotate / autoRotate でしか DOM に存在しないため「画面でこれが見えるとき = 紙が白」になり、
+ * clock モード時は不在なので html/body/#root のベースグラデがそのまま紙に焼ける。
  */
 
 interface SkyColor {
@@ -131,7 +135,7 @@ const SkyBackground: Component<SkyBackgroundProps> = (props) => {
 
   return (
     <div
-      class="absolute inset-0 overflow-hidden"
+      class="sky-background absolute inset-0 overflow-hidden"
       style={{
         background: `linear-gradient(180deg, ${sky().top} 0%, ${sky().bottom} 100%)`,
       }}
