@@ -34,7 +34,7 @@ import { dragStart, dragAdvance, type DragDragState } from "../features/free-rot
 import { wheelAdvance, newWheelVelocityState, resetWheelVelocity } from "../features/free-rotation/wheel";
 import { resistTrigger, notifyResistance } from "../features/free-rotation/resistance";
 import { interaction, enterWarning, cancelWarning } from "../features/activity/interaction";
-import { playTapPulse, playShakeNo } from "../lib/motion";
+import { playTapSheen, playShakeNo } from "../lib/motion";
 
 /** 時計面長押し (= 削除拒否の「イヤイヤ」発火) の閾値。EventIcon の LONG_PRESS_MS と意図的に揃える
  *  (1 つの ms 感覚を全 long-press UI で共有)。 */
@@ -76,10 +76,10 @@ const DimOverlay: ParentComponent<{ opacity: number }> = (props) => (
  * features/layout/palette-clearance の computeMaxClockSize を参照。
  *
  * 時計モード (= !isRotating) のインタラクション。EventIcon の反応機構と同型:
- *  - pointerdown: 500ms 長押しタイマー始動 (pulse はここで発火させない)。
+ *  - pointerdown: 500ms 長押しタイマー始動 (sheen はここで発火させない)。
  *  - 長押し 500ms 経過: イヤイヤと首を振る (SHAKE_NO, amplitude 5px / 600ms)。longPressed フラグ
- *    が立ち、続く pointerup での pulse は抑止される (削除不可を伝えた後に「タップ確認」が出ると変)。
- *  - pointerup (短タップ): pulse がピカッと光る (TAP_PULSE, 260ms)。
+ *    が立ち、続く pointerup での sheen は抑止される (削除不可を伝えた後に「タップ確認」が出ると変)。
+ *  - pointerup (短タップ): 一筋の白帯がサッと過ぎ去る (TAP_SHEEN, 420ms)。
  * できごとアイコンの pointerdown は ActivityLayer 側で clock モード時 stopPropagation してるのでここには
  * 上がってこず、icon と slot の反応は独立。
  */
@@ -109,7 +109,7 @@ const ClockSlot: ParentComponent<{ size: number }> = (props) => {
   const onPointerUp = () => {
     if (isRotating()) return;
     cancelPress();
-    if (!longPressed && ref) playTapPulse(ref);
+    if (!longPressed && ref) playTapSheen(ref);
   };
 
   onCleanup(cancelPress);
@@ -459,7 +459,7 @@ export const ClockLayout: Component = () => {
   onCleanup(cancelMergedPress);
 
   /** かさね β の中身インタラクション。反応機構は ClockSlot / EventIcon と同型 (pointerdown でタイマー、
-   *  500ms で shake + longPressed=true、pointerup で gate 越えたら pulse)。split AM/PM とは別 ref のため
+   *  500ms で shake + longPressed=true、pointerup で gate 越えたら sheen)。split AM/PM とは別 ref のため
    *  timer / フラグを独立に持つ。 */
   const onMergedClockPointerDown = () => {
     if (isRotating()) return;
@@ -475,7 +475,7 @@ export const ClockLayout: Component = () => {
   const onMergedClockPointerUp = () => {
     if (isRotating()) return;
     cancelMergedPress();
-    if (!mergedLongPressed && mergedInnerRef) playTapPulse(mergedInnerRef);
+    if (!mergedLongPressed && mergedInnerRef) playTapSheen(mergedInnerRef);
   };
   useAutoRotateTick();
   useIdleExitTimer();
