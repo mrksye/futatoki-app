@@ -14,11 +14,17 @@ import { detectLocale } from "./detect";
 import { applyDocumentMetadata } from "./document-metadata";
 import { applyJsonLd } from "./json-ld";
 import {
+  defaultNumeralSystem,
   formatBySystem,
   nextNumeralSystem,
+  resetNumeralSystemChoice,
   resolveNumeralSystem,
   toggleNumeralSystem as toggleNumeralSystemFor,
 } from "../features/settings/numeral-system";
+import {
+  hourNumeralsHidden,
+  setHourNumeralsHidden,
+} from "../features/settings/nothing-digits-font";
 import jaDict from "./resources/ja.json";
 
 export type Dict = typeof jaDict;
@@ -53,13 +59,17 @@ type I18nContextValue = {
   locale: Accessor<LocaleMeta>;
   t: (key: TKey, values?: Record<string, unknown>) => string;
   /** 整数を「現在 locale × user 選択」で解決された数字体系で表記。numeral-system feature の
-   *  signal を読むので reactive コンテキストから呼ぶこと。 */
+   *  signal を読むので reactive コンテキストから呼ぶこと。時数を消す NothingDigitsFont は
+   *  ここでは適用しない — 時数描画 site で applyNothingDigitsFont を一段挟む役割分担。 */
   formatNumeral: (n: number) => string;
-  /** 数字体系トグルの「次の状態の preview」(例: "১২৩" や "१२३")。null なら現在 locale に
-   *  alternate が無い (= トグルボタンを出さない)。Accessor なので reactive、signal の現在値が
-   *  変わると preview もリアクティブに切り替わる。 */
-  numeralTogglePreview: () => string | null;
-  /** 現在 locale の数字体系を default ⇄ alternate でトグル。トグル不可 locale では no-op。 */
+  /** トグルボタンの「次タップ後の状態」の preview。常に文字列を返す (全 locale でボタン常時表示)。
+   *  次が表示状態なら次体系の "123" / "১২৩"、次が「時数を隠す」状態なら現体系の "123" に
+   *  combining stroke を被せた "1̶2̶3̶" を返して「タップで消える未来」を視覚化。 */
+  numeralTogglePreview: () => string;
+  /** 「数字体系 × 時数の隠蔽」2 軸を 1 本の cycle に畳んだトグル。
+   *  - 一般 locale: (western 表示) → (隠す) → loop
+   *  - bn: (bengali 表示) → (western 表示) → (隠す) → loop
+   *  隠す解除時は locale default に必ず戻す。 */
   toggleNumeralSystem: () => void;
 };
 
@@ -108,11 +118,50 @@ export function I18nProvider(props: { children: JSX.Element }) {
 
   const formatNumeral: I18nContextValue["formatNumeral"] = (n) =>
     formatBySystem(resolveNumeralSystem(meta.code), n);
-  const numeralTogglePreview: I18nContextValue["numeralTogglePreview"] = () => {
-    const next = nextNumeralSystem(meta.code);
-    return next === null ? null : formatBySystem(next, 123);
+
+  /** combining stroke overlay (U+0336) を各 grapheme の後ろに挟んで「タップで消える未来」を描く。
+   *  bengali/devanagari の合成文字でも 1 codepoint 単位で被さる (時計面に出すのは桁の連なりだけで
+   *  ligature が要らない数字なので Array.from の分割で十分)。font fallback によっては stroke の
+   *  長さがブレるが視認性は十分。 */
+  const strikethrough = (s: string): string =>
+    Array.from(s).map((ch) => ch + "̶").join("");
+
+  /** cycle 上「次に locale 数字体系を切替えるべき位置」にいるかを判定。
+   *  hasAlternate (= LOCALE_NUMERAL_CONFIG に登録あり) かつ現在が default 位置のときだけ true。
+   *  bn @ bengali → true (次は western)、bn @ western → false (次は「隠す」)、en → false。 */
+  const canStepLocaleSystem = (): boolean => {
+    if (nextNumeralSystem(meta.code) === null) return false;
+    return resolveNumeralSystem(meta.code) === defaultNumeralSystem(meta.code);
   };
-  const toggleNumeralSystem = () => toggleNumeralSystemFor(meta.code);
+
+  const numeralTogglePreview: I18nContextValue["numeralTogglePreview"] = () => {
+    if (hourNumeralsHidden()) {
+      // 次は「隠す解除」= locale default 表示へ戻る
+      return formatBySystem(defaultNumeralSystem(meta.code), 123);
+    }
+    if (canStepLocaleSystem()) {
+      // 次は alternate 体系 (= bn の western)
+      return formatBySystem(nextNumeralSystem(meta.code)!, 123);
+    }
+    // 次は「隠す」= 現体系の 123 を斜線打ち消し
+    return strikethrough(formatBySystem(resolveNumeralSystem(meta.code), 123));
+  };
+
+  const toggleNumeralSystem = () => {
+    if (hourNumeralsHidden()) {
+      // (隠す) → loop 先頭: locale default にリセットして表示再開
+      setHourNumeralsHidden(false);
+      resetNumeralSystemChoice();
+      return;
+    }
+    if (canStepLocaleSystem()) {
+      // (default 表示) → (alternate 表示): bn の bengali → western
+      toggleNumeralSystemFor(meta.code);
+      return;
+    }
+    // (最後の表示状態) → (隠す)
+    setHourNumeralsHidden(true);
+  };
 
   createEffect(() => {
     const resolved = dict();

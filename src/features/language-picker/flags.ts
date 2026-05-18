@@ -1,4 +1,5 @@
 import { resetNumeralSystemChoice } from "../settings/numeral-system";
+import { setHourNumeralsHidden } from "../settings/nothing-digits-font";
 
 /**
  * locale code → 国旗絵文字。地域慣習・国際的な代表値に従う:
@@ -36,10 +37,13 @@ export const LANGUAGE_FLAG: Readonly<Record<string, string>> = {
 /** ?lang=xx に書き換えて navigation を replace で行う (i18n/detect.ts が起動時に URL から拾い、
  *  同 key で localStorage 永続化)。location.href 代入は history に新エントリを積むので戻るボタン
  *  で言語切替前に戻れてしまう = 子供向け UI として不適切。replace で現エントリを上書きする。
- *  reset 前提は、過去に別 locale で alternate を選んだ履歴 (例: bn で western に toggle 済) が
- *  新 locale の default を上書きするのを防ぐため。 */
+ *  数字系 signal を 2 本ともクリアするのは、過去の locale で選んだ「alternate 体系」や「時数を
+ *  隠す」状態が新 locale の default 表示を上書きするのを防ぐため (例: bn で western にしていた、
+ *  あるいは時数を隠していた状態のまま en へ切り替えたら、en の文字盤がいきなり消えてる体験に
+ *  なってしまう)。 */
 export const switchLanguageByReload = (code: string): void => {
   resetNumeralSystemChoice();
+  setHourNumeralsHidden(false);
   const url = new URL(window.location.href);
   url.searchParams.set("lang", code);
   window.location.replace(url.toString());

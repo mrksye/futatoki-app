@@ -4,6 +4,7 @@ import { colorMode } from "../features/settings/color-mode";
 import { detailMode } from "../features/settings/detail-mode";
 import { displayedFormatAt } from "../features/settings/time-format-animation";
 import { paletteId } from "../features/settings/palette";
+import { applyNothingDigitsFont } from "../features/settings/nothing-digits-font";
 import { getPalette, type HourColor } from "../colors";
 import { animateMotion } from "../lib/motion";
 import { prerollKey, PULSE_MS } from "../features/settings/time-format-preroll";
@@ -190,6 +191,9 @@ function annularSectorPath(
 
 const ClockFace: Component<ClockFaceProps> = (props) => {
   const { t, formatNumeral } = useI18n();
+  // 時数 (1-12) の text 出力に formatNumeral の出力をもっかい挟んで「文字盤の数字だけ消す」
+  // フォント変換を当てる。分計 (5/10/...) と aria-label は formatNumeral 単独で素通し。
+  // applyNothingDigitsFont は hourNumeralsHidden() の signal を読むので reactive。
   const isKuwashiku = () => detailMode() === "kuwashiku";
   /** monotone × badge は「文字盤自体がバッジ化」する特別仕様。個別 badge 円を出さず、cardinal 数字のみ
    *  くぎりモード流儀の大きなサイズで描き、円盤縁に 59 個の分メモリを置く。 */
@@ -458,7 +462,7 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   }
                   paint-order="stroke"
                 >
-                  {formatNumeral(num())}
+                  {applyNothingDigitsFont(formatNumeral(num()))}
                 </text>
               </g>
             );

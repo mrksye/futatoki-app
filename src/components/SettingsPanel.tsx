@@ -90,8 +90,10 @@ const SettingsPanel: Component = () => {
 
         {/* 左上: 言語選択 + 数字体系トグル (autoRotate 中のみ)。国旗ボタンは現在 locale の flag を
          *  直接描画 (before:hidden で aria-label の ::before 描画を抑制) し、タップで言語ピッカーを
-         *  起動する。数字体系トグルは alternate を持つ locale でのみ表示し、ラベル "123…" ⇄
-         *  "১২৩…" のように切替先の数字グリフを出して default の方向が逆でも整合する。 */}
+         *  起動する。数字体系トグルは「locale 数字体系 × 時数の隠蔽」2 軸を 1 cycle に畳んで全
+         *  locale で常時表示する: 一般 locale は (western) → (隠す) → loop、bn は (bengali) →
+         *  (western) → (隠す) → loop。ラベルは次タップ後の状態を preview し、次が「隠す」のときは
+         *  現体系の "123" に combining stroke を被せた "1̶2̶3̶" を出す。 */}
         <Show when={clockMode() === "autoRotate"}>
           <div class="fixed top-[var(--safe-edge-top)] left-[var(--safe-edge-left)] z-50 flex gap-2">
             {/* 言語選択ボタン: 「次のアクション」を表すアイコン (地球儀) で他のトグル系
@@ -109,15 +111,11 @@ const SettingsPanel: Component = () => {
             >
               🌏
             </button>
-            <Show when={numeralTogglePreview()}>
-              {(preview) => (
-                <button
-                  class={`${compactBtnClass} text-xs tablet:text-sm`}
-                  onPointerDown={toggleNumeralSystem}
-                  aria-label={`${preview()}…`}
-                />
-              )}
-            </Show>
+            <button
+              class={`${compactBtnClass} text-xs tablet:text-sm`}
+              onPointerDown={toggleNumeralSystem}
+              aria-label={`${numeralTogglePreview()}…`}
+            />
           </div>
         </Show>
       </Show>

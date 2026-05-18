@@ -35,6 +35,13 @@ const LOCALE_NUMERAL_CONFIG: Readonly<Record<string, LocaleNumeralConfig>> = {
   // hi: { default: "western", alternate: "devanagari" },
 };
 
+/** 現在 locale に紐づく「default」の数字体系。LOCALE_NUMERAL_CONFIG に無い locale は western。
+ *  i18n 側で cycle stage を判定するときに「今 default 位置にいるか」「unhide した後どこへ戻すか」
+ *  を問い合わせる用。 */
+export function defaultNumeralSystem(localeCode: string): NumeralSystem {
+  return LOCALE_NUMERAL_CONFIG[localeCode]?.default ?? "western";
+}
+
 /** 整数を指定の数字体系で表記。 */
 export function formatBySystem(system: NumeralSystem, n: number): string {
   const zero = NUMERAL_SYSTEM_ZERO[system];
