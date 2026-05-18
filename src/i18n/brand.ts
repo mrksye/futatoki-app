@@ -24,8 +24,8 @@ type LocalizedBrand = { ja: string; [key: string]: string };
 export const OFFICIAL_BRAND: LocalizedBrand = {
   ja: "知育時計ふたときアプリ",
   en: "Futatoki the Learning Clock",
-  "zh-CN": "Futatoki 教学时钟",
-  "zh-TW": "Futatoki 教學時鐘",
+  "zh-CN": "扶嗒托基(Futatoki) 教学时钟",
+  "zh-TW": "扶嗒托基(Futatoki) 教學時鐘",
   ko: "Futatoki 학습 시계",
   es: "Futatoki Reloj Educativo",
   fr: "Futatoki Horloge Éducative",
@@ -47,8 +47,8 @@ export const OFFICIAL_BRAND: LocalizedBrand = {
 export const LP_BRAND: LocalizedBrand = {
   ja: "ふたとき時計",
   en: "Futatoki the Clock",
-  "zh-CN": "Futatoki 双面时钟",
-  "zh-TW": "Futatoki 雙面時鐘",
+  "zh-CN": "扶嗒托基钟",
+  "zh-TW": "扶嗒托基鐘",
   ko: "Futatoki 시계",
   es: "Futatoki Reloj",
   fr: "Futatoki Horloge",
@@ -70,8 +70,8 @@ export const LP_BRAND: LocalizedBrand = {
 export const APP_BRAND: LocalizedBrand = {
   ja: "ふたときアプリ",
   en: "Futatoki App",
-  "zh-CN": "Futatoki 应用",
-  "zh-TW": "Futatoki App",
+  "zh-CN": "扶嗒托基应用",
+  "zh-TW": "扶嗒托基 App",
   ko: "Futatoki 앱",
   es: "Futatoki App",
   fr: "Futatoki App",
@@ -91,12 +91,14 @@ export const APP_BRAND: LocalizedBrand = {
 };
 
 /**
- * iOS Safari ホーム画面追加時のラベル。ja のみカナ短縮、他は全 locale で
- * "Futatoki" Latin (固有名詞) 統一。LP の各 locale でも本文中の固有名は
- * Futatoki Latin 表記なので整合する。
+ * iOS Safari ホーム画面追加時のラベル。ja はカナ短縮「ふたとき」、zh-CN/zh-TW は
+ * 漢字短縮「扶嗒托基」。それ以外は全 locale で "Futatoki" Latin (固有名詞) 統一。
+ * LP の各 locale でも本文中の固有名は Futatoki Latin 表記なので整合する。
  */
 export const APPLE_TITLE: LocalizedBrand = {
   ja: "ふたとき",
+  "zh-CN": "扶嗒托基",
+  "zh-TW": "扶嗒托基",
 };
 
 /** og:locale (Open Graph 形式 = BCP47 を underscore + 大文字 region に)。 */
@@ -169,8 +171,22 @@ export const BRAND_ALIASES: Record<string, readonly string[]> = {
     "ふたとき",
   ],
   en: ["Futatoki the Learning Clock", "Futatoki the Clock", "Futatoki App"],
-  "zh-CN": ["Futatoki 教学时钟", "Futatoki 双面时钟", "Futatoki 应用"],
-  "zh-TW": ["Futatoki 教學時鐘", "Futatoki 雙面時鐘", "Futatoki App"],
+  "zh-CN": [
+    "扶嗒托基 教学时钟",
+    "扶嗒托基钟",
+    "扶嗒托基应用",
+    "扶嗒托基",
+    "Futatoki 教学时钟",
+    "Futatoki",
+  ],
+  "zh-TW": [
+    "扶嗒托基 教學時鐘",
+    "扶嗒托基鐘",
+    "扶嗒托基 App",
+    "扶嗒托基",
+    "Futatoki 教學時鐘",
+    "Futatoki",
+  ],
   ko: ["Futatoki 학습 시계", "Futatoki 시계", "Futatoki 앱"],
   es: ["Futatoki Reloj Educativo", "Futatoki Reloj", "Futatoki App"],
   fr: ["Futatoki Horloge Éducative", "Futatoki Horloge", "Futatoki App"],
