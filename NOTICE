@@ -23,10 +23,17 @@ MIT-licensed "Software":
 
 - "Futatoki" / "Futatoki the Learning Clock" / "Futatoki the Clock" /
   "知育時計ふたときアプリ" / "ふたとき時計" / "フタトキ時計" /
-  "Futatoki 教学时钟" / "Futatoki 双面时钟" and any other localized brand
+  "扶嗒托基" / "扶嗒托基(Futatoki) 教学时钟" / "扶嗒托基钟" /
+  "扶嗒托基(Futatoki) 教學時鐘" / "扶嗒托基鐘" /
+  "Futatoki 教学时钟" / "Futatoki 双面时钟" /
+  "Futatoki 教學時鐘" / "Futatoki 雙面時鐘" and any other localized brand
   names (including prior spellings used by this project — "Futatoki the Clock"
   was the project's primary name before being renamed to "Futatoki the
-  Learning Clock", and remains in use as the affectionate short form)
+  Learning Clock", and remains in use as the affectionate short form; the
+  Chinese-script names "扶嗒托基" / "扶嗒托基钟" / "扶嗒托基鐘" are the
+  preferred zh-CN/zh-TW forms, with "Futatoki 教学时钟" / "Futatoki 双面时钟" /
+  "Futatoki 教學時鐘" / "Futatoki 雙面時鐘" retained as earlier Latinized
+  spellings)
 - All logos, icons, and brand assets in any format (PNG, SVG, WebP, ICO,
   or otherwise), including but not limited to:
     - `public/icon-*.png` (PWA icons, all sizes)
