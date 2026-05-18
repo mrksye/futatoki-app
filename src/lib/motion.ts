@@ -42,20 +42,53 @@ export const POYON3_KEYFRAMES: Keyframe[] = [
 export const playPoyon3 = (el: Element): Animation | null =>
   animateMotion(el, POYON3_KEYFRAMES, { duration: POYON3_DURATION_MS, easing: "ease-out" });
 
-/** キランッ (瞬間ピーク + ゆっくり tail-off の brightness pulse)。時計面のような大面積を素タップした時の
- *  ack 用。scale 系を流用すると面積比で派手に振れすぎる。カーブ調整: ピークを 0.08 まで前倒しして
- *  「光る瞬間」を尖らせ、残り 92% を decay tail にする。peak offset を 0.22 等で中央に寄せるとダラっと
- *  光って「ピカ〜ッ」になりキラン感が消える。duration は 260ms 弱以上が必要 (tail を短く詰めると
- *  全体が「ピッ」と忙しなくなる)。 */
-export const TAP_PULSE_DURATION_MS = 260;
-export const TAP_PULSE_KEYFRAMES: Keyframe[] = [
-  { filter: "brightness(1)",    offset: 0 },
-  { filter: "brightness(1.15)", offset: 0.08 },
-  { filter: "brightness(1)",    offset: 1 },
-];
+/** キラン (一筋の白帯が斜めに過ぎ去る sheen)。ガラスを傾けた瞬間、あるいはクレジットカードの
+ *  ホログラムが光を返すような ack。時計面のような大面積で全体 brightness pulse を打つと「点滅」に
+ *  感じてちらつくため、面の上を局所的に通過する反射に置き換えてある。
+ *  host 内に一時 overlay child を append → WAAPI で帯を X 方向に走らせ、finish で overlay ごと remove。
+ *  常駐 translucent layer を残さない (合成負荷は単発のみ)。連打時は前回 overlay を先に外して同時重畳を防ぐ。
+ *  円形クロック面に対しては host 短辺基準の clip-path: circle(50%) で帯を円内に閉じ込めるため、host は
+ *  bbox 中央に円が描かれる構造 (square host / SVG preserveAspectRatio meet による短辺 fit) を前提とする。 */
+export const TAP_SHEEN_DURATION_MS = 420;
+const TAP_SHEEN_MARKER = "data-tap-sheen";
 
-export const playTapPulse = (el: Element): Animation | null =>
-  animateMotion(el, TAP_PULSE_KEYFRAMES, { duration: TAP_PULSE_DURATION_MS, easing: "ease-out" });
+export const playTapSheen = (host: HTMLElement): Animation | null => {
+  if (skipPredicate()) return null;
+  host.querySelector(`[${TAP_SHEEN_MARKER}]`)?.remove();
+  const overlay = document.createElement("div");
+  overlay.setAttribute(TAP_SHEEN_MARKER, "");
+  overlay.style.cssText = [
+    "position:absolute",
+    "inset:0",
+    "pointer-events:none",
+    "overflow:hidden",
+    "clip-path:circle(50%)",
+  ].join(";");
+  const band = document.createElement("div");
+  band.style.cssText = [
+    "position:absolute",
+    "top:-25%",
+    "left:0",
+    "width:22%",
+    "height:150%",
+    "background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.55) 50%,transparent 100%)",
+    "filter:blur(6px)",
+    "transform-origin:center",
+  ].join(";");
+  overlay.appendChild(band);
+  host.appendChild(overlay);
+  const animation = band.animate(
+    [
+      { transform: "translateX(-200%) rotate(20deg)" },
+      { transform: "translateX(550%) rotate(20deg)" },
+    ],
+    { duration: TAP_SHEEN_DURATION_MS, easing: "cubic-bezier(0.2,0.6,0.2,1)" },
+  );
+  const cleanup = () => overlay.remove();
+  animation.onfinish = cleanup;
+  animation.oncancel = cleanup;
+  return animation;
+};
 
 /** イヤイヤ (左右ダブルシェイク + 一拍休 + 2 周目早め)。長押し時の「アカン」拒否表現。
  *  amplitudePx は呼び出し側の要素サイズに応じて指定する: 小要素 (event icon ~30px) は default 8px で
