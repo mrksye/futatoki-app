@@ -1,10 +1,10 @@
 <img src="./public/icon-192.png" alt="Futatoki" width="96" />
 
-# Futatoki the Learning Clock
+# Futatoki the Learning Clock App
 
 <img src="./public/screenshot.webp" alt="Two analog faces side by side — PM face in full color showing 20:00, AM face dimmed" />
 
-A free, open-source 24-hour analog clock for kids learning to tell time. No install, no sign-up — runs in any browser. Affectionately known as *Futatoki the Clock*, or just *Futatoki*.
+A free, open-source 24-hour analog clock app for kids learning to tell time. No install, no sign-up — runs in any browser. The app version of *Futatoki the Clock* — affectionately, just *Futatoki*.
 
 🌐 [Try it live](https://play.futatoki.app/?lang=en) · 📖 [Learn more](https://futatoki.app/en/) · 📚 [Usage guide](https://futatoki.app/en/guide)
 
@@ -126,10 +126,10 @@ Contributions welcome — especially translations. See [CONTRIBUTING.md](./CONTR
 
 MIT — see [LICENSE](./LICENSE)
 
-The names "Futatoki" / "Futatoki the Learning Clock" / "Futatoki the Clock",
-logos, branding, and the visual design of the clock face when reproduced
-outside the screen-based app are not covered by the MIT License — see
-[NOTICE](./NOTICE) for details.
+The names "Futatoki" / "Futatoki the Learning Clock App" /
+"Futatoki the Learning Clock" / "Futatoki the Clock", logos, branding, and
+the visual design of the clock face when reproduced outside the screen-based
+app are not covered by the MIT License — see [NOTICE](./NOTICE) for details.
 
 ## About
 

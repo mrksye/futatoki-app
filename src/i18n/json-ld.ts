@@ -1,5 +1,5 @@
 import type { LocaleMeta } from "./locales";
-import { APP_BRAND, APP_EXTRA_VARIANTS, BRAND_ALIASES, OFFICIAL_BRAND } from "./brand";
+import { APP_BRAND, APP_EXTRA_VARIANTS, BRAND_ALIASES, CHARACTER_BRAND, OFFICIAL_BRAND } from "./brand";
 
 const SOURCE = "ja";
 const APP_URL = "https://play.futatoki.app/";
@@ -7,13 +7,14 @@ const APP_URL = "https://play.futatoki.app/";
 /**
  * <script type="application/ld+json"> の payload。
  *
- * - name は OFFICIAL_BRAND[locale] (正式名称、Futatoki the Learning Clock 系)。
- *   schema.org の primary name は entity の正式名称を据えるのが本来用途。
+ * - name は OFFICIAL_BRAND[locale] (アプリ版正式名称、Futatoki the Learning
+ *   Clock App 系)。schema.org の primary name は entity の正式名称を据えるのが
+ *   本来用途。
  * - alternateName は BRAND_ALIASES と APP_EXTRA_VARIANTS を全 locale 分
- *   flatten + APP_BRAND の各 locale 値 + "Futatoki" 短縮形、ただし name と
- *   重複する値は除外し、配列内の重複も除く。これにより Google が「正式名 /
- *   愛称 / アプリ版 / 短縮 / 旧表記 / 連濁揺れ」を全部このアプリの別名として
- *   認識する (LP との SEO 整合 + 表記揺れ網羅)。
+ *   flatten + APP_BRAND の各 locale 値 + CHARACTER_BRAND の各 locale 値、
+ *   ただし name と重複する値は除外し、配列内の重複も除く。これにより Google
+ *   が「正式名 / 愛称 / アプリ版 / キャラ単独 / 旧表記 / 連濁揺れ」を全部
+ *   このアプリの別名として認識する (LP との SEO 整合 + 表記揺れ網羅)。
  * - description は resources の meta.description を流用。
  * - inLanguage は BCP47 タグそのまま。
  */
@@ -23,8 +24,9 @@ function buildJsonLd(locale: LocaleMeta, description: string) {
     ...Object.values(BRAND_ALIASES).flat(),
     ...Object.values(APP_EXTRA_VARIANTS).flat(),
     ...Object.values(APP_BRAND),
+    ...Object.values(CHARACTER_BRAND),
   ];
-  const alternateName = [...allVariants, "Futatoki"].filter(
+  const alternateName = allVariants.filter(
     (value, index, array) =>
       value !== name && array.indexOf(value) === index,
   );

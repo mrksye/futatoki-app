@@ -1,18 +1,25 @@
 /**
  * ブランド表記ルール。Thomas the Tank Engine モデル (正式 / 愛称 / 短縮) に
- * 加えて、当アプリ独自の「アプリ版」軸が乗る 4 階層構造。
+ * 加えて、当アプリ独自の「キャラクター ⇄ アプリ版」分離軸が乗る 5 階層構造。
  *
- * - OFFICIAL_BRAND: 正式名称 (Futatoki the Learning Clock / 知育時計ふたときアプリ
- *   など)。JSON-LD `name` / manifest.name / NOTICE などの primary brand 用。
- * - LP_BRAND: 愛称 (Futatoki the Clock / ふたとき時計 など)。説明文の二回目以降、
- *   LP 本体の Home/Privacy で使われる「親しみ表記」。
- * - APP_BRAND: アプリ版表記 (Futatoki App / ふたときアプリ など)。og:site_name
+ * - CHARACTER_BRAND: キャラクター単独名 (Futatoki / ふたとき / 扶嗒托基)。
+ *   ブランド entity の中核。alternateName / SEO 短縮 / iOS ホーム短縮の primary
+ *   source となり、APPLE_TITLE もこの値と同じ役割を持つ。
+ * - OFFICIAL_BRAND: アプリ版正式名称 (Futatoki the Learning Clock App /
+ *   知育時計ふたときアプリ など)。JSON-LD `name` / manifest.name / NOTICE などの
+ *   primary brand 用。末尾「アプリ語」によりキャラ本体とアプリ版を表記レベルで
+ *   分離する。
+ * - LP_BRAND: short form 表記 (Futatoki the Clock / ふたとき時計 など)。
+ *   説明文の二回目以降や LP 本体の Home/Privacy で使われる親しみ表記。
+ * - APP_BRAND: アプリ短縮表記 (Futatoki App / ふたときアプリ など)。og:site_name
  *   や <title> で「LP 本体ではなくアプリ版」を示す軸。
  * - APPLE_TITLE: iOS ホーム画面短縮 (Futatoki / ふたとき)。
+ *   apple-mobile-web-app-title meta 用。値は CHARACTER_BRAND と一致する。
  *
  * 全 20 locale 揃え。LP に翻訳のある 7 locale (en/ja/zh-CN/zh-TW/pt-BR/hi/bn)
  * の正式名称は LP の src/content/guide/{locale}.mdx の appName と同期。残る 13
- * locale は各文化圏の教育語彙 (Educational / 学習 / Lern など) を選定。
+ * locale は各文化圏の教育語彙 (Educational / 学習 / Lern など) + アプリ語
+ * (App / 앱 / Приложение など) で組み立てる。
  */
 
 /** locale → 表示文字列のマップ。ja は SOURCE として全マップで必須なので known property として
@@ -21,27 +28,55 @@
  *  型上も string に確定する)。 */
 type LocalizedBrand = { ja: string; [key: string]: string };
 
+/**
+ * キャラクター単独名。"Futatoki" は固有名 Latin transliteration として ja/zh
+ * を除く全 locale で共通。ja は ひらがな「ふたとき」、zh-CN/zh-TW は漢字音写
+ * 「扶嗒托基」。SEO entity の中核で、alternateName / 短縮ラベルの primary。
+ */
+export const CHARACTER_BRAND: LocalizedBrand = {
+  ja: "ふたとき",
+  en: "Futatoki",
+  "zh-CN": "扶嗒托基",
+  "zh-TW": "扶嗒托基",
+  ko: "Futatoki",
+  es: "Futatoki",
+  fr: "Futatoki",
+  de: "Futatoki",
+  it: "Futatoki",
+  "pt-BR": "Futatoki",
+  ru: "Futatoki",
+  ar: "Futatoki",
+  hi: "Futatoki",
+  id: "Futatoki",
+  th: "Futatoki",
+  tr: "Futatoki",
+  pl: "Futatoki",
+  fa: "Futatoki",
+  ur: "Futatoki",
+  bn: "Futatoki",
+};
+
 export const OFFICIAL_BRAND: LocalizedBrand = {
   ja: "知育時計ふたときアプリ",
-  en: "Futatoki the Learning Clock",
-  "zh-CN": "扶嗒托基(Futatoki) 教学时钟",
-  "zh-TW": "扶嗒托基(Futatoki) 教學時鐘",
-  ko: "Futatoki 학습 시계",
-  es: "Futatoki Reloj Educativo",
-  fr: "Futatoki Horloge Éducative",
-  de: "Futatoki Lernuhr",
-  it: "Futatoki Orologio Didattico",
-  "pt-BR": "Futatoki Relógio Educativo",
-  ru: "Futatoki Обучающие Часы",
-  ar: "Futatoki ساعة تعليمية",
-  hi: "Futatoki शैक्षिक घड़ी",
-  id: "Futatoki Jam Belajar",
-  th: "Futatoki นาฬิกาเรียนรู้",
-  tr: "Futatoki Öğrenme Saati",
-  pl: "Futatoki Zegar do Nauki",
-  fa: "Futatoki ساعت آموزشی",
-  ur: "Futatoki تعلیمی گھڑی",
-  bn: "Futatoki শিক্ষামূলক ঘড়ি",
+  en: "Futatoki the Learning Clock App",
+  "zh-CN": "扶嗒托基 教学时钟 应用",
+  "zh-TW": "扶嗒托基 教學時鐘 App",
+  ko: "Futatoki 학습 시계 앱",
+  es: "Futatoki Reloj Educativo App",
+  fr: "Futatoki Horloge Éducative App",
+  de: "Futatoki Lernuhr App",
+  it: "Futatoki Orologio Didattico App",
+  "pt-BR": "Futatoki Relógio Educativo App",
+  ru: "Futatoki Обучающие Часы Приложение",
+  ar: "Futatoki ساعة تعليمية تطبيق",
+  hi: "Futatoki शैक्षिक घड़ी ऐप",
+  id: "Futatoki Jam Belajar App",
+  th: "Futatoki แอปนาฬิกาเรียนรู้",
+  tr: "Futatoki Öğrenme Saati Uygulaması",
+  pl: "Futatoki Aplikacja Zegar do Nauki",
+  fa: "Futatoki برنامه ساعت آموزشی",
+  ur: "Futatoki تعلیمی گھڑی ایپ",
+  bn: "Futatoki শিক্ষামূলক ঘড়ি অ্যাপ",
 };
 
 export const LP_BRAND: LocalizedBrand = {
@@ -91,9 +126,11 @@ export const APP_BRAND: LocalizedBrand = {
 };
 
 /**
- * iOS Safari ホーム画面追加時のラベル。ja はカナ短縮「ふたとき」、zh-CN/zh-TW は
- * 漢字短縮「扶嗒托基」。それ以外は全 locale で "Futatoki" Latin (固有名詞) 統一。
- * LP の各 locale でも本文中の固有名は Futatoki Latin 表記なので整合する。
+ * iOS Safari ホーム画面追加時のラベル。値は CHARACTER_BRAND と一致するが、
+ * 利用される文脈 (apple-mobile-web-app-title meta) が独自軸なので別 export で
+ * 持つ。ja はカナ短縮「ふたとき」、zh-CN/zh-TW は漢字短縮「扶嗒托基」。
+ * それ以外は CHARACTER_BRAND と同じく "Futatoki" Latin で揃うため、document
+ * metadata 側で fallback して使う。
  */
 export const APPLE_TITLE: LocalizedBrand = {
   ja: "ふたとき",
@@ -156,10 +193,15 @@ export const APP_EXTRA_VARIANTS: Record<string, readonly string[]> = {
  * し、当該 entity の primary name (= OFFICIAL_BRAND[locale]) と重複したもの
  * だけ自動除外して出力する。
  *
- * 短縮単独はひらがな「ふたとき」と Latin「Futatoki」に絞り、旧カタカナ短縮
- * 「フタトキ」は含めない。旧カタカナ主表記「フタトキ時計」は alias として残し、
- * 旧表記からの検索流入を取りこぼさない。連濁などの ja 内表記揺れは
+ * 短縮単独は ja の場合ひらがな「ふたとき」と Latin「Futatoki」に絞り、旧カタカナ
+ * 短縮「フタトキ」は含めない。旧カタカナ主表記「フタトキ時計」は alias として
+ * 残し、旧表記からの検索流入を取りこぼさない。連濁などの ja 内表記揺れは
  * APP_EXTRA_VARIANTS に集約。
+ *
+ * en/zh-CN/zh-TW の primary は OFFICIAL_BRAND 新表記 (末尾 "App" / "应用" /
+ * "App" 追加) に追従しつつ、旧表記 ("Futatoki the Learning Clock" /
+ * "扶嗒托基 教学时钟" / "扶嗒托基 教學時鐘") も検索流入を取りこぼさないよう
+ * alternate として残す。
  */
 export const BRAND_ALIASES: Record<string, readonly string[]> = {
   ja: [
@@ -170,23 +212,40 @@ export const BRAND_ALIASES: Record<string, readonly string[]> = {
     "ふたときアプリ",
     "ふたとき",
   ],
-  en: ["Futatoki the Learning Clock", "Futatoki the Clock", "Futatoki App"],
-  "zh-CN": ["扶嗒托基 教学时钟", "扶嗒托基钟", "扶嗒托基应用", "扶嗒托基"],
-  "zh-TW": ["扶嗒托基 教學時鐘", "扶嗒托基鐘", "扶嗒托基 App", "扶嗒托基"],
-  ko: ["Futatoki 학습 시계", "Futatoki 시계", "Futatoki 앱"],
-  es: ["Futatoki Reloj Educativo", "Futatoki Reloj", "Futatoki App"],
-  fr: ["Futatoki Horloge Éducative", "Futatoki Horloge", "Futatoki App"],
-  de: ["Futatoki Lernuhr", "Futatoki Uhr", "Futatoki App"],
-  it: ["Futatoki Orologio Didattico", "Futatoki Orologio", "Futatoki App"],
-  "pt-BR": ["Futatoki Relógio Educativo", "Futatoki Relógio", "Futatoki App"],
-  ru: ["Futatoki Обучающие Часы", "Futatoki Часы", "Futatoki Приложение"],
-  ar: ["Futatoki ساعة تعليمية", "Futatoki ساعة", "Futatoki تطبيق"],
-  hi: ["Futatoki शैक्षिक घड़ी", "Futatoki घड़ी", "Futatoki ऐप"],
-  id: ["Futatoki Jam Belajar", "Futatoki Jam", "Futatoki App"],
-  th: ["Futatoki นาฬิกาเรียนรู้", "Futatoki นาฬิกา", "Futatoki แอป"],
-  tr: ["Futatoki Öğrenme Saati", "Futatoki Saat", "Futatoki Uygulama"],
-  pl: ["Futatoki Zegar do Nauki", "Futatoki Zegar", "Futatoki Aplikacja"],
-  fa: ["Futatoki ساعت آموزشی", "Futatoki ساعت", "Futatoki برنامه"],
-  ur: ["Futatoki تعلیمی گھڑی", "Futatoki گھڑی", "Futatoki ایپ"],
-  bn: ["Futatoki শিক্ষামূলক ঘড়ি", "Futatoki ঘড়ি", "Futatoki অ্যাপ"],
+  en: [
+    "Futatoki the Learning Clock App",
+    "Futatoki the Learning Clock",
+    "Futatoki the Clock",
+    "Futatoki App",
+  ],
+  "zh-CN": [
+    "扶嗒托基 教学时钟 应用",
+    "扶嗒托基 教学时钟",
+    "扶嗒托基钟",
+    "扶嗒托基应用",
+    "扶嗒托基",
+  ],
+  "zh-TW": [
+    "扶嗒托基 教學時鐘 App",
+    "扶嗒托基 教學時鐘",
+    "扶嗒托基鐘",
+    "扶嗒托基 App",
+    "扶嗒托基",
+  ],
+  ko: ["Futatoki 학습 시계 앱", "Futatoki 학습 시계", "Futatoki 시계", "Futatoki 앱"],
+  es: ["Futatoki Reloj Educativo App", "Futatoki Reloj Educativo", "Futatoki Reloj", "Futatoki App"],
+  fr: ["Futatoki Horloge Éducative App", "Futatoki Horloge Éducative", "Futatoki Horloge", "Futatoki App"],
+  de: ["Futatoki Lernuhr App", "Futatoki Lernuhr", "Futatoki Uhr", "Futatoki App"],
+  it: ["Futatoki Orologio Didattico App", "Futatoki Orologio Didattico", "Futatoki Orologio", "Futatoki App"],
+  "pt-BR": ["Futatoki Relógio Educativo App", "Futatoki Relógio Educativo", "Futatoki Relógio", "Futatoki App"],
+  ru: ["Futatoki Обучающие Часы Приложение", "Futatoki Обучающие Часы", "Futatoki Часы", "Futatoki Приложение"],
+  ar: ["Futatoki ساعة تعليمية تطبيق", "Futatoki ساعة تعليمية", "Futatoki ساعة", "Futatoki تطبيق"],
+  hi: ["Futatoki शैक्षिक घड़ी ऐप", "Futatoki शैक्षिक घड़ी", "Futatoki घड़ी", "Futatoki ऐप"],
+  id: ["Futatoki Jam Belajar App", "Futatoki Jam Belajar", "Futatoki Jam", "Futatoki App"],
+  th: ["Futatoki แอปนาฬิกาเรียนรู้", "Futatoki นาฬิกาเรียนรู้", "Futatoki นาฬิกา", "Futatoki แอป"],
+  tr: ["Futatoki Öğrenme Saati Uygulaması", "Futatoki Öğrenme Saati", "Futatoki Saat", "Futatoki Uygulama"],
+  pl: ["Futatoki Aplikacja Zegar do Nauki", "Futatoki Zegar do Nauki", "Futatoki Zegar", "Futatoki Aplikacja"],
+  fa: ["Futatoki برنامه ساعت آموزشی", "Futatoki ساعت آموزشی", "Futatoki ساعت", "Futatoki برنامه"],
+  ur: ["Futatoki تعلیمی گھڑی ایپ", "Futatoki تعلیمی گھڑی", "Futatoki گھڑی", "Futatoki ایپ"],
+  bn: ["Futatoki শিক্ষামূলক ঘড়ি অ্যাপ", "Futatoki শিক্ষামূলক ঘড়ি", "Futatoki ঘড়ি", "Futatoki অ্যাপ"],
 };
