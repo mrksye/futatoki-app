@@ -29,19 +29,36 @@
   unicode-range: U+0030-0039;
 }
 
-/* Baloo Da 2 SemiBold を Bengali digits (০-৯ / U+09E6-09EF) だけに pyftsubset したもの。
-   OS 標準の Bengali フォント (Vrinda / Nirmala UI 等) は欧文 UI と並べると線が痩せて
-   時計盤の白フチ stroke で削られると視認性が落ちるので self-host。bn locale 以外は
-   この codepoint range の文字が出ないので unicode-range で自動 lazy load される。
-   name table は 'Futatoki Bengali Digits SemiBold' に rename 済 (Baloo の SIL OFL 1.1
-   は RFN 宣言が無いので技術的には不要だが、modified subset と原本の混同を防ぐ意図)。
-   ライセンス本文は public/fonts/OFL-balooda2.txt に同梱。 */
+/* Futatoki Bengali Digits SemiBold / Regular: Baloo Da 2 Variable Font (wght axis) から
+   wght=600 (SemiBold) / wght=400 (Regular) の 2 static instance を抜き出し、U+09E6-09EF
+   (Bengali 数字 ০-৯) だけ pyftsubset したもの。OS 標準の Bengali フォント (Vrinda /
+   Nirmala UI 等) は欧文 UI と並べると線が痩せて時計盤の白フチ stroke で削られると
+   視認性が落ちるので self-host。bn locale 以外はこの codepoint range の文字が出ないので
+   unicode-range で自動 lazy load される。name table は 'Futatoki Bengali Digits
+   SemiBold/Regular' に rename 済 (Baloo の SIL OFL 1.1 は RFN 宣言が無いので技術的には
+   不要だが、modified subset と原本の混同を防ぐ意図)。ライセンス本文は
+   public/fonts/OFL-balooda2.txt に同梱。
+
+   font-weight 値は実体 (SemiBold=600 / Regular=400) ではなく Western Digits (Black=900 /
+   Bold=700) と揃えた「論理 weight」として宣言する。ClockFace.tsx の SVG
+   <text font-weight="900"/"700"> 指定が Bengali / Western 共通の 1 値で同じヒエラルキー
+   (時数 + 5 分目印 = 太い / 1 分目印 = 細い) にヒットするようにするため。Baloo Da 2 は
+   Black (900) を持たない family なので、Nunito の Black/Bold ペアを Baloo Da 2 の
+   SemiBold/Regular ペアで近似する設計 (差 200 wt も揃う)。 */
 @font-face {
   font-family: 'Futatoki Bengali Digits';
   font-style: normal;
-  font-weight: 600;
+  font-weight: 900;
   font-display: swap;
   src: url('/fonts/futatoki-bengali-digits-semibold.woff2') format('woff2');
+  unicode-range: U+09E6-09EF;
+}
+@font-face {
+  font-family: 'Futatoki Bengali Digits';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/futatoki-bengali-digits-regular.woff2') format('woff2');
   unicode-range: U+09E6-09EF;
 }
 
