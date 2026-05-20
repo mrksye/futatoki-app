@@ -45,18 +45,20 @@
 }
 
 /* per-lang font stack の優先順位ルール (全 stack 共通):
-     1. Nunito (app 固有: 時計の Latin 数字を確実に丸ゴシック化するため最先頭、
-        subset 範囲外の glyph は自動で次候補へフォールバック)
-     2. Noto 系 (Android / ChromeOS / Linux ネイティブ)
-     3. Apple 系 (Mac / iOS ネイティブ)
-     4. Microsoft 系 (Windows ネイティブ)
-     5. system-ui / sans-serif fallback
-   根拠: Noto を自前で入れてる Mac/Win user はごく少数なので、Noto を上位に
+     1. Noto 系 (Android / ChromeOS / Linux ネイティブ)
+     2. Apple 系 (Mac / iOS ネイティブ)
+     3. Microsoft 系 (Windows ネイティブ)
+     4. system-ui / sans-serif fallback
+   根拠: Noto を自前で入れてる Mac/Win user はごく少数なので、Noto を先頭に
    置いても Mac/Win 標準 user の見た目は変わらず (Apple/MS 系まで降りてくる)、
-   かつ Android/Linux 民は Noto に確実にヒットして tofu / 残念フォント回避。 */
+   かつ Android/Linux 民は Noto に確実にヒットして tofu / 残念フォント回避。
+   Nunito / Futatoki Bengali Digits は self-host してあるが UI 全般には適用せず、
+   時計盤 (時数 1-12 / 分計 1-60) の SVG inline font-family でだけ参照する
+   (ClockFace.tsx の <text font-family="Futatoki Bengali Digits, Nunito, sans-serif">)。
+   文字盤の Latin 数字を確実に Nunito の丸ゴシックに、Bengali 数字 ০-৯ (U+09E6-09EF)
+   を unicode-range 経由で Futatoki Bengali Digits subset にヒットさせる。 */
 @theme {
   --font-sans:
-    'Nunito',
     'Noto Sans', 'Noto Sans JP', 'Noto Sans CJK JP',
     'Hiragino Maru Gothic ProN', 'Hiragino Kaku Gothic ProN',
     'Yu Gothic UI', 'Yu Gothic', 'Meiryo', 'BIZ UDPGothic',
@@ -134,13 +136,11 @@ html, body, #root {
    render され、各地域の typographic 慣習 (台湾/HK/Macao = 中央、Mainland = 左下、韓文も独自)
    と外れる。Arabic / Thai / Indic 系は --font-sans に glyph が無く Linux 素 user で tofu 化
    するリスク。lang ごとに優先 font を指定して解消する。並び順は --font-sans と同じ
-   「Noto → Apple → Microsoft」ルール (Nunito を最先頭に残して Latin 数字の丸ゴシック化を維持、
-   Bengali だけは Futatoki Bengali Digits を最先頭にして時計盤数字を self-host)。
+   「Noto → Apple → Microsoft」ルール。
    <html lang="..." dir="..."> は i18n/index.tsx が locale 検出時に設定する。
    Web font 化していないので bundle 増加なし。 */
 [lang="zh-TW"] {
   font-family:
-    'Nunito',
     'Noto Sans TC', 'Noto Sans CJK TC', 'Noto Sans',
     'PingFang TC', 'Heiti TC',
     'Microsoft JhengHei',
@@ -149,7 +149,6 @@ html, body, #root {
 
 [lang="zh-CN"] {
   font-family:
-    'Nunito',
     'Noto Sans SC', 'Noto Sans CJK SC', 'Noto Sans',
     'PingFang SC', 'Heiti SC',
     'Microsoft YaHei',
@@ -158,7 +157,6 @@ html, body, #root {
 
 [lang="ko"] {
   font-family:
-    'Nunito',
     'Noto Sans KR', 'Noto Sans CJK KR', 'Noto Sans',
     'Apple SD Gothic Neo',
     'Malgun Gothic',
@@ -167,7 +165,6 @@ html, body, #root {
 
 [dir="rtl"] {
   font-family:
-    'Nunito',
     'Noto Sans Arabic', 'Noto Sans',
     'SF Arabic', 'Geeza Pro',
     'Segoe UI', 'Tahoma',
@@ -176,7 +173,6 @@ html, body, #root {
 
 [lang="th"] {
   font-family:
-    'Nunito',
     'Noto Sans Thai', 'Noto Sans',
     'Thonburi', 'Sukhumvit Set',
     'Leelawadee UI',
@@ -185,7 +181,6 @@ html, body, #root {
 
 [lang="hi"] {
   font-family:
-    'Nunito',
     'Noto Sans Devanagari', 'Noto Sans',
     'Kohinoor Devanagari', 'Devanagari Sangam MN',
     'Nirmala UI', 'Mangal',
@@ -194,8 +189,6 @@ html, body, #root {
 
 [lang="bn"] {
   font-family:
-    'Futatoki Bengali Digits',
-    'Nunito',
     'Noto Sans Bengali', 'Noto Sans',
     'Kohinoor Bangla', 'Bangla Sangam MN',
     'Nirmala UI', 'Vrinda',
