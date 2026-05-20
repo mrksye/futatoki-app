@@ -67,7 +67,7 @@ export function usePaletteClearance(
   };
 
   onMount(() => {
-    // self-hosted Nunito の読み込み完了前に測ると metrics がフォールバック font 基準になる。
+    // self-hosted font の読み込み完了前に測ると metrics がフォールバック font 基準になる。
     // document.fonts が未対応 (ごく古い browser) なら即時 measure。
     if (typeof document !== "undefined" && document.fonts?.ready) {
       document.fonts.ready.then(remeasure);
