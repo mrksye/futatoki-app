@@ -2,7 +2,7 @@
 
 /* Nunito self-host。Google Fonts CDN から直接 import すると訪問者の IP が Google に渡るので
    privacy 配慮で woff2 を public/fonts/ に bundle (3 subset 合計 ~95KB)。
-   CJK / Arabic / Thai 等は Nunito に glyph が無いので下の lang 別 rule で OS 標準にフォールバック。 */
+   subset 外 (CJK / Arabic / Thai / Indic 等) は Nunito ヒットせず下の lang 別 stack に降りる。 */
 @font-face {
   font-family: 'Nunito';
   font-style: normal;
@@ -44,6 +44,25 @@
   unicode-range: U+09E6-09EF;
 }
 
+/* per-lang font stack の優先順位ルール (全 stack 共通):
+     1. Nunito (app 固有: 時計の Latin 数字を確実に丸ゴシック化するため最先頭、
+        subset 範囲外の glyph は自動で次候補へフォールバック)
+     2. Noto 系 (Android / ChromeOS / Linux ネイティブ)
+     3. Apple 系 (Mac / iOS ネイティブ)
+     4. Microsoft 系 (Windows ネイティブ)
+     5. system-ui / sans-serif fallback
+   根拠: Noto を自前で入れてる Mac/Win user はごく少数なので、Noto を上位に
+   置いても Mac/Win 標準 user の見た目は変わらず (Apple/MS 系まで降りてくる)、
+   かつ Android/Linux 民は Noto に確実にヒットして tofu / 残念フォント回避。 */
+@theme {
+  --font-sans:
+    'Nunito',
+    'Noto Sans', 'Noto Sans JP', 'Noto Sans CJK JP',
+    'Hiragino Maru Gothic ProN', 'Hiragino Kaku Gothic ProN',
+    'Yu Gothic UI', 'Yu Gothic', 'Meiryo', 'BIZ UDPGothic',
+    system-ui, -apple-system, sans-serif;
+}
+
 /* tablet variant: 横幅と高さ両方を見て、スマホのランドスケープ (幅 >= 768px でも高さが低い) を除外。
    min-height は iPhone 14 Pro Max ランドスケープ (430px) から十分離れる 32rem (512px) に設定。 */
 @custom-variant tablet (@media (min-width: 48rem) and (min-height: 32rem));
@@ -66,7 +85,7 @@
 html, body, #root {
   margin: 0;
   padding: 0;
-  font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -109,39 +128,78 @@ html, body, #root {
   background: linear-gradient(160deg, #fef6e4 0%, #fce4ec 35%, #e8eaf6 65%, #e0f7fa 100%);
 }
 
-/* lang / dir 別の font stack。Nunito を先頭に残しつつ、Han / Hangul / Arabic glyph はそれぞれの
-   地域 OS 標準フォントで補完する (デフォルトの fallback だと「。」位置等が地域 typographic 慣習と
-   外れる: 台湾/HK/Macao = 中央 / Mainland = 左下 / 韓文・Arabic 各独自)。順序は OS 標準 → Noto
-   保険 (Linux で自前 install した user 向け) → sans-serif。Web font 化していないので bundle 増加なし。
-   i18n/index.tsx が <html lang="..." dir="..."> を locale 検出時に設定する。 */
+/* per-lang font stack。lang 別に「Noto → Apple → Microsoft」の地域 OS ネイティブを優先指定する。
+   既存の --font-sans は JP 系 (Hiragino Maru Gothic 等) 主体で、zh-TW / zh-CN / ko でも JP
+   フォントが Han 字に当たってしまう。その結果「。」等の punctuation 位置が JP 流 (左下) で
+   render され、各地域の typographic 慣習 (台湾/HK/Macao = 中央、Mainland = 左下、韓文も独自)
+   と外れる。Arabic / Thai / Indic 系は --font-sans に glyph が無く Linux 素 user で tofu 化
+   するリスク。lang ごとに優先 font を指定して解消する。並び順は --font-sans と同じ
+   「Noto → Apple → Microsoft」ルール (Nunito を最先頭に残して Latin 数字の丸ゴシック化を維持、
+   Bengali だけは Futatoki Bengali Digits を最先頭にして時計盤数字を self-host)。
+   <html lang="..." dir="..."> は i18n/index.tsx が locale 検出時に設定する。
+   Web font 化していないので bundle 増加なし。 */
 [lang="zh-TW"] {
-  font-family: 'Nunito', 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Noto Sans CJK TC', sans-serif;
+  font-family:
+    'Nunito',
+    'Noto Sans TC', 'Noto Sans CJK TC', 'Noto Sans',
+    'PingFang TC', 'Heiti TC',
+    'Microsoft JhengHei',
+    sans-serif;
 }
 
 [lang="zh-CN"] {
-  font-family: 'Nunito', 'PingFang SC', 'Heiti SC', 'Microsoft YaHei', 'Noto Sans SC', 'Noto Sans CJK SC', sans-serif;
+  font-family:
+    'Nunito',
+    'Noto Sans SC', 'Noto Sans CJK SC', 'Noto Sans',
+    'PingFang SC', 'Heiti SC',
+    'Microsoft YaHei',
+    sans-serif;
 }
 
 [lang="ko"] {
-  font-family: 'Nunito', 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', 'Noto Sans CJK KR', sans-serif;
+  font-family:
+    'Nunito',
+    'Noto Sans KR', 'Noto Sans CJK KR', 'Noto Sans',
+    'Apple SD Gothic Neo',
+    'Malgun Gothic',
+    sans-serif;
 }
 
 [dir="rtl"] {
-  font-family: 'Nunito', 'Noto Sans Arabic', 'SF Arabic', 'Geeza Pro', 'Segoe UI', 'Tahoma', sans-serif;
+  font-family:
+    'Nunito',
+    'Noto Sans Arabic', 'Noto Sans',
+    'SF Arabic', 'Geeza Pro',
+    'Segoe UI', 'Tahoma',
+    system-ui, -apple-system, sans-serif;
 }
 
-/* タイ / インド系スクリプトも Nunito に glyph が無いので OS 標準を指定。未指定だと Linux 素 user で
-   tofu のリスク。 */
 [lang="th"] {
-  font-family: 'Nunito', 'Thonburi', 'Sukhumvit Set', 'Leelawadee UI', 'Noto Sans Thai', sans-serif;
+  font-family:
+    'Nunito',
+    'Noto Sans Thai', 'Noto Sans',
+    'Thonburi', 'Sukhumvit Set',
+    'Leelawadee UI',
+    sans-serif;
 }
 
 [lang="hi"] {
-  font-family: 'Nunito', 'Kohinoor Devanagari', 'Devanagari Sangam MN', 'Nirmala UI', 'Mangal', 'Noto Sans Devanagari', sans-serif;
+  font-family:
+    'Nunito',
+    'Noto Sans Devanagari', 'Noto Sans',
+    'Kohinoor Devanagari', 'Devanagari Sangam MN',
+    'Nirmala UI', 'Mangal',
+    sans-serif;
 }
 
 [lang="bn"] {
-  font-family: 'Futatoki Bengali Digits', 'Nunito', 'Kohinoor Bangla', 'Bangla Sangam MN', 'Nirmala UI', 'Vrinda', 'Noto Sans Bengali', sans-serif;
+  font-family:
+    'Futatoki Bengali Digits',
+    'Nunito',
+    'Noto Sans Bengali', 'Noto Sans',
+    'Kohinoor Bangla', 'Bangla Sangam MN',
+    'Nirmala UI', 'Vrinda',
+    sans-serif;
 }
 
 @keyframes twinkle {
