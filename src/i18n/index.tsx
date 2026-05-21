@@ -8,7 +8,6 @@ import {
   type JSX,
 } from "solid-js";
 import * as i18n from "@solid-primitives/i18n";
-import IntlMessageFormat from "intl-messageformat";
 import { SUPPORTED_LOCALES, DEFAULT_LOCALE, SOURCE_LOCALE, type LocaleMeta } from "./locales";
 import { detectLocale } from "./detect";
 import { applyDocumentMetadata } from "./document-metadata";
@@ -77,24 +76,20 @@ export function I18nProvider(props: { children: JSX.Element }) {
     return i18n.flatten(resource) as unknown as Record<string, string>;
   });
 
-  /** ICU MessageFormat の実体生成は重いのでテンプレ毎にキャッシュ。 */
-  const mfCache = new Map<string, IntlMessageFormat>();
-  const getFormatter = (template: string): IntlMessageFormat => {
-    let mf = mfCache.get(template);
-    if (!mf) {
-      mf = new IntlMessageFormat(template, meta.code);
-      mfCache.set(template, mf);
-    }
-    return mf;
+  /** placeholder は `{name}` のみ (現状 dict は `{n}` の単一形のみ使用)。ICU の plural/select/
+   *  number 等は使わないので intl-messageformat の依存を抜いて素朴な正規表現置換に置換。
+   *  未定義キーは `{key}` のまま残して翻訳漏れに気付ける形にする。 */
+  const interpolate = (
+    template: string,
+    values?: Record<string, unknown>,
+  ): string => {
+    if (!values) return template;
+    return template.replace(/\{(\w+)\}/g, (_, k) =>
+      k in values ? String(values[k]) : `{${k}}`,
+    );
   };
 
-  const translate = i18n.translator(
-    () => dict() ?? {},
-    (template: string, values?: Record<string, unknown>) => {
-      if (!values) return template;
-      return getFormatter(template).format(values) as string;
-    },
-  );
+  const translate = i18n.translator(() => dict() ?? {}, interpolate);
 
   const t: I18nContextValue["t"] = (key, values) =>
     (translate(key as never, values as never) as string | undefined) ?? key;
