@@ -10,14 +10,23 @@
     "kuwashiku": "تَفصِیل",
     "sector": "ٹُکڑے",
     "badge": "دائِرے",
-    "rotateEnter": "گُھماؤ",
-    "rotateExit": "گَھڑی",
     "mergeToSingle": "مِلا دو",
     "splitToTwo": "اَلَگ کَرو",
     "rewindMinute": "{n} مِنَٹ پِیچھے",
-    "autoStart": "خودکار",
-    "autoStop": "بَند",
     "random": "کوئی بھی"
+  },
+  "mode": {
+    "picker": "موڈ",
+    "auto": "خودکار",
+    "free": "آزاد",
+    "clock": "گَھڑی"
+  },
+  "section": {
+    "color": "رَنگ",
+    "detail": "نِشان",
+    "digit": "گَھنٹے",
+    "timeFormat": "فارمَیٹ",
+    "numeral": "اَعداد"
   },
   "activity": {
     "add": "سَرگَرمی",
@@ -54,6 +63,8 @@
     "clockFaceAm": "صُبح کی اینالاگ گَھڑی",
     "clockFacePm": "دوپَہَر کی اینالاگ گَھڑی",
     "clockFace": "اینالاگ گَھڑی",
-    "languagePicker": "زَبان مُنتَخَب کَریں"
+    "languagePicker": "زَبان مُنتَخَب کَریں",
+    "settingsOpen": "سَیٹِنگز کھولیں",
+    "settingsClose": "سَیٹِنگز بَند کَریں"
   }
 }

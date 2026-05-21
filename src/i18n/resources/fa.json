@@ -10,14 +10,23 @@
     "kuwashiku": "کامِل",
     "sector": "بُرِش",
     "badge": "دایِره",
-    "rotateEnter": "چَرخِش",
-    "rotateExit": "ساعَت",
     "mergeToSingle": "رویِ هَم",
     "splitToTwo": "جُدا",
     "rewindMinute": "{n} دَقیقه عَقَب",
-    "autoStart": "خودکار",
-    "autoStop": "تَوَقُّف",
     "random": "تَصادُفی"
+  },
+  "mode": {
+    "picker": "حالَت",
+    "auto": "خودکار",
+    "free": "آزاد",
+    "clock": "ساعَت"
+  },
+  "section": {
+    "color": "رَنگ‌ها",
+    "detail": "علامَت‌ها",
+    "digit": "ساعَت‌ها",
+    "timeFormat": "قالِب",
+    "numeral": "اَعداد"
   },
   "activity": {
     "add": "فَعّالیَّت",
@@ -54,6 +63,8 @@
     "clockFaceAm": "ساعَتِ عَقربه‌ایِ صُبح",
     "clockFacePm": "ساعَتِ عَقربه‌ایِ بَعدازظُهر",
     "clockFace": "ساعَتِ عَقربه‌ای",
-    "languagePicker": "اِنتِخابِ زَبان"
+    "languagePicker": "اِنتِخابِ زَبان",
+    "settingsOpen": "باز کَردَنِ تَنظیمات",
+    "settingsClose": "بَستَنِ تَنظیمات"
   }
 }

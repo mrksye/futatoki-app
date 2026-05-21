@@ -10,14 +10,23 @@
     "kuwashiku": "पूरा",
     "sector": "टुकड़े",
     "badge": "गोले",
-    "rotateEnter": "घुमाओ",
-    "rotateExit": "घड़ी",
     "mergeToSingle": "जोड़ो",
     "splitToTwo": "अलग",
     "rewindMinute": "{n} मिनट पीछे",
-    "autoStart": "ऑटो",
-    "autoStop": "रुको",
     "random": "कोई भी"
+  },
+  "mode": {
+    "picker": "मोड",
+    "auto": "ऑटो",
+    "free": "स्वतंत्र",
+    "clock": "घड़ी"
+  },
+  "section": {
+    "color": "रंग",
+    "detail": "निशान",
+    "digit": "घंटे",
+    "timeFormat": "प्रारूप",
+    "numeral": "अंक"
   },
   "activity": {
     "add": "गतिविधि",
@@ -54,6 +63,8 @@
     "clockFaceAm": "सुबह की एनालॉग घड़ी",
     "clockFacePm": "दोपहर की एनालॉग घड़ी",
     "clockFace": "एनालॉग घड़ी",
-    "languagePicker": "भाषा चुनें"
+    "languagePicker": "भाषा चुनें",
+    "settingsOpen": "सेटिंग्स खोलें",
+    "settingsClose": "सेटिंग्स बंद करें"
   }
 }

@@ -10,14 +10,23 @@
     "kuwashiku": "lengkap",
     "sector": "potongan",
     "badge": "bulatan",
-    "rotateEnter": "putar",
-    "rotateExit": "jam",
     "mergeToSingle": "tumpuk",
     "splitToTwo": "pisah",
     "rewindMinute": "mundur {n} menit",
-    "autoStart": "otomatis",
-    "autoStop": "stop",
     "random": "acak"
+  },
+  "mode": {
+    "picker": "Mode",
+    "auto": "Otomatis",
+    "free": "Bebas",
+    "clock": "Jam"
+  },
+  "section": {
+    "color": "Warna",
+    "detail": "Tanda",
+    "digit": "Jam",
+    "timeFormat": "Format",
+    "numeral": "Angka"
   },
   "activity": {
     "add": "Kegiatan",
@@ -54,6 +63,8 @@
     "clockFaceAm": "Jam analog pagi",
     "clockFacePm": "Jam analog sore",
     "clockFace": "Jam analog",
-    "languagePicker": "Pilih bahasa"
+    "languagePicker": "Pilih bahasa",
+    "settingsOpen": "Buka pengaturan",
+    "settingsClose": "Tutup pengaturan"
   }
 }

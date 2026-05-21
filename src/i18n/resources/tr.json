@@ -10,14 +10,23 @@
     "kuwashiku": "ayrıntılı",
     "sector": "dilim",
     "badge": "yuvarlak",
-    "rotateEnter": "çevir",
-    "rotateExit": "saat",
     "mergeToSingle": "birleştir",
     "splitToTwo": "ayır",
     "rewindMinute": "{n} dk geri",
-    "autoStart": "otomatik",
-    "autoStop": "durdur",
     "random": "rastgele"
+  },
+  "mode": {
+    "picker": "Mod",
+    "auto": "Otomatik",
+    "free": "Serbest",
+    "clock": "Saat"
+  },
+  "section": {
+    "color": "Renkler",
+    "detail": "İşaretler",
+    "digit": "Saatler",
+    "timeFormat": "Biçim",
+    "numeral": "Rakamlar"
   },
   "activity": {
     "add": "Etkinlik",
@@ -54,6 +63,8 @@
     "clockFaceAm": "Sabah analog saat",
     "clockFacePm": "Öğleden sonra analog saat",
     "clockFace": "Analog saat",
-    "languagePicker": "Dil seç"
+    "languagePicker": "Dil seç",
+    "settingsOpen": "Ayarları aç",
+    "settingsClose": "Ayarları kapat"
   }
 }

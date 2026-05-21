@@ -10,14 +10,23 @@
     "kuwashiku": "detallado",
     "sector": "porciones",
     "badge": "círculos",
-    "rotateEnter": "girar",
-    "rotateExit": "reloj",
     "mergeToSingle": "juntar",
     "splitToTwo": "separar",
     "rewindMinute": "{n} min atrás",
-    "autoStart": "auto",
-    "autoStop": "parar",
     "random": "al azar"
+  },
+  "mode": {
+    "picker": "Modo",
+    "auto": "Auto",
+    "free": "Libre",
+    "clock": "Reloj"
+  },
+  "section": {
+    "color": "Colores",
+    "detail": "Marcas",
+    "digit": "Horas",
+    "timeFormat": "Formato",
+    "numeral": "Números"
   },
   "activity": {
     "add": "Actividad",
@@ -54,6 +63,8 @@
     "clockFaceAm": "Reloj analógico de la mañana",
     "clockFacePm": "Reloj analógico de la tarde",
     "clockFace": "Reloj analógico",
-    "languagePicker": "Elegir idioma"
+    "languagePicker": "Elegir idioma",
+    "settingsOpen": "Abrir ajustes",
+    "settingsClose": "Cerrar ajustes"
   }
 }

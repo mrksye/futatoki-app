@@ -12,7 +12,6 @@ import {
   type LanguagePickerOrigin,
 } from "../features/language-picker/state";
 import { useIsTablet } from "../hooks/useIsTablet";
-import { useOrientation } from "../hooks/useOrientation";
 import { useViewport } from "../hooks/useViewport";
 import { useI18n } from "../i18n";
 import { animateMotion, motionAllowed } from "../lib/motion";
@@ -34,9 +33,10 @@ const RING_LONG_RATIO = 1.5;
 /** 0.5 で短辺方向が完全な半円 = stadium / pill 形になり、自転車のチェーンっぽい滑らかな曲線で
  *  回転する。 */
 const CORNER_RATIO = 0.5;
-/** ring center を origin から viewport 長辺方向に push する量 (ring 長辺 * これ)。値を上げるほど
- *  ring が画面外に押し出されて visible 範囲が狭まる。 */
-const RING_CENTER_OUTSET_RATIO = 0.15;
+/** ring center を origin から x 方向に push する量 (ring 長辺 * これ)。正で左に push、負で右に
+ *  push。popover 内の 🌏 ボタンを起点に「ボタンの右側にリングを寄せる」運用なので負値。値の絶対値
+ *  を上げるほど ring が画面外に押し出されて visible 範囲が狭まる。 */
+const RING_CENTER_OUTSET_RATIO = -0.15;
 /** stadium 形 (CORNER_RATIO=0.5) の周長 = short * (2*longRatio + π - 2)。item 間隔から ring 短辺
  *  を逆算するための divisor。 */
 const RING_PERIMETER_DIVISOR = 2 * RING_LONG_RATIO + Math.PI - 2;
@@ -76,26 +76,25 @@ const LanguagePicker: Component = () => {
 
 const LanguageRingMenu: Component<{ origin: LanguagePickerOrigin }> = (props) => {
   const isTablet = useIsTablet();
-  const isLandscape = useOrientation();
   const viewport = useViewport();
   const { locale } = useI18n();
   const iconSize = () => isTablet() ? ICON_SIZE_TABLET : ICON_SIZE_MOBILE;
   const iconFont = () => isTablet() ? ICON_FONT_TABLET : ICON_FONT_MOBILE;
 
   /** item 間隔 (icon + gap) * N が周長になるよう ring 短辺を逆算するので、gap を変えれば ring が
-   *  自動で伸び縮みする。viewport 向きに追従して長辺/短辺を割り当てる。 */
+   *  自動で伸び縮みする。viewport の向きに関わらず常に横長 stadium に固定 (popover 内の 🌏 起点
+   *  から下に広がる細い帯にする運用)。 */
   const itemSpacing = () => iconSize() + (isTablet() ? ICON_GAP_TABLET : ICON_GAP_MOBILE);
   const ringShort = () => SUPPORTED_LOCALES.length * itemSpacing() / RING_PERIMETER_DIVISOR;
   const ringLong = () => ringShort() * RING_LONG_RATIO;
-  const ringW = () => isLandscape() ? ringLong() : ringShort();
-  const ringH = () => isLandscape() ? ringShort() : ringLong();
+  const ringW = () => ringLong();
+  const ringH = () => ringShort();
   const cornerR = () => ringShort() * CORNER_RATIO;
 
-  /** ring center を viewport 長辺方向 (landscape=-x、portrait=-y) に push して画面外に押し出し、
-   *  可視範囲を短辺方向の細い帯に絞る。 */
+  /** ring center を origin から x 方向に push して画面外に押し出し、可視範囲を縦の細い帯に絞る。 */
   const outsetPx = () => ringLong() * RING_CENTER_OUTSET_RATIO;
-  const ringCx = () => isLandscape() ? props.origin.x - outsetPx() : props.origin.x;
-  const ringCy = () => isLandscape() ? props.origin.y : props.origin.y - outsetPx();
+  const ringCx = () => props.origin.x - outsetPx();
+  const ringCy = () => props.origin.y;
 
   /** path-local 座標 (0,0)-(W,H) で CW 順に描く stadium path。length 0 = 左上 corner 角丸の終点
    *  なので、length 0.5L = 開始点の対角 ≈ 右下 corner となり initial offset の基準に使える。 */

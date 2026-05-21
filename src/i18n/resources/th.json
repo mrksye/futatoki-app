@@ -10,14 +10,23 @@
     "kuwashiku": "ละเอียด",
     "sector": "แบ่งสี",
     "badge": "วงกลม",
-    "rotateEnter": "หมุน",
-    "rotateExit": "นาฬิกา",
     "mergeToSingle": "ซ้อนกัน",
     "splitToTwo": "แยกกัน",
     "rewindMinute": "ถอย {n} นาที",
-    "autoStart": "ออโต้",
-    "autoStop": "หยุด",
     "random": "สุ่ม"
+  },
+  "mode": {
+    "picker": "โหมด",
+    "auto": "อัตโนมัติ",
+    "free": "อิสระ",
+    "clock": "นาฬิกา"
+  },
+  "section": {
+    "color": "สี",
+    "detail": "ขีดนาที",
+    "digit": "ชั่วโมง",
+    "timeFormat": "รูปแบบ",
+    "numeral": "ตัวเลข"
   },
   "activity": {
     "add": "กิจกรรม",
@@ -54,6 +63,8 @@
     "clockFaceAm": "นาฬิกาเข็มตอนเช้า",
     "clockFacePm": "นาฬิกาเข็มตอนบ่าย",
     "clockFace": "นาฬิกาเข็ม",
-    "languagePicker": "เลือกภาษา"
+    "languagePicker": "เลือกภาษา",
+    "settingsOpen": "เปิดการตั้งค่า",
+    "settingsClose": "ปิดการตั้งค่า"
   }
 }

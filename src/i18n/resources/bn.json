@@ -10,14 +10,23 @@
     "kuwashiku": "বিস্‌তারিত",
     "sector": "রঙিন ভাগ",
     "badge": "গোল",
-    "rotateEnter": "ঘোরাও",
-    "rotateExit": "ঘড়ি",
     "mergeToSingle": "একসাথে",
     "splitToTwo": "আলাদা",
     "rewindMinute": "{n} মিনিট পিছে",
-    "autoStart": "অটো",
-    "autoStop": "থামাও",
     "random": "এলোমেলো"
+  },
+  "mode": {
+    "picker": "মোড",
+    "auto": "অটো",
+    "free": "মুক্ত",
+    "clock": "ঘড়ি"
+  },
+  "section": {
+    "color": "রঙ",
+    "detail": "চিহ্ন",
+    "digit": "ঘণ্টা",
+    "timeFormat": "ছক",
+    "numeral": "সংখ্যা"
   },
   "activity": {
     "add": "কাজ",
@@ -54,6 +63,8 @@
     "clockFaceAm": "সকালের অ্যানালগ ঘড়ি",
     "clockFacePm": "বিকেলের অ্যানালগ ঘড়ি",
     "clockFace": "অ্যানালগ ঘড়ি",
-    "languagePicker": "ভাষা নির্বাচন"
+    "languagePicker": "ভাষা নির্বাচন",
+    "settingsOpen": "সেটিংস খুলুন",
+    "settingsClose": "সেটিংস বন্ধ করুন"
   }
 }

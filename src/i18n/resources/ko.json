@@ -10,14 +10,23 @@
     "kuwashiku": "자세하게",
     "sector": "조각",
     "badge": "동그라미",
-    "rotateEnter": "회전",
-    "rotateExit": "시계",
     "mergeToSingle": "겹치기",
     "splitToTwo": "나누기",
     "rewindMinute": "{n}분 되돌리기",
-    "autoStart": "자동",
-    "autoStop": "멈춤",
     "random": "랜덤"
+  },
+  "mode": {
+    "picker": "모드",
+    "auto": "자동",
+    "free": "자유",
+    "clock": "시계"
+  },
+  "section": {
+    "color": "색상",
+    "detail": "분 눈금",
+    "digit": "시",
+    "timeFormat": "표기",
+    "numeral": "숫자"
   },
   "activity": {
     "add": "활동",
@@ -54,6 +63,8 @@
     "clockFaceAm": "오전 아날로그 시계",
     "clockFacePm": "오후 아날로그 시계",
     "clockFace": "아날로그 시계",
-    "languagePicker": "언어 선택"
+    "languagePicker": "언어 선택",
+    "settingsOpen": "설정 열기",
+    "settingsClose": "설정 닫기"
   }
 }

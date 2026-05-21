@@ -10,14 +10,23 @@
     "kuwashiku": "くわしく",
     "sector": "くぎり",
     "badge": "まる",
-    "rotateEnter": "かいてん",
-    "rotateExit": "とけい",
     "mergeToSingle": "かさねる",
     "splitToTwo": "わける",
     "rewindMinute": "{n}ふんもどす",
-    "autoStart": "じどう",
-    "autoStop": "すとっぷ",
     "random": "らんだむ"
+  },
+  "mode": {
+    "picker": "もーど",
+    "auto": "じどう",
+    "free": "じゆう",
+    "clock": "とけい"
+  },
+  "section": {
+    "color": "はいしょく",
+    "detail": "ぶんけい",
+    "digit": "じすう",
+    "timeFormat": "じかんひょうき",
+    "numeral": "すうじ"
   },
   "activity": {
     "add": "できごと",
@@ -45,7 +54,7 @@
     "distinct12": "くっきりいろ",
     "vivid": "そらのいろ",
     "ygb": "あおきみどり",
-    "primary3": "さんげんしょく",
+    "primary3": "3げんしょく",
     "wheel": "いろのわ",
     "cud12": "みんなのいろ",
     "monotone": "ものとーん"
@@ -54,6 +63,8 @@
     "clockFaceAm": "午前のアナログ時計",
     "clockFacePm": "午後のアナログ時計",
     "clockFace": "アナログ時計",
-    "languagePicker": "言語を選ぶ"
+    "languagePicker": "言語を選ぶ",
+    "settingsOpen": "せっていをひらく",
+    "settingsClose": "せっていをとじる"
   }
 }

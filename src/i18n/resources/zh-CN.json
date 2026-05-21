@@ -10,14 +10,23 @@
     "kuwashiku": "详细",
     "sector": "分段",
     "badge": "圆点",
-    "rotateEnter": "自由走",
-    "rotateExit": "时钟",
     "mergeToSingle": "叠起来",
     "splitToTwo": "分开",
     "rewindMinute": "退{n}分钟",
-    "autoStart": "自动走",
-    "autoStop": "停下来",
     "random": "随机"
+  },
+  "mode": {
+    "picker": "模式",
+    "auto": "自动",
+    "free": "自由",
+    "clock": "时钟"
+  },
+  "section": {
+    "color": "配色",
+    "detail": "分刻度",
+    "digit": "时数",
+    "timeFormat": "时制",
+    "numeral": "数字"
   },
   "activity": {
     "add": "活动",
@@ -54,6 +63,8 @@
     "clockFaceAm": "上午的指针时钟",
     "clockFacePm": "下午的指针时钟",
     "clockFace": "指针时钟",
-    "languagePicker": "选择语言"
+    "languagePicker": "选择语言",
+    "settingsOpen": "打开设置",
+    "settingsClose": "关闭设置"
   }
 }

@@ -10,14 +10,23 @@
     "kuwashiku": "szczegóły",
     "sector": "wycinki",
     "badge": "kółka",
-    "rotateEnter": "kręć",
-    "rotateExit": "zegar",
     "mergeToSingle": "złącz",
     "splitToTwo": "rozdziel",
     "rewindMinute": "cofnij o {n} min",
-    "autoStart": "auto",
-    "autoStop": "stop",
     "random": "losowo"
+  },
+  "mode": {
+    "picker": "Tryb",
+    "auto": "Auto",
+    "free": "Swobodny",
+    "clock": "Zegar"
+  },
+  "section": {
+    "color": "Kolory",
+    "detail": "Znaczniki",
+    "digit": "Godziny",
+    "timeFormat": "Format",
+    "numeral": "Cyfry"
   },
   "activity": {
     "add": "Zajęcia",
@@ -54,6 +63,8 @@
     "clockFaceAm": "Zegar analogowy rano",
     "clockFacePm": "Zegar analogowy po południu",
     "clockFace": "Zegar analogowy",
-    "languagePicker": "Wybierz język"
+    "languagePicker": "Wybierz język",
+    "settingsOpen": "Otwórz ustawienia",
+    "settingsClose": "Zamknij ustawienia"
   }
 }

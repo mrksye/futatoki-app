@@ -10,14 +10,23 @@
     "kuwashiku": "detailed",
     "sector": "slices",
     "badge": "circles",
-    "rotateEnter": "spin",
-    "rotateExit": "clock",
     "mergeToSingle": "stack",
     "splitToTwo": "split",
     "rewindMinute": "back {n} min",
-    "autoStart": "auto",
-    "autoStop": "stop",
     "random": "random"
+  },
+  "mode": {
+    "picker": "Mode",
+    "auto": "Auto",
+    "free": "Free",
+    "clock": "Clock"
+  },
+  "section": {
+    "color": "Colors",
+    "detail": "Marks",
+    "digit": "Hours",
+    "timeFormat": "Format",
+    "numeral": "Numbers"
   },
   "activity": {
     "add": "activity",
@@ -54,6 +63,8 @@
     "clockFaceAm": "AM analog clock",
     "clockFacePm": "PM analog clock",
     "clockFace": "Analog clock",
-    "languagePicker": "Choose language"
+    "languagePicker": "Choose language",
+    "settingsOpen": "Open settings",
+    "settingsClose": "Close settings"
   }
 }

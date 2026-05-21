@@ -5,8 +5,10 @@ import HandsLayer from "./HandsLayer";
 import ActivityLayer from "./ActivityLayer";
 import ActivityPicker from "./ActivityPicker";
 import LanguagePicker from "./LanguagePicker";
+import ModePicker from "./ModePicker";
+import RotationActions from "./RotationActions";
 import SecondsBar from "./SecondsBar";
-import SettingsPanel from "./SettingsPanel";
+import SettingsPopover from "./SettingsPopover";
 import SkyBackground from "./SkyBackground";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { useOrientation } from "../hooks/useOrientation";
@@ -701,7 +703,11 @@ export const ClockLayout: Component = () => {
         {isAm() ? t("badge.am") : t("badge.pm")}
       </div>
 
-      <SettingsPanel />
+      <ModePicker />
+
+      <SettingsPopover />
+
+      <RotationActions />
 
       <ActivityPicker />
 

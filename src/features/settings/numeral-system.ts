@@ -87,3 +87,23 @@ export function toggleNumeralSystem(localeCode: string): void {
 export function resetNumeralSystemChoice(): void {
   setNumeralSystemChoice(null);
 }
+
+/** locale で利用可能な数字体系の一覧。default を先頭に。LOCALE_NUMERAL_CONFIG に無い locale は
+ *  western 1 個。ラジオ UI が「選択肢を全部並べる」用途で読む。 */
+export function availableNumeralSystems(localeCode: string): readonly NumeralSystem[] {
+  const config = LOCALE_NUMERAL_CONFIG[localeCode];
+  if (!config) return ["western"];
+  return [config.default, config.alternate];
+}
+
+/** 特定の数字体系を直接選択。locale で未対応な system 指定は no-op (UI 側で出さない想定)。
+ *  default を選んだ場合は choice を null に戻して「locale 切替時の default に追従」モードへ。 */
+export function selectNumeralSystem(localeCode: string, system: NumeralSystem): void {
+  const config = LOCALE_NUMERAL_CONFIG[localeCode];
+  if (!config) {
+    if (system === "western") setNumeralSystemChoice(null);
+    return;
+  }
+  if (system === config.default) setNumeralSystemChoice(null);
+  else if (system === config.alternate) setNumeralSystemChoice(system);
+}

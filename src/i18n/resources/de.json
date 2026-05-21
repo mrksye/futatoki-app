@@ -10,14 +10,23 @@
     "kuwashiku": "genau",
     "sector": "tortenstück",
     "badge": "kreise",
-    "rotateEnter": "drehen",
-    "rotateExit": "uhr",
     "mergeToSingle": "zusammen",
     "splitToTwo": "trennen",
     "rewindMinute": "{n} min zurück",
-    "autoStart": "auto",
-    "autoStop": "stopp",
     "random": "Zufall"
+  },
+  "mode": {
+    "picker": "Modus",
+    "auto": "Auto",
+    "free": "Frei",
+    "clock": "Uhr"
+  },
+  "section": {
+    "color": "Farben",
+    "detail": "Striche",
+    "digit": "Stunden",
+    "timeFormat": "Format",
+    "numeral": "Ziffern"
   },
   "activity": {
     "add": "Aktivität",
@@ -54,6 +63,8 @@
     "clockFaceAm": "Analoge Uhr am Vormittag",
     "clockFacePm": "Analoge Uhr am Nachmittag",
     "clockFace": "Analoge Uhr",
-    "languagePicker": "Sprache wählen"
+    "languagePicker": "Sprache wählen",
+    "settingsOpen": "Einstellungen öffnen",
+    "settingsClose": "Einstellungen schließen"
   }
 }
