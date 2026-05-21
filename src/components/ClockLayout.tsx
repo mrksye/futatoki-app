@@ -460,6 +460,15 @@ export const ClockLayout: Component = () => {
   let mergedLongPressed = false;
   useMergeImpactWobble(() => mergedContainerRef, mergedRevealed);
 
+  /** わける/かさねる 切替中 (transitioning) は body に slot-transitioning を付与し、index.css の
+   *  `body.slot-transitioning .slot-crossfade` rule で slot-crossfade ボタン (できごと追加 / 1ふん
+   *  戻す / AM/PM バッジ) を slot-dim animation で 560ms 中央谷型に薄くする (移動するボタンに
+   *  視線が引かれるのを抑え、時計の合体アニメに集中させる UX 設計)。 */
+  createEffect(() => {
+    document.body.classList.toggle("slot-transitioning", transitioning());
+  });
+  onCleanup(() => document.body.classList.remove("slot-transitioning"));
+
   const cancelMergedPress = () => {
     if (mergedPressTimer) {
       clearTimeout(mergedPressTimer);
