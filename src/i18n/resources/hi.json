@@ -13,7 +13,8 @@
     "mergeToSingle": "जोड़ो",
     "splitToTwo": "अलग",
     "rewindMinute": "{n} मिनट पीछे",
-    "random": "कोई भी"
+    "random": "कोई भी",
+    "noNumerals": "कोई नहीं"
   },
   "mode": {
     "picker": "मोड",

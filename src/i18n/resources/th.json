@@ -13,7 +13,8 @@
     "mergeToSingle": "ซ้อนกัน",
     "splitToTwo": "แยกกัน",
     "rewindMinute": "ถอย {n} นาที",
-    "random": "สุ่ม"
+    "random": "สุ่ม",
+    "noNumerals": "ไม่มี"
   },
   "mode": {
     "picker": "โหมด",

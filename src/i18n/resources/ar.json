@@ -13,7 +13,8 @@
     "mergeToSingle": "دَمْج",
     "splitToTwo": "فَصْل",
     "rewindMinute": "رُجُوع {n} دَقِيقَة",
-    "random": "عَشْوَائِيّ"
+    "random": "عَشْوَائِيّ",
+    "noNumerals": "لَا شَيْء"
   },
   "mode": {
     "picker": "وَضْع",

@@ -13,7 +13,8 @@
     "mergeToSingle": "かさねる",
     "splitToTwo": "わける",
     "rewindMinute": "{n}ふんもどす",
-    "random": "らんだむ"
+    "random": "らんだむ",
+    "noNumerals": "なし"
   },
   "mode": {
     "picker": "もーど",

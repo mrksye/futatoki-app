@@ -13,7 +13,8 @@
     "mergeToSingle": "birleştir",
     "splitToTwo": "ayır",
     "rewindMinute": "{n} dk geri",
-    "random": "rastgele"
+    "random": "rastgele",
+    "noNumerals": "Yok"
   },
   "mode": {
     "picker": "Mod",

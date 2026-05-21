@@ -13,7 +13,8 @@
     "mergeToSingle": "رویِ هَم",
     "splitToTwo": "جُدا",
     "rewindMinute": "{n} دَقیقه عَقَب",
-    "random": "تَصادُفی"
+    "random": "تَصادُفی",
+    "noNumerals": "هیچ"
   },
   "mode": {
     "picker": "حالَت",

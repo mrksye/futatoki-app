@@ -13,7 +13,8 @@
     "mergeToSingle": "tumpuk",
     "splitToTwo": "pisah",
     "rewindMinute": "mundur {n} menit",
-    "random": "acak"
+    "random": "acak",
+    "noNumerals": "Tidak ada"
   },
   "mode": {
     "picker": "Mode",

@@ -13,7 +13,8 @@
     "mergeToSingle": "zusammen",
     "splitToTwo": "trennen",
     "rewindMinute": "{n} min zurück",
-    "random": "Zufall"
+    "random": "Zufall",
+    "noNumerals": "Keine"
   },
   "mode": {
     "picker": "Modus",

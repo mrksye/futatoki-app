@@ -13,7 +13,8 @@
     "mergeToSingle": "مِلا دو",
     "splitToTwo": "اَلَگ کَرو",
     "rewindMinute": "{n} مِنَٹ پِیچھے",
-    "random": "کوئی بھی"
+    "random": "کوئی بھی",
+    "noNumerals": "کوئی نہیں"
   },
   "mode": {
     "picker": "موڈ",

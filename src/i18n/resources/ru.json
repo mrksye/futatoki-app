@@ -13,7 +13,8 @@
     "mergeToSingle": "вместе",
     "splitToTwo": "отдельно",
     "rewindMinute": "-{n} минута",
-    "random": "случайно"
+    "random": "случайно",
+    "noNumerals": "Нет"
   },
   "mode": {
     "picker": "Режим",

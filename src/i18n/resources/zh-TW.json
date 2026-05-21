@@ -13,7 +13,8 @@
     "mergeToSingle": "疊起來",
     "splitToTwo": "分開",
     "rewindMinute": "倒退 {n} 分",
-    "random": "隨機"
+    "random": "隨機",
+    "noNumerals": "無"
   },
   "mode": {
     "picker": "模式",

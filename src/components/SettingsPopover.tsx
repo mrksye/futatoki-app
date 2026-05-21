@@ -243,11 +243,13 @@ const SettingsPopover: Component = () => {
             </div>
           </div>
 
-          {/* すうじ — 各 system + 「なし」(hidden) をラジオ式に並べる。bn 等の multi-system locale
-              でも western/bengali を別 option として並列に出す。なし option ラベルは現在体系の
-              「123」を line-through で打ち消した表現。U+0336 combining stroke を 1 字ずつ挟む方式は
-              Bengali shaping で digit + stroke cluster が tofu 化することがあるので、表示は普通の
-              数字 (1分戻すボタンと同じ formatNumeral 経由) に CSS text-decoration で線を引く。 */}
+          {/* すうじたいけい — 各 system + 「なし」(hidden) をラジオ式に並べる。bn 等の multi-system
+              locale でも western/bengali を別 option として並列に出す。「なし」 option ラベルは
+              各 locale の「なし / None / Aucun …」翻訳 (settings.noNumerals) をそのまま描画する。
+              旧版は現在体系の「123」に line-through を引いた表現だったが、line-through は数字を
+              否定する記号としては読みづらく (CJK や Arabic shaping で線位置が崩れる locale もある)、
+              また打ち消し線の意味が「削除済み」とも取れて子供向け UI に向かなかったので素直に
+              各言語の自然な「なし」語を出す。 */}
           <div class="mb-3">
             <div class={sectionLabelClass}>{t("section.numeral")}</div>
             <div class="flex gap-1">
@@ -261,8 +263,8 @@ const SettingsPopover: Component = () => {
                 )}
               </For>
               <button
-                class={`${pillBtn} before:line-through ${hourNumeralsHidden() ? pillActive : pillInactive}`}
-                aria-label={formatNumeral(123)}
+                class={`${pillBtn} ${hourNumeralsHidden() ? pillActive : pillInactive}`}
+                aria-label={t("settings.noNumerals")}
                 onClick={() => setHourNumeralsHidden(true)}
               />
             </div>
