@@ -46,6 +46,11 @@ const SWATCH_GAPS_WHEEL = [5, 5, 6] as const;
  * 右上の歯車トリガー + 展開パネル。
  *
  * - パネル内は はいしょく / ぶんけい / じすう / じかんひょうき / すうじ / 言語選択 を並べる。
+ * - popover content は常時マウントし、open 切替時に opacity + transform を transition させて
+ *   fade/scale in-out する (ModePicker 同型)。Show でアンマウントすると enter 時の補間が走らない。
+ *   content は absolute 配置で trigger 直下に重ねるので、collapsed 時のレイアウト占有はゼロ。
+ *   closed 時は `pointer-events: none` で下層要素 (時計・他 popover の overlay close 等) の
+ *   タップを吸わないよう切る。
  * - popover 外タップで close するのは、popover 開いてる間だけマウントする透明 overlay で吸収する。
  *   document level pointerdown listener は pointerdown を伝播させてしまい時計・ModePicker・回転
  *   モード等の下層要素を意図せず発火させるので使わない。overlay の z は z-[55] で他 floating
@@ -95,12 +100,12 @@ const SettingsPopover: Component = () => {
         />
       </Show>
 
-    {/* container 自身は items-end の flex col で width が popover content 幅まで広がる。
-        歯車ボタンより左側に空きスペースが残るので、その透明領域タップでも close できるよう
-        container 自身に onClick={close} を載せる。歯車ボタンと popover content の onClick は
-        stopPropagation で container まで bubble させず、各々の役割 (toggle / 設定操作) を保つ。 */}
+    {/* container は fixed で trigger サイズだけ占有 (popover content は absolute で trigger
+        直下右寄せ)。trigger と popover content の onClick はそれぞれ stopPropagation で各々の
+        役割 (toggle / 設定操作) を保つ。container 自身の onClick={close} は ModePicker と機構を
+        揃える保険 (実際の外タップ close は overlay 経由で発火するので通常ここまで来ない)。 */}
     <div
-      class="fixed top-[var(--safe-edge-top)] right-[var(--safe-edge-right)] z-[60] flex flex-col items-end gap-2"
+      class="fixed top-[var(--safe-edge-top)] right-[var(--safe-edge-right)] z-[60]"
       onClick={() => { if (open()) close(); }}
     >
       <button
@@ -111,10 +116,28 @@ const SettingsPopover: Component = () => {
         <GearIcon class="w-5 h-5 tablet:w-6 tablet:h-6" />
       </button>
 
-      <Show when={open()}>
+      {/* popover content は常時マウントして open() 連動で opacity + transform を transition。
+          ModePicker のメニュー stagger と ease curve を揃え、transform-origin は trigger 直下の
+          top right に置いて歯車から開いてくる感じを出す。closed 時は pointer-events: none で
+          領域を実質的に消す (下層 overlay の close click が通るように)。 */}
         <div
-          class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-3 tablet:p-4 max-h-[80vh] overflow-y-auto"
-          style={{ "min-width": "240px", "max-width": "320px" }}
+          class="absolute top-full right-0 mt-2 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-3 tablet:p-4 max-h-[80vh] overflow-y-auto min-w-[240px] max-w-[320px] tablet:min-w-[280px] tablet:max-w-[400px]"
+          style={{
+            // absolute 配置だと width: auto = shrink-to-fit が containing block (= trigger サイズ
+            // 数十 px) に引きずられて min-width 下限に張り付く。max-content にすると containing
+            // block と無関係に中身の intrinsic max content width で算出され、その上で min/max-width
+            // 制約 (class 側で tablet breakpoint 込みで指定) が clamp として効く。これで pillBtn
+            // 系と同じ tablet ブレークポイントで popover 全体も一段広がる。
+            width: "max-content",
+            opacity: open() ? 1 : 0,
+            transform: open()
+              ? "translateY(0) scale(1)"
+              : "translateY(-8px) scale(0.92)",
+            transition:
+              "opacity 180ms ease-out, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+            "pointer-events": open() ? "auto" : "none",
+            "transform-origin": "top right",
+          }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* はいしょく */}
@@ -129,7 +152,7 @@ const SettingsPopover: Component = () => {
                   return (
                   <button
                     class={
-                      "flex items-center gap-1.5 px-2 py-1 rounded-full border active:scale-95 transition-all before:hidden " +
+                      "flex items-center gap-1.5 px-2 py-1 tablet:px-3 tablet:py-2 rounded-full border active:scale-95 transition-all before:hidden " +
                       (paletteId() === p.id
                         ? "border-gray-800 bg-gray-100"
                         : "border-gray-200 bg-white")
@@ -168,7 +191,7 @@ const SettingsPopover: Component = () => {
                         )}
                       </For>
                     </span>
-                    <span class="text-xs tablet:text-sm">
+                    <span class="text-xs tablet:text-base">
                       {t(`palette.${p.id}` as never)}
                     </span>
                   </button>
@@ -280,7 +303,6 @@ const SettingsPopover: Component = () => {
             </div>
           </div>
         </div>
-      </Show>
     </div>
     </>
   );
