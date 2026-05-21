@@ -1,4 +1,4 @@
-import { createSignal, onCleanup, onMount, Show, For, type Component } from "solid-js";
+import { createSignal, Show, For, type Component } from "solid-js";
 import { useI18n } from "../i18n";
 import { palettes } from "../colors";
 import { colorMode, toggleColorMode } from "../features/settings/color-mode";
@@ -16,7 +16,7 @@ import {
   hourNumeralsHidden,
   setHourNumeralsHidden,
 } from "../features/settings/nothing-digits-font";
-import { languagePickerOpen, openLanguagePickerAtElement } from "../features/language-picker/state";
+import { openLanguagePickerAtElement } from "../features/language-picker/state";
 
 /** はいしょく swatch に出す代表色の hour (24h)。12 / 13 / 14 時 = pm[0] / pm[1] / pm[2]。 */
 const SWATCH_PM_INDICES = [0, 1, 2] as const;
@@ -30,8 +30,13 @@ const strikethrough = (s: string): string =>
  * 右上の歯車トリガー + 展開パネル。
  *
  * - パネル内は はいしょく / ぶんけい / じすう / じかんひょうき / すうじ / 言語選択 を並べる。
- * - popover 外の pointerdown で自動 close。trigger と popover content の両方を 1 つの
- *   containerRef でラップして、内部 click は contains で守る。
+ * - popover 外タップで close するのは、popover 開いてる間だけマウントする透明 overlay で吸収する。
+ *   document level pointerdown listener は pointerdown を伝播させてしまい時計・ModePicker・回転
+ *   モード等の下層要素を意図せず発火させるので使わない。overlay の z は z-[55] で他 floating
+ *   ボタン (ModePicker / RotationActions / AM/PM badge 等、軒並み z-50 以下) より上に置き、popover
+ *   content/trigger (z-[60]) より下、language picker overlay (z-[100]) より下に位置取る。
+ * - language picker open 中は z-[100] の language picker overlay が前面に出るので popover overlay は
+ *   隠れて何も拾わず、ピッカーを閉じても popover はそのまま開いた状態が維持される。
  * - autoRotate (子どもが眺めるモード) 中も常時表示する方針: ModePicker と同じく「いつでも
  *   触れる」UX を優先する。
  * - ラベル描画は index.css の `button[aria-label]::before` 規約に従う。アイコン (⚙ や 🌏) や
@@ -43,21 +48,8 @@ const SettingsPopover: Component = () => {
   const { t, locale } = useI18n();
   const [open, setOpen] = createSignal(false);
 
-  let containerRef: HTMLDivElement | undefined;
-
   const close = () => setOpen(false);
   const toggle = () => setOpen((o) => !o);
-
-  const onDocPointerDown = (e: PointerEvent) => {
-    if (!open()) return;
-    // 言語ピッカーが出ている間は popover を維持する (popover 内の 🌏 ボタン経由で開いた前提で
-    // 戻り先 = popover が消えてると遷移が不自然)。
-    if (languagePickerOpen()) return;
-    if (containerRef && !containerRef.contains(e.target as Node)) close();
-  };
-
-  onMount(() => document.addEventListener("pointerdown", onDocPointerDown));
-  onCleanup(() => document.removeEventListener("pointerdown", onDocPointerDown));
 
   const pillBtn =
     "px-3 py-1 tablet:px-4 tablet:py-2 rounded-full text-sm tablet:text-base font-bold shadow-sm active:scale-90 transition-all whitespace-nowrap";
@@ -74,14 +66,29 @@ const SettingsPopover: Component = () => {
   };
 
   return (
+    <>
+      {/* popover 外タップ吸収用の透明 overlay。pointerdown を吸って下層要素 (時計・ModePicker・
+          回転モード等) の誤発火を防ぐ。tap (= pointerup → click) で popover close。 */}
+      <Show when={open()}>
+        <div
+          class="fixed inset-0 z-[55]"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={close}
+        />
+      </Show>
+
+    {/* container 自身は items-end の flex col で width が popover content 幅まで広がる。
+        ⚙ ボタンより左側に空きスペースが残るので、その透明領域タップでも close できるよう
+        container 自身に onClick={close} を載せる。⚙ ボタンと popover content の onClick は
+        stopPropagation で container まで bubble させず、各々の役割 (toggle / 設定操作) を保つ。 */}
     <div
-      ref={(el) => (containerRef = el)}
-      class="fixed top-[var(--safe-edge-top)] right-[var(--safe-edge-right)] z-50 flex flex-col items-end gap-2"
+      class="fixed top-[var(--safe-edge-top)] right-[var(--safe-edge-right)] z-[60] flex flex-col items-end gap-2"
+      onClick={() => { if (open()) close(); }}
     >
       <button
         class="w-10 h-10 tablet:w-12 tablet:h-12 rounded-full bg-white/80 shadow-md flex items-center justify-center active:scale-90 transition-all text-xl tablet:text-2xl before:hidden"
         aria-label={open() ? t("a11y.settingsClose") : t("a11y.settingsOpen")}
-        onClick={toggle}
+        onClick={(e) => { e.stopPropagation(); toggle(); }}
       >
         ⚙
       </button>
@@ -90,6 +97,7 @@ const SettingsPopover: Component = () => {
         <div
           class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-3 tablet:p-4 max-h-[80vh] overflow-y-auto"
           style={{ "min-width": "240px", "max-width": "320px" }}
+          onClick={(e) => e.stopPropagation()}
         >
           {/* はいしょく */}
           <div class="mb-3">
@@ -244,6 +252,7 @@ const SettingsPopover: Component = () => {
         </div>
       </Show>
     </div>
+    </>
   );
 };
 
