@@ -24,8 +24,23 @@ import {
 import { openLanguagePickerAtElement } from "../features/language-picker/state";
 import GearIcon from "./icons/GearIcon";
 
-/** はいしょく swatch に出す代表色の hour (24h)。12 / 13 / 14 時 = pm[0] / pm[1] / pm[2]。 */
-const SWATCH_PM_INDICES = [0, 1, 2] as const;
+/**
+ * はいしょく swatch に出す代表色の hour (24h)。
+ * - default: 12 / 13 / 14 時 = pm[0] / pm[1] / pm[2] の 3 個並び。
+ * - wheel (いろのわ): 12 色相環なので 3 個では色相サンプルが偏る。13 / 16 / 19 / 22 時
+ *   = pm[1] / pm[4] / pm[7] / pm[10] = あか・き・みどり・あお の 4 個並び。
+ *
+ * swatch の合計幅は 3 個並び (= SWATCH_WIDTH_PX = 28px) に揃える。各 dot 間の距離は GAPS で
+ * 個別指定し、`margin-left = gap - dot 直径` を inline style に流す (負値 = overlap)。
+ * 左の dot ほど z-index が高いので、ある dot の「見える幅」≒ 次 dot 左端までの距離 = その gap。
+ * wheel は均等 (16/3 ≒ 5.33px ずつ) からミクロンだけ黄・緑を詰め、その分青を広く取る:
+ * [赤→黄 5px, 黄→緑 5px, 緑→青 6px] → 黄 5px / 緑 5px / 青 6px の領域配分。
+ */
+const SWATCH_INDICES_DEFAULT = [0, 1, 2] as const;
+const SWATCH_INDICES_WHEEL = [1, 4, 7, 10] as const;
+const SWATCH_DOT_PX = 12; // w-3
+const SWATCH_GAPS_DEFAULT = [8, 8] as const;
+const SWATCH_GAPS_WHEEL = [5, 5, 6] as const;
 
 /**
  * 右上の歯車トリガー + 展開パネル。
@@ -107,7 +122,11 @@ const SettingsPopover: Component = () => {
             <div class={sectionLabelClass}>{t("section.color")}</div>
             <div class="grid grid-cols-2 gap-2">
               <For each={palettes}>
-                {(p) => (
+                {(p) => {
+                  const isWheel = p.id === "wheel";
+                  const indices = isWheel ? SWATCH_INDICES_WHEEL : SWATCH_INDICES_DEFAULT;
+                  const gaps = isWheel ? SWATCH_GAPS_WHEEL : SWATCH_GAPS_DEFAULT;
+                  return (
                   <button
                     class={
                       "flex items-center gap-1.5 px-2 py-1 rounded-full border active:scale-95 transition-all before:hidden " +
@@ -119,11 +138,11 @@ const SettingsPopover: Component = () => {
                     onClick={() => selectPalette(p.id)}
                   >
                     <span class="flex">
-                      <For each={SWATCH_PM_INDICES}>
+                      <For each={indices}>
                         {(i, idx) => (
                           <span
                             class={
-                              "inline-block w-3 h-3 rounded-full border -ml-1 first:ml-0 relative " +
+                              "inline-block w-3 h-3 rounded-full border relative " +
                               // 白盤面 (ものとーん) は border-white だと dot が完全消失するので
                               // 内側に薄めの黒線で外形を見せる。外側の border を黒に変えると
                               // ものとーんだけ円が大きく見えるので、border-transparent で寸法を
@@ -135,8 +154,15 @@ const SettingsPopover: Component = () => {
                             }
                             style={{
                               "background-color": p.pm[i]!.bg,
+                              // 隣接 dot との左端→左端距離を gap で個別指定。margin-left =
+                              // gap - SWATCH_DOT_PX (負値が普通 = overlap)。3 個並びは均等
+                              // (gap 8px = overlap 4px)、wheel は黄緑を詰めて青を広く取る。
+                              "margin-left":
+                                idx() === 0
+                                  ? "0"
+                                  : `${gaps[idx() - 1]! - SWATCH_DOT_PX}px`,
                               // 左の dot を手前に重ねる (document order だと右が前面に来てしまう)。
-                              "z-index": String(SWATCH_PM_INDICES.length - idx()),
+                              "z-index": String(indices.length - idx()),
                             }}
                           />
                         )}
@@ -146,7 +172,8 @@ const SettingsPopover: Component = () => {
                       {t(`palette.${p.id}` as never)}
                     </span>
                   </button>
-                )}
+                  );
+                }}
               </For>
             </div>
           </div>
