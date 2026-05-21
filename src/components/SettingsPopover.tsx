@@ -17,6 +17,7 @@ import {
   setHourNumeralsHidden,
 } from "../features/settings/nothing-digits-font";
 import { openLanguagePickerAtElement } from "../features/language-picker/state";
+import GearIcon from "./icons/GearIcon";
 
 /** はいしょく swatch に出す代表色の hour (24h)。12 / 13 / 14 時 = pm[0] / pm[1] / pm[2]。 */
 const SWATCH_PM_INDICES = [0, 1, 2] as const;
@@ -34,8 +35,8 @@ const SWATCH_PM_INDICES = [0, 1, 2] as const;
  *   隠れて何も拾わず、ピッカーを閉じても popover はそのまま開いた状態が維持される。
  * - autoRotate (子どもが眺めるモード) 中も常時表示する方針: ModePicker と同じく「いつでも
  *   触れる」UX を優先する。
- * - ラベル描画は index.css の `button[aria-label]::before` 規約に従う。アイコン (⚙ や 🌏) や
- *   色 dot 等 DOM children が必要なボタンだけ `before:hidden` で疑似要素を抑制する。
+ * - ラベル描画は index.css の `button[aria-label]::before` 規約に従う。アイコン (歯車 SVG や
+ *   🌏) や 色 dot 等 DOM children が必要なボタンだけ `before:hidden` で疑似要素を抑制する。
  * - popover 内の操作系ボタンは onClick (= pointerup でキャンセル可能) に統一する。pointerdown
  *   即発火は誤タップ取消ができないので子供向け UI として避ける。
  */
@@ -73,19 +74,19 @@ const SettingsPopover: Component = () => {
       </Show>
 
     {/* container 自身は items-end の flex col で width が popover content 幅まで広がる。
-        ⚙ ボタンより左側に空きスペースが残るので、その透明領域タップでも close できるよう
-        container 自身に onClick={close} を載せる。⚙ ボタンと popover content の onClick は
+        歯車ボタンより左側に空きスペースが残るので、その透明領域タップでも close できるよう
+        container 自身に onClick={close} を載せる。歯車ボタンと popover content の onClick は
         stopPropagation で container まで bubble させず、各々の役割 (toggle / 設定操作) を保つ。 */}
     <div
       class="fixed top-[var(--safe-edge-top)] right-[var(--safe-edge-right)] z-[60] flex flex-col items-end gap-2"
       onClick={() => { if (open()) close(); }}
     >
       <button
-        class="w-10 h-10 tablet:w-12 tablet:h-12 rounded-full bg-white/80 shadow-md flex items-center justify-center active:scale-90 transition-all text-xl tablet:text-2xl before:hidden"
+        class="w-10 h-10 tablet:w-12 tablet:h-12 rounded-full bg-white/80 shadow-md flex items-center justify-center active:scale-90 transition-all text-gray-700 before:hidden"
         aria-label={open() ? t("a11y.settingsClose") : t("a11y.settingsOpen")}
         onClick={(e) => { e.stopPropagation(); toggle(); }}
       >
-        ⚙
+        <GearIcon class="w-5 h-5 tablet:w-6 tablet:h-6" />
       </button>
 
       <Show when={open()}>
