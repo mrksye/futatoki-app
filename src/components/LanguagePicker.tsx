@@ -47,8 +47,8 @@ const APPEAR_DURATION_MS = 280;
  *  手前側がスカスカになるので、配列を末尾から rotate して常にこの数だけ前置近隣を確保する。 */
 const REQUIRED_LEFT_NEIGHBORS = 5;
 /** stagger 起点を現在 locale より前にずらす数。現在 locale を真っ先に出すと「自分を再選択する」
- *  ような不自然感が出るので少し後ろに置き、周囲を先に見せる。4 で現在 locale が 5 番目に登場。 */
-const CURRENT_STAGGER_PRECEDING = 4;
+ *  ような不自然感が出るので少し後ろに置き、周囲を先に見せる。5 で現在 locale が 6 番目に登場。 */
+const CURRENT_STAGGER_PRECEDING = 5;
 
 const DRAG_THRESHOLD_FAST_PX = 2;
 const DRAG_THRESHOLD_SLOW_PX = 6;
@@ -147,14 +147,19 @@ const LanguageRingMenu: Component<{ origin: LanguagePickerOrigin }> = (props) =>
     ? -1
     : orderedLocales.findIndex(l => l.code === locale().code);
 
-  /** 現在 locale を visible 範囲中央に揃える length offset を setup phase で set する。子 LocaleIcon
-   *  の onMount より前に確定させないと、出現アニメの end keyframe が古い position で固定されて
-   *  しまう (Solid の onMount で rotate しても間に合わない)。 */
+  /** 現在 locale を ring の「9 時方向」(= 左半円中点 = 視覚的に origin と対角の visible 弧中央)
+   *  に揃える length offset を setup phase で set する。stadium path は CW で 上辺 → 右半円 →
+   *  下辺 → 左半円 → 始点 と進むので、左半円中点 = 上辺長 (=short*0.5) + 右半円 (=π*short/2)
+   *  + 下辺 (=short*0.5) + 左半円の半分 (=π*short/4) = short*(1 + 3π/4)。総周長 L = short*(1+π)
+   *  なので length 比は (1 + 3π/4) / (1 + π) ≈ 0.811 (longRatio=1.5 固定での値)。
+   *  子 LocaleIcon の onMount より前に確定させないと、出現アニメの end keyframe が古い position
+   *  で固定されてしまう (Solid の onMount で rotate しても間に合わない)。 */
+  const NINE_OCLOCK_RATIO = (1 + 3 * Math.PI / 4) / (1 + Math.PI);
   if (currentLocaleIndex >= 0) {
     const L = totalLength();
     if (L > 0) {
       const stepLength = L / orderedLocales.length;
-      setLanguagePickerLengthOffset(L * 0.5 - currentLocaleIndex * stepLength);
+      setLanguagePickerLengthOffset(L * NINE_OCLOCK_RATIO - currentLocaleIndex * stepLength);
     }
   }
 
