@@ -21,11 +21,6 @@ import { openLanguagePickerAtElement } from "../features/language-picker/state";
 /** はいしょく swatch に出す代表色の hour (24h)。12 / 13 / 14 時 = pm[0] / pm[1] / pm[2]。 */
 const SWATCH_PM_INDICES = [0, 1, 2] as const;
 
-/** combining stroke (U+0336) を各 grapheme の後ろに挟んで「打消し」表示。すうじ「なし」option の
- *  preview ラベル用 (時数を隠す状態 = 「数字に消しゴム」)。 */
-const strikethrough = (s: string): string =>
-  Array.from(s).map((ch) => ch + "̶").join("");
-
 /**
  * 右上の歯車トリガー + 展開パネル。
  *
@@ -45,7 +40,7 @@ const strikethrough = (s: string): string =>
  *   即発火は誤タップ取消ができないので子供向け UI として避ける。
  */
 const SettingsPopover: Component = () => {
-  const { t, locale } = useI18n();
+  const { t, locale, formatNumeral } = useI18n();
   const [open, setOpen] = createSignal(false);
 
   const close = () => setOpen(false);
@@ -192,7 +187,9 @@ const SettingsPopover: Component = () => {
 
           {/* すうじ — 各 system + 「なし」(hidden) をラジオ式に並べる。bn 等の multi-system locale
               でも western/bengali を別 option として並列に出す。なし option ラベルは現在体系の
-              「123」に combining stroke を被せた打消し表現。 */}
+              「123」を line-through で打ち消した表現。U+0336 combining stroke を 1 字ずつ挟む方式は
+              Bengali shaping で digit + stroke cluster が tofu 化することがあるので、表示は普通の
+              数字 (1分戻すボタンと同じ formatNumeral 経由) に CSS text-decoration で線を引く。 */}
           <div class="mb-3">
             <div class={sectionLabelClass}>{t("section.numeral")}</div>
             <div class="flex gap-1">
@@ -206,10 +203,8 @@ const SettingsPopover: Component = () => {
                 )}
               </For>
               <button
-                class={`${pillBtn} ${hourNumeralsHidden() ? pillActive : pillInactive}`}
-                aria-label={strikethrough(
-                  formatBySystem(resolveNumeralSystem(locale().code), 123),
-                )}
+                class={`${pillBtn} before:line-through ${hourNumeralsHidden() ? pillActive : pillInactive}`}
+                aria-label={formatNumeral(123)}
                 onClick={() => setHourNumeralsHidden(true)}
               />
             </div>
