@@ -30,11 +30,13 @@ const RotationActions: Component = () => {
   const btnClass =
     "px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-bold shadow-md active:scale-90 transition-all bg-white/80 text-gray-700 whitespace-nowrap";
 
-  // 1ふんもどす ボタンは icon 化された正円固定。サイズは pill ボタン (text-base/text-xl + py-1/py-4
-  // = 高さ mobile 32px / tablet 60px) と縦が揃うように合わせる。`before:hidden` で aria-label の
-  // ::before 描画を抑止し、中身は RewindIcon。
+  // 1ふんもどす ボタンは icon 化された横長 pill。寸法は pill ボタン (text-base+py-1 で「1ふんもどす」
+  // 文字を載せた時とほぼ同じ box height 32 / 60px、width 80 / 120px) と並んだ時に違和感が無いよう
+  // 固定。icon は中央寄せで左右に空白スペースを取る。`before:hidden` で aria-label の ::before
+  // 描画を抑止し、中身は RewindIcon。fixed w/h なので ghost button (usePaletteClearance) も
+  // 同じ寸法を再現できる。
   const rewindBtnClass =
-    "w-8 h-8 tablet:w-[60px] tablet:h-[60px] rounded-full shadow-md active:scale-90 transition-all bg-white/80 text-gray-700 flex items-center justify-center before:hidden";
+    "w-20 h-8 tablet:w-[120px] tablet:h-[60px] rounded-full shadow-md active:scale-90 transition-all bg-white/80 text-gray-700 flex items-center justify-center before:hidden";
 
   // 中央下/中央右 slot (= 1ふんもどす) と時計の幾何的衝突を避けるため、ボタン寸法を ClockLayout に
   // 渡す。旧 SettingsPanel では palette ボタン群を測っていたが、palette は popover に移った。さらに

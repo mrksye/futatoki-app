@@ -109,11 +109,11 @@ const SettingsPopover: Component = () => {
       onClick={() => { if (open()) close(); }}
     >
       <button
-        class="w-8 h-8 tablet:w-[60px] tablet:h-[60px] rounded-full bg-white/80 shadow-md flex items-center justify-center active:scale-90 transition-all text-gray-700 before:hidden"
+        class="w-10 h-10 tablet:w-12 tablet:h-12 rounded-full bg-white/80 shadow-md flex items-center justify-center active:scale-90 transition-all text-gray-700 before:hidden"
         aria-label={open() ? t("a11y.settingsClose") : t("a11y.settingsOpen")}
         onClick={(e) => { e.stopPropagation(); toggle(); }}
       >
-        <GearIcon class="w-6 h-6 tablet:w-9 tablet:h-9" />
+        <GearIcon class="w-5 h-5 tablet:w-6 tablet:h-6" />
       </button>
 
       {/* popover content は常時マウントして open() 連動で opacity + transform を transition。
