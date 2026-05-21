@@ -404,12 +404,24 @@ export const ClockLayout: Component = () => {
   };
 
   /** ホイール event ハンドラ。SolidJS の onWheel JSX は passive listener として登録されて
-   *  preventDefault が効かないため、onMount で自前 addEventListener("wheel", ..., { passive: false }) で
+   *  preventDefault が効かないため自前 addEventListener("wheel", ..., { passive: false }) で
    *  attach する (page scroll を抑制する用)。止まる位置を整数分に揃えるため float 累積を Math.round で
-   *  snap し、tween で滑らかに動かす。 */
+   *  snap し、tween で滑らかに動かす。
+   *
+   *  listener は window 直付け。containerRef だけに付けると merged (かさね) モードで
+   *  mergedInnerRef (pointer-events: auto) が wheel を吸い、bubble は mergedContainerRef
+   *  までしか上がらん (両者は containerRef とは sibling) ので reach できない。window で受けてから
+   *  target が clock 領域 (containerRef または mergedContainerRef 内) かを check し、popover や
+   *  language picker 内の wheel は target check で skip させる。 */
   const onWheel = (e: WheelEvent) => {
     if (clockMode() !== "freeRotate") return;
     if (dragging()) return;
+    const target = e.target as Node | null;
+    if (!target) return;
+    const inClock =
+      (containerRef && containerRef.contains(target)) ||
+      (mergedContainerRef && mergedContainerRef.contains(target));
+    if (!inClock) return;
     e.preventDefault();
     const result = wheelAdvance(e, wheelVelocityState);
     if (result.kind === "ignore") return;
@@ -433,14 +445,10 @@ export const ClockLayout: Component = () => {
   };
 
   onMount(() => {
-    if (containerRef) {
-      containerRef.addEventListener("wheel", onWheel, { passive: false });
-    }
+    window.addEventListener("wheel", onWheel, { passive: false });
   });
   onCleanup(() => {
-    if (containerRef) {
-      containerRef.removeEventListener("wheel", onWheel);
-    }
+    window.removeEventListener("wheel", onWheel);
     if (wheelTweenRaf !== null) cancelAnimationFrame(wheelTweenRaf);
     if (wheelSessionIdleTimer) clearTimeout(wheelSessionIdleTimer);
   });
