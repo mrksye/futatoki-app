@@ -23,8 +23,8 @@
   },
   "section": {
     "color": "Цвета",
-    "detail": "Метки",
-    "digit": "Час",
+    "detail": "Деления",
+    "digit": "Метки",
     "timeFormat": "Формат",
     "numeral": "Цифры"
   },

@@ -23,8 +23,8 @@
   },
   "section": {
     "color": "Couleurs",
-    "detail": "Marques",
-    "digit": "Heures",
+    "detail": "Graduations",
+    "digit": "Repères",
     "timeFormat": "Format",
     "numeral": "Chiffres"
   },

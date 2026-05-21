@@ -24,7 +24,7 @@
   "section": {
     "color": "สี",
     "detail": "ขีดนาที",
-    "digit": "ชั่วโมง",
+    "digit": "เครื่องหมาย",
     "timeFormat": "รูปแบบ",
     "numeral": "ตัวเลข"
   },

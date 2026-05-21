@@ -23,8 +23,8 @@
   },
   "section": {
     "color": "Renkler",
-    "detail": "İşaretler",
-    "digit": "Saatler",
+    "detail": "Çizgiler",
+    "digit": "İşaretler",
     "timeFormat": "Biçim",
     "numeral": "Rakamlar"
   },

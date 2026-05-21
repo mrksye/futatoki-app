@@ -24,7 +24,7 @@
   "section": {
     "color": "색상",
     "detail": "분 눈금",
-    "digit": "시",
+    "digit": "표시",
     "timeFormat": "표기",
     "numeral": "숫자"
   },

@@ -23,8 +23,8 @@
   },
   "section": {
     "color": "はいしょく",
-    "detail": "ふんけい",
-    "digit": "じすう",
+    "detail": "ふんめもり",
+    "digit": "しるし",
     "timeFormat": "じかんひょうき",
     "numeral": "すうじ"
   },

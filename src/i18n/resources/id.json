@@ -23,8 +23,8 @@
   },
   "section": {
     "color": "Warna",
-    "detail": "Tanda",
-    "digit": "Jam",
+    "detail": "Garis",
+    "digit": "Tanda",
     "timeFormat": "Format",
     "numeral": "Angka"
   },

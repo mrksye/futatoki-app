@@ -24,7 +24,7 @@
   "section": {
     "color": "配色",
     "detail": "分刻度",
-    "digit": "時數",
+    "digit": "標記",
     "timeFormat": "時制",
     "numeral": "數字"
   },

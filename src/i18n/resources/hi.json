@@ -23,8 +23,8 @@
   },
   "section": {
     "color": "रंग",
-    "detail": "निशान",
-    "digit": "घंटे",
+    "detail": "लकीरें",
+    "digit": "निशान",
     "timeFormat": "प्रारूप",
     "numeral": "अंक"
   },

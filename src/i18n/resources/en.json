@@ -23,10 +23,10 @@
   },
   "section": {
     "color": "Colors",
-    "detail": "Marks",
-    "digit": "Hours",
+    "detail": "Ticks",
+    "digit": "Markers",
     "timeFormat": "Format",
-    "numeral": "Numbers"
+    "numeral": "Numerals"
   },
   "activity": {
     "add": "activity",

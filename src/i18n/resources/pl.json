@@ -23,8 +23,8 @@
   },
   "section": {
     "color": "Kolory",
-    "detail": "Znaczniki",
-    "digit": "Godziny",
+    "detail": "Kreski",
+    "digit": "Znaczniki",
     "timeFormat": "Format",
     "numeral": "Cyfry"
   },

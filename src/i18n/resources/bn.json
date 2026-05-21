@@ -23,8 +23,8 @@
   },
   "section": {
     "color": "রঙ",
-    "detail": "চিহ্ন",
-    "digit": "ঘণ্টা",
+    "detail": "দাগ",
+    "digit": "চিহ্ন",
     "timeFormat": "ছক",
     "numeral": "সংখ্যা"
   },
