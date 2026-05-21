@@ -1,5 +1,10 @@
-import { createSignal, Show, For, type Component } from "solid-js";
+import { Show, For, type Component } from "solid-js";
 import { useI18n } from "../i18n";
+import {
+  activePopover,
+  closeActivePopover,
+  togglePopover,
+} from "../lib/exclusive-popover";
 import { palettes } from "../colors";
 import { colorMode, toggleColorMode } from "../features/settings/color-mode";
 import { detailMode, toggleDetailMode } from "../features/settings/detail-mode";
@@ -29,8 +34,10 @@ const SWATCH_PM_INDICES = [0, 1, 2] as const;
  * - popover 外タップで close するのは、popover 開いてる間だけマウントする透明 overlay で吸収する。
  *   document level pointerdown listener は pointerdown を伝播させてしまい時計・ModePicker・回転
  *   モード等の下層要素を意図せず発火させるので使わない。overlay の z は z-[55] で他 floating
- *   ボタン (ModePicker / RotationActions / AM/PM badge 等、軒並み z-50 以下) より上に置き、popover
- *   content/trigger (z-[60]) より下、language picker overlay (z-[100]) より下に位置取る。
+ *   ボタン (RotationActions / AM/PM badge 等、軒並み z-50 以下) より上に置き、popover content/
+ *   trigger (z-[60]) より下、language picker overlay (z-[100]) より下に位置取る。
+ * - ModePicker と同 z 階層なので overlay の物理遮蔽だけでは排他にならず、両 popover の open 状態は
+ *   exclusive-popover.ts の共有 signal で 1 つだけに制限する (別 popover を開くと自動的に閉じる)。
  * - language picker open 中は z-[100] の language picker overlay が前面に出るので popover overlay は
  *   隠れて何も拾わず、ピッカーを閉じても popover はそのまま開いた状態が維持される。
  * - autoRotate (子どもが眺めるモード) 中も常時表示する方針: ModePicker と同じく「いつでも
@@ -42,10 +49,10 @@ const SWATCH_PM_INDICES = [0, 1, 2] as const;
  */
 const SettingsPopover: Component = () => {
   const { t, locale, formatNumeral } = useI18n();
-  const [open, setOpen] = createSignal(false);
 
-  const close = () => setOpen(false);
-  const toggle = () => setOpen((o) => !o);
+  const open = () => activePopover() === "settings";
+  const close = closeActivePopover;
+  const toggle = () => togglePopover("settings");
 
   const pillBtn =
     "px-3 py-1 tablet:px-4 tablet:py-2 rounded-full text-sm tablet:text-base font-bold shadow-sm active:scale-90 transition-all whitespace-nowrap";

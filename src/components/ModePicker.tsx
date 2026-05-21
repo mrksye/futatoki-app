@@ -1,8 +1,13 @@
-import { createSignal, For, Show, type Component } from "solid-js";
+import { For, Show, type Component } from "solid-js";
 import { useI18n } from "../i18n";
 import { clockMode, transition, type ClockMode } from "../features/free-rotation/state";
 import type { TKey } from "../i18n";
 import ModeIcon from "./icons/ModeIcon";
+import {
+  activePopover,
+  closeActivePopover,
+  togglePopover,
+} from "../lib/exclusive-popover";
 
 /** clock からは freeRotate にしか transition できない FSM ルール (state.ts の ALLOWED_TRANSITIONS)
  *  を満たすため、autoRotate を選んだ時は freeRotate を経由する。 */
@@ -36,14 +41,17 @@ const STAGGER_MS = 50;
  * 等の下層要素を意図せず発火させるので使わない。overlay の z は z-[55] で他 floating ボタン
  * (RotationActions / AM/PM badge 等、軒並み z-50 以下) より上に置き、popover content/trigger
  * (z-[60]) より下、language picker overlay (z-[100]) より下に位置取る (SettingsPopover overlay と
- * 同層)。両 popover の overlay は z 同値だがそれぞれ独立に mount/unmount するので干渉しない。
+ * 同層)。
+ *
+ * SettingsPopover と同 z 階層なので overlay の物理遮蔽だけでは排他にならず、両 popover の open 状態
+ * は exclusive-popover.ts の共有 signal で 1 つだけに制限する (別 popover を開くと自動的に閉じる)。
  */
 const ModePicker: Component = () => {
   const { t } = useI18n();
-  const [expanded, setExpanded] = createSignal(false);
 
-  const close = () => setExpanded(false);
-  const toggle = () => setExpanded((o) => !o);
+  const expanded = () => activePopover() === "mode";
+  const close = closeActivePopover;
+  const toggle = () => togglePopover("mode");
 
   /** 展開中の 3 モードボタン用 (ラベルテキスト pill 形)。 */
   const baseClass =
@@ -57,7 +65,7 @@ const ModePicker: Component = () => {
 
   const select = (target: ClockMode) => {
     goMode(target);
-    setExpanded(false);
+    closeActivePopover();
   };
 
   return (
@@ -87,8 +95,15 @@ const ModePicker: Component = () => {
           <ModeIcon class="w-5 h-5 tablet:w-6 tablet:h-6" />
         </button>
 
+        {/* 展開メニューの wrapper。子ボタンは fade-out transition のために常時マウントしてる
+            (Show でアンマウントすると enter 時の opacity 0 → 1 補間が走らない) ので、collapsed 時
+            にこの wrapper 領域が下層 (clock のジェスチャ / 別 popover の overlay close) のタップを
+            吸ってしまわないよう wrapper 自身も pointer-events: none に倒す。子ボタン側の
+            pointer-events 切替は staggered fade と同じく個別管理で残す (フェード途中で押せない/
+            押せるの境界が visual と一致するように)。 */}
         <div
           class="absolute top-full left-0 mt-2 flex flex-col gap-2 items-start"
+          style={{ "pointer-events": expanded() ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
         >
           <For each={ITEMS}>
