@@ -11,6 +11,7 @@ import { useRewindHold } from "../features/free-rotation/rewind";
 import { randomizeRotate } from "../features/free-rotation/random-time";
 import { openPickerAtElement } from "../features/activity/picker";
 import { usePaletteClearance } from "../features/layout/palette-clearance";
+import RewindIcon from "./icons/RewindIcon";
 
 /**
  * 回転モード時のサブ操作ボタン群。 ModePicker / SettingsPopover の外に残る floating UI:
@@ -29,12 +30,19 @@ const RotationActions: Component = () => {
   const btnClass =
     "px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-bold shadow-md active:scale-90 transition-all bg-white/80 text-gray-700 whitespace-nowrap";
 
+  // 1ふんもどす ボタンは icon 化された正円固定。サイズは pill ボタン (text-base/text-xl + py-1/py-4
+  // = 高さ mobile 32px / tablet 60px) と縦が揃うように合わせる。`before:hidden` で aria-label の
+  // ::before 描画を抑止し、中身は RewindIcon。
+  const rewindBtnClass =
+    "w-8 h-8 tablet:w-[60px] tablet:h-[60px] rounded-full shadow-md active:scale-90 transition-all bg-white/80 text-gray-700 flex items-center justify-center before:hidden";
+
   // 中央下/中央右 slot (= 1ふんもどす) と時計の幾何的衝突を避けるため、ボタン寸法を ClockLayout に
-  // 渡す。旧 SettingsPanel では palette ボタン群を測っていたが、palette は popover に移ったので
-  // 残る floating の中央 slot ボタン (1ふんもどす) だけを測れば十分。
+  // 渡す。旧 SettingsPanel では palette ボタン群を測っていたが、palette は popover に移った。さらに
+  // 1ふんもどす も icon 化で正円固定になったので ghost button の幅は CSS の w-* で決まる。ラベル
+  // 配列は API 上必要で 1 要素入れているだけ (aria-label は SR 用に残るが ::before は hide)。
   usePaletteClearance(
     () => [t("settings.rewindMinute", { n: formatNumeral(1) })],
-    btnClass,
+    rewindBtnClass,
   );
 
   return (
@@ -81,7 +89,8 @@ const RotationActions: Component = () => {
         aria-label={t("activity.add")}
       />
 
-      {/* RIGHT スロット 1ふんもどす: freeRotate 中だけ可視。長押しで連続。 */}
+      {/* RIGHT スロット 1ふんもどす: freeRotate 中だけ可視。長押しで連続。
+          ラベル文字は出さず早戻し ⏪ (RewindIcon) を中央に描画。aria-label は SR 用に残す。 */}
       <button
         class={
           "fixed z-50 slot-crossfade " +
@@ -93,7 +102,7 @@ const RotationActions: Component = () => {
               ? "right-[var(--safe-edge-right)] top-[80%] -translate-y-1/2"
               : "right-[var(--safe-edge-right)] top-1/2 -translate-y-1/2") +
           " " +
-          btnClass
+          rewindBtnClass
         }
         style={{
           "touch-action": "none",
@@ -104,7 +113,9 @@ const RotationActions: Component = () => {
         onPointerUp={stopRewind}
         onPointerCancel={stopRewind}
         aria-label={t("settings.rewindMinute", { n: formatNumeral(1) })}
-      />
+      >
+        <RewindIcon class="w-6 h-6 tablet:w-9 tablet:h-9" />
+      </button>
     </>
   );
 };
