@@ -2,6 +2,7 @@ import { createSignal, For, onCleanup, onMount, type Component } from "solid-js"
 import { useI18n } from "../i18n";
 import { clockMode, transition, type ClockMode } from "../features/free-rotation/state";
 import type { TKey } from "../i18n";
+import ModeIcon from "./icons/ModeIcon";
 
 /** clock からは freeRotate にしか transition できない FSM ルール (state.ts の ALLOWED_TRANSITIONS)
  *  を満たすため、autoRotate を選んだ時は freeRotate を経由する。 */
@@ -43,10 +44,15 @@ const ModePicker: Component = () => {
   onMount(() => document.addEventListener("pointerdown", onDocPointerDown));
   onCleanup(() => document.removeEventListener("pointerdown", onDocPointerDown));
 
+  /** 展開中の 3 モードボタン用 (ラベルテキスト pill 形)。 */
   const baseClass =
     "px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-bold shadow-md active:scale-90 transition-all whitespace-nowrap";
   const inactiveClass = "bg-white/80 text-gray-700";
   const activeClass = "bg-gray-800 text-white";
+
+  /** トリガー専用 (SettingsPopover の歯車ボタンと対の丸アイコン FAB)。 */
+  const triggerClass =
+    "w-10 h-10 tablet:w-12 tablet:h-12 rounded-full bg-white/80 shadow-md flex items-center justify-center active:scale-90 transition-all text-gray-700 before:hidden";
 
   const select = (target: ClockMode) => {
     goMode(target);
@@ -59,10 +65,12 @@ const ModePicker: Component = () => {
       class="fixed top-[var(--safe-edge-top)] left-[var(--safe-edge-left)] z-50"
     >
       <button
-        class={`${baseClass} ${inactiveClass}`}
+        class={triggerClass}
         aria-label={t("mode.picker")}
         onClick={() => setExpanded((o) => !o)}
-      />
+      >
+        <ModeIcon class="w-5 h-5 tablet:w-6 tablet:h-6" />
+      </button>
 
       <div class="absolute top-full left-0 mt-2 flex flex-col gap-2 items-start">
         <For each={ITEMS}>
