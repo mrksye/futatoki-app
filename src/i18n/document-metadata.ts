@@ -1,6 +1,7 @@
 import type { LocaleMeta } from "./locales";
 import { APP_BRAND, APPLE_TITLE, OG_LOCALE } from "./brand";
 import { BRAND_CONFIG } from "../../branding/brand.config";
+import { formatMetaString } from "./format-meta";
 
 const SOURCE = "ja";
 
@@ -26,10 +27,12 @@ export function applyDocumentMetadata(
 ) {
   if (typeof document === "undefined") return;
 
-  const title = dict["meta.title"];
-  const description = dict["meta.description"];
-  if (!title || !description) return;
+  const titleTemplate = dict["meta.title"];
+  const descriptionTemplate = dict["meta.description"];
+  if (!titleTemplate || !descriptionTemplate) return;
 
+  const title = formatMetaString(titleTemplate, locale);
+  const description = formatMetaString(descriptionTemplate, locale);
   const siteName = APP_BRAND[locale.code] ?? APP_BRAND[SOURCE];
   const appleTitle = APPLE_TITLE[locale.code] ?? BRAND_CONFIG.defaultTitle;
   const ogLocale = OG_LOCALE[locale.code] ?? OG_LOCALE[SOURCE];

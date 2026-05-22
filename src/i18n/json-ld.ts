@@ -1,6 +1,7 @@
 import type { LocaleMeta } from "./locales";
 import { APP_BRAND, APP_EXTRA_VARIANTS, BRAND_ALIASES, CHARACTER_BRAND, OFFICIAL_BRAND } from "./brand";
 import { BRAND_CONFIG } from "../../branding/brand.config";
+import { formatMetaString } from "./format-meta";
 
 const SOURCE = "ja";
 const APP_URL = `https://${BRAND_CONFIG.domain}/`;
@@ -64,9 +65,10 @@ export function applyJsonLd(
 ) {
   if (typeof document === "undefined") return;
 
-  const description = dict["meta.description"];
-  if (!description) return;
+  const descriptionTemplate = dict["meta.description"];
+  if (!descriptionTemplate) return;
 
+  const description = formatMetaString(descriptionTemplate, locale);
   const payload = buildJsonLd(locale, description);
   let script = document.querySelector<HTMLScriptElement>(
     'script[type="application/ld+json"]',

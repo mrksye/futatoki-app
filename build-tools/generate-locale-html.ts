@@ -25,6 +25,7 @@ import {
 } from "../src/i18n/locales";
 import { APP_BRAND, OG_LOCALE, APPLE_TITLE } from "../src/i18n/brand";
 import { BRAND_CONFIG } from "../branding/brand.config";
+import { formatMetaString } from "../src/i18n/format-meta";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -81,11 +82,13 @@ function replaceMetaContent(
 }
 
 function buildLocaleHtml(template: string, locale: LocaleMeta, res: ResourceJson): string {
-  const title = res.meta?.title;
-  const description = res.meta?.description;
-  if (!title || !description) {
+  const titleTemplate = res.meta?.title;
+  const descriptionTemplate = res.meta?.description;
+  if (!titleTemplate || !descriptionTemplate) {
     throw new Error(`meta.title or meta.description missing for ${locale.code}`);
   }
+  const title = formatMetaString(titleTemplate, locale);
+  const description = formatMetaString(descriptionTemplate, locale);
 
   const siteName = APP_BRAND[locale.code] ?? APP_BRAND[SOURCE_LOCALE];
   const ogLocale = OG_LOCALE[locale.code] ?? OG_LOCALE[SOURCE_LOCALE];
