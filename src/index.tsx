@@ -10,6 +10,8 @@ import "./lib/motion-bootstrap";
 // dev mode 限定: window.__seedDemoActivities を露出。LP 側 screenshots.mjs から Playwright 経由で
 // 呼ばれ Top hero 動画の「12 種できごと scatter」を録画する。本番 bundle では空。
 import "./lib/demo-seam";
+import { reportAppOpen } from "./lib/beacon";
+import { detectLocale } from "./i18n/detect";
 import App from "./App";
 
 const root = document.getElementById("root");
@@ -33,5 +35,9 @@ if ("serviceWorker" in navigator) {
     if (hadControllerAtStart) window.location.reload();
   });
 }
+
+// 起動ビーコンを 1 発。i18n context や component lifecycle に依存させず、ブート時点で確実に
+// 1 回だけ撃つために detectLocale() を直叩きする (I18nProvider 側でも同じ pure 関数を呼ぶが副作用なし)。
+reportAppOpen(detectLocale());
 
 render(() => <App />, root);

@@ -23,10 +23,12 @@
  * 系で redirect され、en HTML から OG を取得する。送信側言語は不確定だが、
  * グローバル fallback として en に倒すのが OSS 公開の妥当解。
  *
- * アクセス集計: locale HTML を正常返却した時のみ Analytics Engine に集計用
- * データポイントを記録する。redirect (302) は中間ステップなので計測対象外。
- * 個人を識別する情報は記録しない (IP / Cookie / UA 完全文字列など)。詳細は
- * https://futatoki.app/privacy/ 参照。
+ * アクセス集計:
+ *   - LP の locale HTML 配信時 (surface=lp): サーバ側で計測。
+ *   - アプリ起動時 (surface=app): /_beacon にクライアントから 1 発投げてもらい計測。
+ *     PWA standalone / 正確なデバイス種別 / 起動時刻 を取れる (retention 代理信号)。
+ *   個人を識別する情報は記録しない (IP / Cookie / Session ID / UA 完全文字列など)。
+ *   詳細は https://futatoki.app/privacy/ 参照。
  */
 
 import { matchLocale, matchAcceptLanguage } from "../i18n/match";
@@ -37,75 +39,159 @@ interface Env {
   ANALYTICS?: AnalyticsEngineDataset;
 }
 
+type Surface = "lp" | "app";
+type DisplayMode = "standalone" | "browser" | "unknown";
+type DeviceType = "mobile" | "tablet" | "desktop";
+
+const BEACON_PATH = "/_beacon";
+const MAX_BEACON_BYTES = 256;
+
+const BOT_RE =
+  /bot|crawler|spider|preview|monitor|fetch|curl|wget|headless|facebookexternalhit|whatsapp/i;
+
+interface DataPoint {
+  country: string;
+  langPrefix: string;
+  locale: string;
+  /** pathname のみ。クエリ文字列は含めない (privacy policy 準拠)。 */
+  path: string;
+  refHost: string;
+  device: DeviceType;
+  surface: Surface;
+  mode: DisplayMode;
+}
+
 /**
- * Records an aggregate page-view data point. No-op when the ANALYTICS
- * binding is not configured (e.g. on forked deployments).
+ * 集計データポイントを 1 件書く。ANALYTICS binding 未設定 (fork 等) では no-op。
  *
  * Schema:
- *   blob1: country (CF edge geolocation, 2-letter ISO code)
- *   blob2: browser preferred language prefix (e.g. "ja")
- *   blob3: actual locale served (matched against supported locales)
- *   blob4: request path
- *   blob5: referrer hostname only ("direct" / "internal" / hostname)
+ *   blob1: country (CF エッジ判定の 2 文字 ISO)
+ *   blob2: ブラウザ優先言語の prefix (例 "ja")
+ *   blob3: 配信 / 表示 locale
+ *   blob4: path (pathname のみ。query は含めない)
+ *   blob5: referrer host のみ ("direct" / "internal" / hostname)
  *   blob6: device type ("mobile" / "tablet" / "desktop")
+ *   blob7: surface ("lp" = ランディング閲覧, "app" = アプリ起動ビーコン)
+ *   blob8: display mode ("standalone" / "browser" / "unknown")
  */
-function recordPageView(
-  request: Request,
-  env: Env,
-  servedLocale: string,
-  requestPath: string,
-): void {
+function writeDataPoint(env: Env, p: DataPoint): void {
   if (!env.ANALYTICS) return;
-
-  const ua = request.headers.get("user-agent") ?? "";
-  // Filter common bots and SNS crawlers; SNS crawlers hit this worker for OG
-  // tags but should not count as human page views.
-  if (
-    /bot|crawler|spider|preview|monitor|fetch|curl|wget|headless|facebookexternalhit|whatsapp/i.test(
-      ua,
-    )
-  ) {
-    return;
-  }
-
-  const acceptLang = request.headers.get("accept-language") ?? "";
-  const rawLang =
-    acceptLang.split(",")[0]?.split(";")[0]?.trim().toLowerCase() ?? "";
-  const langPrefix = rawLang ? (rawLang.split("-")[0] || "unknown") : "unknown";
-
-  const country = request.cf?.country ?? "XX";
-
-  const referer = request.headers.get("referer");
-  let refHost = "direct";
-  if (referer) {
-    try {
-      const refUrl = new URL(referer);
-      const requestUrl = new URL(request.url);
-      refHost =
-        refUrl.hostname === requestUrl.hostname ? "internal" : refUrl.hostname;
-    } catch {
-      refHost = "invalid";
-    }
-  }
-
-  const deviceType: string = /mobile|android.*mobile|iphone|ipod/i.test(ua)
-    ? "mobile"
-    : /tablet|ipad/i.test(ua)
-      ? "tablet"
-      : "desktop";
-
   env.ANALYTICS.writeDataPoint({
-    blobs: [country, langPrefix, servedLocale, requestPath, refHost, deviceType],
+    blobs: [
+      p.country,
+      p.langPrefix,
+      p.locale,
+      p.path,
+      p.refHost,
+      p.device,
+      p.surface,
+      p.mode,
+    ],
     doubles: [1],
-    indexes: [country],
+    indexes: [p.country],
   });
+}
+
+function langPrefixOf(request: Request): string {
+  const acceptLang = request.headers.get("accept-language") ?? "";
+  const raw =
+    acceptLang.split(",")[0]?.split(";")[0]?.trim().toLowerCase() ?? "";
+  return raw ? raw.split("-")[0] || "unknown" : "unknown";
+}
+
+function refHostOf(request: Request): string {
+  const referer = request.headers.get("referer");
+  if (!referer) return "direct";
+  try {
+    const ref = new URL(referer);
+    const self = new URL(request.url);
+    return ref.hostname === self.hostname ? "internal" : ref.hostname;
+  } catch {
+    return "invalid";
+  }
+}
+
+/** UA からの粗いデバイス推定。サーバ側の限界 (iPad は Macintosh を詐称) は許容。 */
+function deviceFromUA(ua: string): DeviceType {
+  if (/mobile|android.*mobile|iphone|ipod/i.test(ua)) return "mobile";
+  if (/tablet|ipad/i.test(ua)) return "tablet";
+  return "desktop";
+}
+
+function isBot(ua: string): boolean {
+  return BOT_RE.test(ua);
+}
+
+/** クライアント送信値を許可リストで検証 (信用しない)。 */
+function asDevice(v: unknown, fallback: DeviceType): DeviceType {
+  return v === "mobile" || v === "tablet" || v === "desktop" ? v : fallback;
+}
+function asMode(v: unknown): DisplayMode {
+  return v === "standalone" || v === "browser" ? v : "unknown";
+}
+
+/**
+ * /_beacon: アプリ起動ビーコンを受けて集計。
+ * 受け取るのは {mode, device, locale} だけ。個人識別情報は受け取らない。
+ */
+async function handleBeacon(request: Request, env: Env): Promise<Response> {
+  const ua = request.headers.get("user-agent") ?? "";
+  if (isBot(ua)) return new Response(null, { status: 204 });
+
+  const declaredLen = Number(request.headers.get("content-length") ?? "0");
+  if (declaredLen > MAX_BEACON_BYTES) {
+    return new Response(null, { status: 413 });
+  }
+
+  let mode: DisplayMode = "unknown";
+  let device: DeviceType = deviceFromUA(ua);
+  let locale = "unknown";
+
+  try {
+    const text = await request.text();
+    if (text.length > MAX_BEACON_BYTES) {
+      return new Response(null, { status: 413 });
+    }
+    const parsed: unknown = JSON.parse(text);
+    if (parsed && typeof parsed === "object") {
+      const b = parsed as Record<string, unknown>;
+      mode = asMode(b.mode);
+      device = asDevice(b.device, device);
+      const matched = typeof b.locale === "string" ? matchLocale(b.locale) : null;
+      locale = matched ?? "unknown";
+    }
+  } catch {
+    // 壊れた body は捨てて 204。計測は撃てなくてもエラーにはしない。
+    return new Response(null, { status: 204 });
+  }
+
+  writeDataPoint(env, {
+    country: request.cf?.country ?? "XX",
+    langPrefix: langPrefixOf(request),
+    locale,
+    path: BEACON_PATH,
+    refHost: refHostOf(request),
+    device,
+    surface: "app",
+    mode,
+  });
+
+  return new Response(null, { status: 204 });
 }
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
-    // ルート以外 (assets, manifest, sw, icons 等) はそのまま静的配信に渡す。
+    // アプリ起動ビーコン (POST のみ)。
+    if (url.pathname === BEACON_PATH) {
+      if (request.method !== "POST") {
+        return new Response(null, { status: 405 });
+      }
+      return handleBeacon(request, env);
+    }
+
+    // ルート以外 (assets, manifest, sw, icons 等) はそのまま静的配信へ。
     if (url.pathname !== "/") {
       return env.ASSETS.fetch(request);
     }
@@ -119,9 +205,21 @@ export default {
         const response = await env.ASSETS.fetch(
           new Request(localeHtmlUrl.toString(), request),
         );
-        // 正常レスポンスのみ集計対象（locale HTML が存在しない異常系は除外）
+        // 正常レスポンスのみ集計対象 (locale HTML が無い異常系は除外)。
         if (response.status === 200) {
-          recordPageView(request, env, matched, url.pathname + url.search);
+          const ua = request.headers.get("user-agent") ?? "";
+          if (!isBot(ua)) {
+            writeDataPoint(env, {
+              country: request.cf?.country ?? "XX",
+              langPrefix: langPrefixOf(request),
+              locale: matched,
+              path: url.pathname,
+              refHost: refHostOf(request),
+              device: deviceFromUA(ua),
+              surface: "lp",
+              mode: "unknown",
+            });
+          }
         }
         return response;
       }
