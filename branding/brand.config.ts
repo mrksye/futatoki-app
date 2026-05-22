@@ -35,6 +35,13 @@ export interface BrandConfig {
    *  CHARACTER_BRAND / APPLE_TITLE. A single Latin word works best. */
   readonly defaultTitle: string;
 
+  /** Hex color used by `<meta name="theme-color">`, PWA manifests, and the
+   *  status bar tint on installed PWAs. */
+  readonly themeColor: string;
+
+  /** Hex color used as the PWA splash screen background while the app boots. */
+  readonly backgroundColor: string;
+
   /** External author links surfaced in code comments (privacy policy etc.)
    *  and available to localized resources via placeholders. */
   readonly externalLinks: {
@@ -48,6 +55,8 @@ export const BRAND_CONFIG: BrandConfig = {
   storagePrefix: "futatoki",
   logPrefix: "[futatoki-app]",
   defaultTitle: "Futatoki",
+  themeColor: "#f8f0e8",
+  backgroundColor: "#f8f0e8",
   externalLinks: {
     privacy: "https://futatoki.app/privacy/",
   },

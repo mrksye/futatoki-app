@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "vite",
     "build:wrangler": "bun run build-tools/build-wrangler.ts",
-    "build": "vite build && bun run build-tools/generate-locale-html.ts",
+    "build:manifests": "bun run build-tools/build-manifests.ts",
+    "build:seo": "bun run build-tools/build-seo-static.ts",
+    "build:brand-static": "bun run build:manifests && bun run build:seo",
+    "build": "bun run build:brand-static && vite build && bun run build-tools/generate-locale-html.ts",
     "preview": "vite preview",
     "cf:preview": "bun run build && wrangler dev",
     "deploy": "bun run build && wrangler deploy"
