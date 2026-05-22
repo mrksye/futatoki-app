@@ -1,0 +1,1 @@
+export { initFirstLaunch } from "./controller";

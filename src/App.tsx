@@ -1,8 +1,11 @@
-import { createEffect, onCleanup, type Component } from "solid-js";
+import { createEffect, onCleanup, Show, type Component } from "solid-js";
 import { ClockLayout } from "./components/ClockLayout";
+import FirstLaunchSplash from "./components/FirstLaunchSplash";
 import { pickerOpen } from "./features/activity/picker";
 import { languagePickerOpen } from "./features/language-picker/state";
 import { initFullMoonEasterEgg } from "./features/full-moon-easter-egg";
+import { initFirstLaunch } from "./features/first-launch";
+import { firstLaunchActive } from "./features/first-launch/state";
 import { requestChronostasis } from "./lib/chronostasis";
 import { useChronostasisBodyClass } from "./lib/chronostasis/solid";
 import { I18nProvider } from "./i18n";
@@ -22,9 +25,15 @@ const App: Component = () => {
   useChronostasisBodyClass();
   usePickerHoldsChronostasis();
   initFullMoonEasterEgg();
+  // 初回起動の永続フラグ管理 (pointerdown 観測 → completeFirstLaunch)。演出は Splash 側で完結。
+  // pending=false なら no-op。詳細は features/first-launch/controller.ts。
+  initFirstLaunch();
   return (
     <I18nProvider>
       <ClockLayout />
+      <Show when={firstLaunchActive()}>
+        <FirstLaunchSplash />
+      </Show>
     </I18nProvider>
   );
 };
