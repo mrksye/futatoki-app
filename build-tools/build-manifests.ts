@@ -1,17 +1,17 @@
 /**
- * 全 20 locale の PWA manifest を public/manifest.{locale}.webmanifest として
- * 生成する pre-build script。
+ * 全 20 locale の PWA manifest を文字列として生成する pure function。
  *
  * SOURCE OF TRUTH:
  * - 表記値 (name / short_name): branding/brand.ts の OFFICIAL_BRAND / CHARACTER_BRAND
- * - description: src/i18n/resources/{locale}.json の meta.description (token 展開後)
+ * - description: src/i18n/resources/{locale}.json の meta.description (formatMetaString で token 展開)
  * - icon path / theme_color / background_color: branding/brand.config.ts
  *
- * vite build より先に走らせ、public/ 配下に書き出した内容を vite が dist/ にコピー
- * する流れ。生成物自体は .gitignore で tracked から外し CI でも build 時に再生成。
+ * vite plugin (brandingAssetsPlugin) が build 時は this.emitFile で dist/ に
+ * rollup virtual asset として emit、dev 時は configureServer middleware で
+ * in-memory serve する。本 file は file system への書き出しは行わず、
+ * pure function として locale → JSON string Map を返すだけ。
  */
 
-import { writeFileSync, mkdirSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,7 +22,6 @@ import { formatMetaString } from "../src/i18n/format-meta";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
-const PUBLIC_DIR = resolve(ROOT, "public");
 const RESOURCES_DIR = resolve(ROOT, "src/i18n/resources");
 
 type Manifest = {
@@ -69,32 +68,18 @@ async function loadDescriptionTemplate(code: string): Promise<string | null> {
   }
 }
 
-export async function buildManifests(): Promise<void> {
-  mkdirSync(PUBLIC_DIR, { recursive: true });
-  let written = 0;
-  const skipped: string[] = [];
+/**
+ * 全 SUPPORTED_LOCALES 分の manifest JSON 文字列を locale code → JSON content の
+ * Map で返す。meta.description が無い locale は silent skip。呼び出し側 (vite
+ * plugin) が build 時 emitFile / dev 時 middleware serve に振り分ける。
+ */
+export async function buildAllManifests(): Promise<Map<string, string>> {
+  const manifests = new Map<string, string>();
   for (const locale of SUPPORTED_LOCALES) {
     const descriptionTemplate = await loadDescriptionTemplate(locale.code);
-    if (!descriptionTemplate) {
-      skipped.push(locale.code);
-      continue;
-    }
+    if (!descriptionTemplate) continue;
     const manifest = buildManifest(locale, descriptionTemplate);
-    writeFileSync(
-      join(PUBLIC_DIR, `manifest.${locale.code}.webmanifest`),
-      JSON.stringify(manifest, null, 2) + "\n",
-    );
-    written++;
+    manifests.set(locale.code, JSON.stringify(manifest, null, 2) + "\n");
   }
-  console.info(`[build-manifests] wrote ${written} manifests to public/`);
-  if (skipped.length > 0) {
-    console.warn(`[build-manifests] skipped (missing meta.description): ${skipped.join(", ")}`);
-  }
-}
-
-if (import.meta.main) {
-  buildManifests().catch((e) => {
-    console.error("[build-manifests] failed:", e);
-    process.exit(1);
-  });
+  return manifests;
 }

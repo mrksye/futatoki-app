@@ -9,8 +9,8 @@ import { SUPPORTED_LOCALES, SOURCE_LOCALE } from "./src/i18n/locales";
 import { APP_BRAND, APPLE_TITLE, CHARACTER_BRAND, OFFICIAL_BRAND, OG_LOCALE } from "./branding/brand";
 import { BRAND_CONFIG } from "./branding/brand.config";
 import { formatMetaString } from "./src/i18n/format-meta";
-import { buildManifests } from "./build-tools/build-manifests";
-import { buildSeoStatic } from "./build-tools/build-seo-static";
+import { buildAllManifests } from "./build-tools/build-manifests";
+import { buildRobotsTxt, buildSitemapXml } from "./build-tools/build-seo-static";
 
 const ROOT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const BRANDING_DIR = resolve(ROOT_DIR, "branding");
@@ -58,34 +58,102 @@ const escapeHtmlAttr = (raw: string): string =>
     .replace(/"/g, "&quot;");
 
 /**
- * branding/ 配下の visual asset を dev 時 middleware / build 時 dist/ コピーで配信し、
- * brand-driven 静的 (manifest 20 個 + robots / sitemap) を configResolved で自動生成し、
- * index.html 内の %BRAND_*% placeholder を build / dev 双方で BRAND_CONFIG と
- * branding/brand.ts と formatMetaString 由来の値に展開する Forgejo 流の単一 plugin。
+ * branding/ 配下の visual asset (icon, og.png, screenshot.webp 等) と
+ * brand-driven 生成物 (manifest 20 個 / robots.txt / sitemap.xml) を扱う
+ * 単一 plugin。生成物は file system に永続させず、build 時は this.emitFile で
+ * rollup virtual asset として dist/ に直接 emit、dev 時は configureServer
+ * middleware で in-memory serve する (public/ には何も書かない)。
+ * index.html 内の %BRAND_*% placeholder の build/dev 双方 transform、
+ * branding/ 内の visual asset の dev middleware serve + build 時 dist/ copy も
+ * 兼ねる。
  */
 function brandingAssetsPlugin(): Plugin {
+  let manifestCache: Map<string, string> | null = null;
+  let robotsCache: string | null = null;
+  let sitemapCache: string | null = null;
+  let isBuild = false;
+
   return {
     name: "branding-assets",
-    async configResolved() {
-      await buildManifests();
-      buildSeoStatic();
+
+    configResolved(config) {
+      isBuild = config.command === "build";
     },
-    configureServer(server) {
+
+    async buildStart() {
+      if (!isBuild) return;
+      const manifests = await buildAllManifests();
+      for (const [locale, json] of manifests) {
+        this.emitFile({
+          type: "asset",
+          fileName: `manifest.${locale}.webmanifest`,
+          source: json,
+        });
+      }
+      this.emitFile({
+        type: "asset",
+        fileName: "robots.txt",
+        source: buildRobotsTxt(),
+      });
+      this.emitFile({
+        type: "asset",
+        fileName: "sitemap.xml",
+        source: buildSitemapXml(),
+      });
+    },
+
+    async configureServer(server) {
+      manifestCache = await buildAllManifests();
+      robotsCache = buildRobotsTxt();
+      sitemapCache = buildSitemapXml();
+
       server.middlewares.use((req, res, next) => {
         if (!req.url) return next();
         const pathOnly = req.url.split("?")[0] ?? "";
+
+        const manifestMatch = pathOnly.match(/^\/manifest\.([a-zA-Z-]+)\.webmanifest$/);
+        if (manifestMatch && manifestCache) {
+          const localeCode = manifestMatch[1];
+          if (localeCode) {
+            const json = manifestCache.get(localeCode);
+            if (json) {
+              res.setHeader("Content-Type", "application/manifest+json");
+              res.end(json);
+              return;
+            }
+          }
+        }
+
+        if (pathOnly === "/robots.txt" && robotsCache) {
+          res.setHeader("Content-Type", "text/plain");
+          res.end(robotsCache);
+          return;
+        }
+
+        if (pathOnly === "/sitemap.xml" && sitemapCache) {
+          res.setHeader("Content-Type", "application/xml");
+          res.end(sitemapCache);
+          return;
+        }
+
         const filename = pathOnly.replace(/^\/+/, "");
-        if (!BRAND_ASSET_EXTENSIONS.test(filename)) return next();
-        const filepath = join(BRANDING_DIR, filename);
-        if (!existsSync(filepath) || !statSync(filepath).isFile()) return next();
-        const ext = filename.split(".").pop()?.toLowerCase() ?? "";
-        res.setHeader(
-          "Content-Type",
-          BRAND_ASSET_MIME[ext] ?? "application/octet-stream",
-        );
-        res.end(readFileSync(filepath));
+        if (BRAND_ASSET_EXTENSIONS.test(filename)) {
+          const filepath = join(BRANDING_DIR, filename);
+          if (existsSync(filepath) && statSync(filepath).isFile()) {
+            const ext = filename.split(".").pop()?.toLowerCase() ?? "";
+            res.setHeader(
+              "Content-Type",
+              BRAND_ASSET_MIME[ext] ?? "application/octet-stream",
+            );
+            res.end(readFileSync(filepath));
+            return;
+          }
+        }
+
+        next();
       });
     },
+
     transformIndexHtml(html) {
       return html
         .replace(/%BRAND_SOURCE_LOCALE%/g, SOURCE_LOCALE)
@@ -104,6 +172,7 @@ function brandingAssetsPlugin(): Plugin {
         .replace(/%BRAND_SOURCE_OG_LOCALE%/g, SOURCE_OG_LOCALE)
         .replace(/%BRAND_SOURCE_APP_BRAND%/g, escapeHtmlAttr(SOURCE_APP_BRAND));
     },
+
     closeBundle() {
       if (!existsSync(BRANDING_DIR) || !existsSync(DIST_DIR)) return;
       for (const file of readdirSync(BRANDING_DIR)) {
