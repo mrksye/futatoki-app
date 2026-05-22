@@ -1,40 +1,40 @@
 @import "tailwindcss";
 
-/* Futatoki Western Digits SemiBold / Black を Nunito Variable Font (wght axis) から
+/* Clockface Western SemiBold / Black を Nunito Variable Font (wght axis) から
    wght=700 / wght=900 の 2 static instance として抜き出し、U+0030-0039 (Latin 数字 0-9)
    だけに pyftsubset したもの。時計盤の時数 (1-12 / 1-24) と分計 (1-60) の Latin 数字描画
    専用で、UI 全般には当てない (per-lang stack 経由で OS ネイティブが当たる)。SVG inline
-   font-family で 'Futatoki Bengali Digits, Futatoki Western Digits, sans-serif' の順に指定し、
+   font-family で 'Clockface Bengali, Clockface Western, sans-serif' の順に指定し、
    Bengali 数字 ০-৯ → Bengali Digits、Latin 数字 0-9 → Western Digits の順にヒット。
-   name table は 'Futatoki Western Digits' に rename 済 (Nunito の SIL OFL 1.1 は RFN 宣言が
+   name table は 'Clockface Western' に rename 済 (Nunito の SIL OFL 1.1 は RFN 宣言が
    無いので技術的には不要だが、modified subset と原本の混同を防ぐ意図)。Google Fonts CDN から
    直接 import すると訪問者の IP が Google に渡るので privacy 配慮で self-host、ライセンス本文
    は public/fonts/OFL-nunito.txt に同梱。旧 Nunito 3 subset (latin/latin-ext/cyrillic ~95KB)
    は UI 全般での使用を止めて時計盤数字専用に集約したので破棄、必要だった 0-9 だけ
    ~1.4KB × 2 weight (合計 ~2.9KB) に圧縮した。 */
 @font-face {
-  font-family: 'Futatoki Western Digits';
+  font-family: 'Clockface Western';
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('/fonts/futatoki-western-digits-bold.woff2') format('woff2');
+  src: url('/fonts/clockface-western-bold.woff2') format('woff2');
   unicode-range: U+0030-0039;
 }
 @font-face {
-  font-family: 'Futatoki Western Digits';
+  font-family: 'Clockface Western';
   font-style: normal;
   font-weight: 900;
   font-display: swap;
-  src: url('/fonts/futatoki-western-digits-black.woff2') format('woff2');
+  src: url('/fonts/clockface-western-black.woff2') format('woff2');
   unicode-range: U+0030-0039;
 }
 
-/* Futatoki Bengali Digits SemiBold / Regular: Baloo Da 2 Variable Font (wght axis) から
+/* Clockface Bengali SemiBold / Regular: Baloo Da 2 Variable Font (wght axis) から
    wght=600 (SemiBold) / wght=400 (Regular) の 2 static instance を抜き出し、U+09E6-09EF
    (Bengali 数字 ০-৯) だけ pyftsubset したもの。OS 標準の Bengali フォント (Vrinda /
    Nirmala UI 等) は欧文 UI と並べると線が痩せて時計盤の白フチ stroke で削られると
    視認性が落ちるので self-host。bn locale 以外はこの codepoint range の文字が出ないので
-   unicode-range で自動 lazy load される。name table は 'Futatoki Bengali Digits
+   unicode-range で自動 lazy load される。name table は 'Clockface Bengali
    SemiBold/Regular' に rename 済 (Baloo の SIL OFL 1.1 は RFN 宣言が無いので技術的には
    不要だが、modified subset と原本の混同を防ぐ意図)。ライセンス本文は
    public/fonts/OFL-balooda2.txt に同梱。
@@ -46,19 +46,19 @@
    Black (900) を持たない family なので、Nunito の Black/Bold ペアを Baloo Da 2 の
    SemiBold/Regular ペアで近似する設計 (差 200 wt も揃う)。 */
 @font-face {
-  font-family: 'Futatoki Bengali Digits';
+  font-family: 'Clockface Bengali';
   font-style: normal;
   font-weight: 900;
   font-display: swap;
-  src: url('/fonts/futatoki-bengali-digits-semibold.woff2') format('woff2');
+  src: url('/fonts/clockface-bengali-semibold.woff2') format('woff2');
   unicode-range: U+09E6-09EF;
 }
 @font-face {
-  font-family: 'Futatoki Bengali Digits';
+  font-family: 'Clockface Bengali';
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('/fonts/futatoki-bengali-digits-regular.woff2') format('woff2');
+  src: url('/fonts/clockface-bengali-regular.woff2') format('woff2');
   unicode-range: U+09E6-09EF;
 }
 
@@ -70,9 +70,9 @@
    根拠: Noto を自前で入れてる Mac/Win user はごく少数なので、Noto を先頭に
    置いても Mac/Win 標準 user の見た目は変わらず (Apple/MS 系まで降りてくる)、
    かつ Android/Linux 民は Noto に確実にヒットして tofu / 残念フォント回避。
-   Futatoki Western Digits / Futatoki Bengali Digits は self-host してあるが UI 全般には
+   Clockface Western / Clockface Bengali は self-host してあるが UI 全般には
    適用せず、時計盤 (時数 1-12 / 分計 1-60) の SVG inline font-family でだけ参照する
-   (ClockFace.tsx の <text font-family="Futatoki Bengali Digits, Futatoki Western Digits, sans-serif">)。
+   (ClockFace.tsx の <text font-family="Clockface Bengali, Clockface Western, sans-serif">)。
    Latin 数字 0-9 を Western Digits (Nunito を 0-9 だけ subset rename した自作 font) の丸
    ゴシックに、Bengali 数字 ০-৯ (U+09E6-09EF) を Bengali Digits (Baloo Da 2 を ০-৯ だけ
    subset rename した自作 font) にそれぞれ unicode-range 経由でヒットさせる。 */
