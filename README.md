@@ -1,8 +1,8 @@
-<img src="./public/icon-192.png" alt="Futatoki" width="96" />
+<img src="./branding/icon-192.png" alt="Futatoki" width="96" />
 
 # Futatoki the Learning Clock App
 
-<img src="./public/screenshot.webp" alt="Two analog faces side by side — PM face in full color showing 20:00, AM face dimmed" />
+<img src="./branding/screenshot.webp" alt="Two analog faces side by side — PM face in full color showing 20:00, AM face dimmed" />
 
 A free, open-source 24-hour analog clock app for kids learning to tell time. No install, no sign-up — runs in any browser. The app version of *Futatoki the Clock* — affectionately, just *Futatoki*.
 

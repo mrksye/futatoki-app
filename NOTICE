@@ -36,9 +36,9 @@ MIT-licensed "Software":
   remain in use as the affectionate short form and as the LP-side title)
 - All logos, icons, and brand assets in any format (PNG, SVG, WebP, ICO,
   or otherwise), including but not limited to:
-    - `public/icon-*.png` (PWA icons, all sizes)
-    - `public/icon*.svg`, `public/favicon.svg`, and any other SVG icon sources
-    - `public/screenshot.webp` and any promotional imagery
+    - `branding/icon-*.png` (PWA icons, all sizes)
+    - `branding/icon*.svg`, `branding/favicon.svg`, and any other SVG icon sources
+    - `branding/screenshot.webp` and any promotional imagery
     - Any icon, logo, or brand asset embedded in source files (e.g. inline
       SVG within `src/` that represents the Futatoki brand or its clock-face
       identity, as opposed to generic UI iconography)
