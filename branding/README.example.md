@@ -48,7 +48,7 @@ This project is fork-friendly by design. To rebrand:
 1. Edit `branding/brand.config.ts` — set your `domain`, `lpDomain`,
    `storagePrefix`, `logPrefix`, `defaultTitle`, `themeColor`,
    `backgroundColor`, and `externalLinks.privacy`.
-2. Edit `src/i18n/brand.ts` — set your 5-axis brand names (CHARACTER /
+2. Edit `branding/brand.ts` — set your 5-axis brand names (CHARACTER /
    OFFICIAL / LP / APP / APPLE) for every locale you support. Locales you
    drop should also be removed from `src/i18n/locales.ts`.
 3. (Optional) Edit `src/i18n/resources/{locale}.json` — `meta.title` and

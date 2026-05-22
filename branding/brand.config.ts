@@ -1,15 +1,15 @@
 /**
  * Structural brand identity (domain, storage namespace, default title, etc.).
  * Locale-specific brand strings (CHARACTER / OFFICIAL / LP / APP / APPLE)
- * live in src/i18n/brand.ts; visual assets live next to this file in branding/.
+ * live next to this file in branding/brand.ts; visual assets live in this directory too.
  *
  * Cloudflare deploys override `domain` via the ROUTE_DOMAIN env variable
  * (see wrangler.jsonc.template); the value here is the static-build default
  * used by `vite build` and `bun dev`.
  *
  * Forks: edit this file, swap assets in this directory, edit
- * src/i18n/brand.ts, and replace root NOTICE / README.md from the templates
- * in branding/NOTICE.example.md and branding/README.example.md.
+ * branding/brand.ts (locale strings), and replace root NOTICE / README.md
+ * from the templates in branding/NOTICE.example.md and branding/README.example.md.
  */
 
 export interface BrandConfig {

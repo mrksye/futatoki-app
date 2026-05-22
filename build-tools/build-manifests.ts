@@ -3,7 +3,7 @@
  * 生成する pre-build script。
  *
  * SOURCE OF TRUTH:
- * - 表記値 (name / short_name): src/i18n/brand.ts の OFFICIAL_BRAND / CHARACTER_BRAND
+ * - 表記値 (name / short_name): branding/brand.ts の OFFICIAL_BRAND / CHARACTER_BRAND
  * - description: src/i18n/resources/{locale}.json の meta.description (token 展開後)
  * - icon path / theme_color / background_color: branding/brand.config.ts
  *
@@ -16,7 +16,7 @@ import { readFile } from "node:fs/promises";
 import { join, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SUPPORTED_LOCALES, type LocaleMeta, SOURCE_LOCALE } from "../src/i18n/locales";
-import { CHARACTER_BRAND, OFFICIAL_BRAND } from "../src/i18n/brand";
+import { CHARACTER_BRAND, OFFICIAL_BRAND } from "../branding/brand";
 import { BRAND_CONFIG } from "../branding/brand.config";
 import { formatMetaString } from "../src/i18n/format-meta";
 

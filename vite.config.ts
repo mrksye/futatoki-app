@@ -6,7 +6,7 @@ import { copyFileSync, existsSync, readdirSync, readFileSync, statSync } from "n
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SUPPORTED_LOCALES, SOURCE_LOCALE } from "./src/i18n/locales";
-import { APP_BRAND, APPLE_TITLE, CHARACTER_BRAND, OFFICIAL_BRAND, OG_LOCALE } from "./src/i18n/brand";
+import { APP_BRAND, APPLE_TITLE, CHARACTER_BRAND, OFFICIAL_BRAND, OG_LOCALE } from "./branding/brand";
 import { BRAND_CONFIG } from "./branding/brand.config";
 import { formatMetaString } from "./src/i18n/format-meta";
 import { buildManifests } from "./build-tools/build-manifests";
@@ -61,7 +61,7 @@ const escapeHtmlAttr = (raw: string): string =>
  * branding/ 配下の visual asset を dev 時 middleware / build 時 dist/ コピーで配信し、
  * brand-driven 静的 (manifest 20 個 + robots / sitemap) を configResolved で自動生成し、
  * index.html 内の %BRAND_*% placeholder を build / dev 双方で BRAND_CONFIG と
- * src/i18n/brand.ts と formatMetaString 由来の値に展開する Forgejo 流の単一 plugin。
+ * branding/brand.ts と formatMetaString 由来の値に展開する Forgejo 流の単一 plugin。
  */
 function brandingAssetsPlugin(): Plugin {
   return {

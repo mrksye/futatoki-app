@@ -23,7 +23,7 @@ import {
   SOURCE_LOCALE,
   type LocaleMeta,
 } from "../src/i18n/locales";
-import { APP_BRAND, OG_LOCALE, APPLE_TITLE } from "../src/i18n/brand";
+import { APP_BRAND, OG_LOCALE, APPLE_TITLE } from "../branding/brand";
 import { BRAND_CONFIG } from "../branding/brand.config";
 import { formatMetaString } from "../src/i18n/format-meta";
 

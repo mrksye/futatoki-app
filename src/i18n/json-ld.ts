@@ -1,5 +1,5 @@
 import type { LocaleMeta } from "./locales";
-import { APP_BRAND, APP_EXTRA_VARIANTS, BRAND_ALIASES, CHARACTER_BRAND, OFFICIAL_BRAND } from "./brand";
+import { APP_BRAND, APP_EXTRA_VARIANTS, BRAND_ALIASES, CHARACTER_BRAND, OFFICIAL_BRAND } from "../../branding/brand";
 import { BRAND_CONFIG } from "../../branding/brand.config";
 import { formatMetaString } from "./format-meta";
 

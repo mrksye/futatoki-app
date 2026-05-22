@@ -127,6 +127,19 @@ Contributions welcome — especially translations. See [CONTRIBUTING.md](./CONTR
 - How to add a new language
 - Code, bug reports, and feature suggestions
 
+## Forking
+
+This project is fork-friendly. To rebrand for your own deployment:
+
+1. **Pick a new name** for your fork — see [NOTICE](./NOTICE) for why.
+2. Edit `branding/brand.config.ts` (domain, storage prefix, theme color, etc.)
+3. Edit `branding/brand.ts` (5-axis localized brand names per locale)
+4. Replace the visual assets in `branding/` (`icon.svg`, `icon-192.png`, `icon-512.png`, `og.png`)
+5. Replace the root `NOTICE` and `README.md` from `branding/NOTICE.example.md` and `branding/README.example.md`
+6. Run `bun run build` — every PWA manifest, `robots.txt`, `sitemap.xml`, and the `index.html` / per-locale HTMLs are regenerated with your brand values.
+
+Full fork template with the detailed walkthrough: [`branding/README.example.md`](./branding/README.example.md).
+
 ## License
 
 MIT — see [LICENSE](./LICENSE)
