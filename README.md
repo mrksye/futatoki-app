@@ -127,19 +127,27 @@ Contributions welcome — especially translations. See [CONTRIBUTING.md](./CONTR
 - How to add a new language
 - Code, bug reports, and feature suggestions
 
-## Forking
+## Forking — go ahead
 
-This project is fork-friendly. To rebrand for your own deployment:
+Yes, really. Fork it, rebrand it, ship it under your own name, even sell it.
+The `branding/` directory is the only place that holds Futatoki's identity —
+swap its contents and the whole app (PWA manifests, OG tags, storage keys,
+icons) follows your fork:
 
-1. **Pick a new name** for your fork — see [NOTICE](./NOTICE) for why.
-2. Edit `package.json` `name` to match your fork's package identity (matters when you publish or share the repo, not for the built artifacts).
-3. Edit `branding/brand.config.ts` (domain, storage prefix, theme color, etc.)
-4. Edit `branding/brand.ts` (5-axis localized brand names per locale)
-5. Replace the visual assets in `branding/` (`icon.svg`, `icon-192.png`, `icon-512.png`, `og.png`)
-6. Replace the root `NOTICE` and `README.md` from `branding/NOTICE.example.md` and `branding/README.example.md`
-7. Run `bun run build` — every PWA manifest, `robots.txt`, `sitemap.xml`, and the `index.html` / per-locale HTMLs are regenerated with your brand values.
+1. Edit `branding/brand.config.ts` (domain, prefix, theme color)
+2. Edit `branding/brand.ts` (5-axis localized names per locale)
+3. Replace `branding/` assets (`icon.svg`, `og.png`, etc.)
+4. Replace root `NOTICE` and `README.md` from `branding/*.example.md`
+5. Edit `package.json` `name`
+6. `bun run build`
 
-Full fork template with the detailed walkthrough: [`branding/README.example.md`](./branding/README.example.md).
+Verify with `grep -rE "Futatoki|ふたとき" dist/` — should be 0 hits.
+
+Two asks: pick a different name (see [NOTICE](./NOTICE) for why) and don't
+lift the clock-face visual design onto physical clocks or toys (also in
+[NOTICE](./NOTICE)). Everything else is MIT, go wild.
+
+Full template with the longer walkthrough: [`branding/README.example.md`](./branding/README.example.md).
 
 ## License
 
