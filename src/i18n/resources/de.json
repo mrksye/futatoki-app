@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Öffne Futatoki – Uhren-App für Kinder",
-    "description": "Vollständige Anleitung und Tipps zum Beibringen auf futatoki.app. Die App-Version von Futatoki Uhr."
+    "title": "Öffne {characterBrand} – Uhren-App für Kinder",
+    "description": "Vollständige Anleitung und Tipps zum Beibringen auf {lpDomain}. Die App-Version von {lpBrand}."
   },
   "settings": {
     "hour24": "24h",

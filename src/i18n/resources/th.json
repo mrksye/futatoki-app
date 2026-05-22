@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "เปิด Futatoki – แอปนาฬิกาสำหรับเด็ก",
-    "description": "คู่มือฉบับเต็มและคำแนะนำการสอนที่ futatoki.app เวอร์ชันแอปของ Futatoki นาฬิกา"
+    "title": "เปิด {characterBrand} – แอปนาฬิกาสำหรับเด็ก",
+    "description": "คู่มือฉบับเต็มและคำแนะนำการสอนที่ {lpDomain} เวอร์ชันแอปของ {lpBrand}"
   },
   "settings": {
     "hour24": "24h",

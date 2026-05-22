@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Apri Futatoki – App orologio per bambini",
-    "description": "Guida completa e consigli per insegnare su futatoki.app. La versione app di Futatoki Orologio."
+    "title": "Apri {characterBrand} – App orologio per bambini",
+    "description": "Guida completa e consigli per insegnare su {lpDomain}. La versione app di {lpBrand}."
   },
   "settings": {
     "hour24": "24h",

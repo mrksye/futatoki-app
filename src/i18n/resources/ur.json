@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Futatoki کھولیں – بَچّوں کی گَھڑی کا ایپ",
-    "description": "مُکَمَّل گائیڈ اَور تَدریسی تَجاویز کے لِیے futatoki.app دیکھیں۔ Futatoki گَھڑی کا ایپ وَرژَن۔"
+    "title": "{characterBrand} کھولیں – بَچّوں کی گَھڑی کا ایپ",
+    "description": "مُکَمَّل گائیڈ اَور تَدریسی تَجاویز کے لِیے {lpDomain} دیکھیں۔ {characterBrand} گَھڑی کا ایپ وَرژَن۔"
   },
   "settings": {
     "hour24": "24h",

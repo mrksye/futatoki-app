@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Otwórz Futatoki – Aplikacja zegarowa dla dzieci",
-    "description": "Pełny przewodnik i wskazówki dydaktyczne na futatoki.app. Wersja aplikacji Futatoki Zegar."
+    "title": "Otwórz {characterBrand} – Aplikacja zegarowa dla dzieci",
+    "description": "Pełny przewodnik i wskazówki dydaktyczne na {lpDomain}. Wersja aplikacji {lpBrand}."
   },
   "settings": {
     "hour24": "24h",

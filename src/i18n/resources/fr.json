@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Ouvre Futatoki – Appli horloge pour enfants",
-    "description": "Voir futatoki.app pour le guide complet et les conseils pédagogiques. Version appli de Futatoki Horloge."
+    "title": "Ouvre {characterBrand} – Appli horloge pour enfants",
+    "description": "Voir {lpDomain} pour le guide complet et les conseils pédagogiques. Version appli de {lpBrand}."
   },
   "settings": {
     "hour24": "24h",

@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Open Futatoki – Clock for Kids App",
-    "description": "See futatoki.app for the full guide and teaching tips. The app version of Futatoki the Clock."
+    "title": "Open {characterBrand} – Clock for Kids App",
+    "description": "See {lpDomain} for the full guide and teaching tips. The app version of {lpBrand}."
   },
   "settings": {
     "hour24": "24h",

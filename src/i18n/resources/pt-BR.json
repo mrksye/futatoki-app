@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Abra Futatoki – App de relógio para crianças",
-    "description": "Veja futatoki.app para o guia completo e dicas de ensino. Versão app de Futatoki Relógio."
+    "title": "Abra {characterBrand} – App de relógio para crianças",
+    "description": "Veja {lpDomain} para o guia completo e dicas de ensino. Versão app de {lpBrand}."
   },
   "settings": {
     "hour24": "24h",

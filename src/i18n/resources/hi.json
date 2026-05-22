@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Futatoki खोलें – बच्चों की घड़ी का ऐप",
-    "description": "पूरी गाइड और सिखाने के तरीके futatoki.app पर। Futatoki घड़ी का ऐप संस्करण।"
+    "title": "{characterBrand} खोलें – बच्चों की घड़ी का ऐप",
+    "description": "पूरी गाइड और सिखाने के तरीके {lpDomain} पर। {lpBrand} का ऐप संस्करण।"
   },
   "settings": {
     "hour24": "24h",

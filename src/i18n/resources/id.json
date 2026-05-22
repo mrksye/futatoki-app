@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Buka Futatoki – Aplikasi jam untuk anak",
-    "description": "Lihat panduan lengkap dan tips mengajar di futatoki.app. Versi app dari Futatoki Jam."
+    "title": "Buka {characterBrand} – Aplikasi jam untuk anak",
+    "description": "Lihat panduan lengkap dan tips mengajar di {lpDomain}. Versi app dari {lpBrand}."
   },
   "settings": {
     "hour24": "24j",

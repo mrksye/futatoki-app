@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Futatoki Aç – Çocuklar için saat uygulaması",
-    "description": "Tam rehber ve öğretim ipuçları için futatoki.app'i ziyaret edin. Futatoki Saat'in uygulama sürümü."
+    "title": "{characterBrand} Aç – Çocuklar için saat uygulaması",
+    "description": "Tam rehber ve öğretim ipuçları için {lpDomain}'i ziyaret edin. {lpBrand}'in uygulama sürümü."
   },
   "settings": {
     "hour24": "24s",
