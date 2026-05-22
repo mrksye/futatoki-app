@@ -69,7 +69,7 @@ async function loadDescriptionTemplate(code: string): Promise<string | null> {
   }
 }
 
-async function main() {
+export async function buildManifests(): Promise<void> {
   mkdirSync(PUBLIC_DIR, { recursive: true });
   let written = 0;
   const skipped: string[] = [];
@@ -92,7 +92,9 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error("[build-manifests] failed:", e);
-  process.exit(1);
-});
+if (import.meta.main) {
+  buildManifests().catch((e) => {
+    console.error("[build-manifests] failed:", e);
+    process.exit(1);
+  });
+}

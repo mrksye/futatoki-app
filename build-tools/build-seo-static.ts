@@ -34,7 +34,13 @@ function buildSitemap(): string {
 `;
 }
 
-mkdirSync(PUBLIC_DIR, { recursive: true });
-writeFileSync(join(PUBLIC_DIR, "robots.txt"), buildRobots());
-writeFileSync(join(PUBLIC_DIR, "sitemap.xml"), buildSitemap());
-console.info(`[build-seo-static] wrote robots.txt + sitemap.xml to public/`);
+export function buildSeoStatic(): void {
+  mkdirSync(PUBLIC_DIR, { recursive: true });
+  writeFileSync(join(PUBLIC_DIR, "robots.txt"), buildRobots());
+  writeFileSync(join(PUBLIC_DIR, "sitemap.xml"), buildSitemap());
+  console.info(`[build-seo-static] wrote robots.txt + sitemap.xml to public/`);
+}
+
+if (import.meta.main) {
+  buildSeoStatic();
+}

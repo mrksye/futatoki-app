@@ -6,6 +6,8 @@ import { copyFileSync, existsSync, readdirSync, readFileSync, statSync } from "n
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SUPPORTED_LOCALES, SOURCE_LOCALE } from "./src/i18n/locales";
+import { buildManifests } from "./build-tools/build-manifests";
+import { buildSeoStatic } from "./build-tools/build-seo-static";
 
 const ROOT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const BRANDING_DIR = resolve(ROOT_DIR, "branding");
@@ -28,6 +30,10 @@ const BRAND_ASSET_MIME: Record<string, string> = {
 function brandingAssetsPlugin(): Plugin {
   return {
     name: "branding-assets",
+    async configResolved() {
+      await buildManifests();
+      buildSeoStatic();
+    },
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         if (!req.url) return next();
