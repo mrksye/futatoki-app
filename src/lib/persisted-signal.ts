@@ -1,12 +1,13 @@
 import { createSignal, type Signal, type Setter } from "solid-js";
+import { BRAND_CONFIG } from "../../branding/brand.config";
 
 /**
- * localStorage 永続化付き createSignal。各 setting が自分の key (`futatoki.<key>`) を持ち、setter 経由の
+ * localStorage 永続化付き createSignal。各 setting が自分の key (`{storagePrefix}.<key>`) を持ち、setter 経由の
  * 書き換え時に JSON で自動保存される。読み込み失敗 (パース不可・private mode 等) は silent に initial へ
- * フォールバック。
+ * フォールバック。prefix は brand.config.ts の storagePrefix から取得する。
  */
 export function persistedSignal<T>(key: string, initial: T): Signal<T> {
-  const storageKey = `futatoki.${key}`;
+  const storageKey = `${BRAND_CONFIG.storagePrefix}.${key}`;
 
   let loaded = initial;
   try {

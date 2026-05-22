@@ -1,8 +1,9 @@
 import type { LocaleMeta } from "./locales";
 import { APP_BRAND, APP_EXTRA_VARIANTS, BRAND_ALIASES, CHARACTER_BRAND, OFFICIAL_BRAND } from "./brand";
+import { BRAND_CONFIG } from "../../branding/brand.config";
 
 const SOURCE = "ja";
-const APP_URL = "https://play.futatoki.app/";
+const APP_URL = `https://${BRAND_CONFIG.domain}/`;
 
 /**
  * <script type="application/ld+json"> の payload。

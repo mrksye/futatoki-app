@@ -1,5 +1,6 @@
 import type { LocaleMeta } from "./locales";
 import { APP_BRAND, APPLE_TITLE, OG_LOCALE } from "./brand";
+import { BRAND_CONFIG } from "../../branding/brand.config";
 
 const SOURCE = "ja";
 
@@ -30,7 +31,7 @@ export function applyDocumentMetadata(
   if (!title || !description) return;
 
   const siteName = APP_BRAND[locale.code] ?? APP_BRAND[SOURCE];
-  const appleTitle = APPLE_TITLE[locale.code] ?? "Futatoki";
+  const appleTitle = APPLE_TITLE[locale.code] ?? BRAND_CONFIG.defaultTitle;
   const ogLocale = OG_LOCALE[locale.code] ?? OG_LOCALE[SOURCE];
 
   document.title = title;
