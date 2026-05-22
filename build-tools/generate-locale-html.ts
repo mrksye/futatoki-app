@@ -24,6 +24,7 @@ import {
   type LocaleMeta,
 } from "../src/i18n/locales";
 import { APP_BRAND, OG_LOCALE, APPLE_TITLE } from "../src/i18n/brand";
+import { BRAND_CONFIG } from "../branding/brand.config";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -31,7 +32,7 @@ const DIST = join(ROOT, "dist");
 const TEMPLATE_PATH = join(DIST, "index.html");
 const OUTPUT_DIR = join(DIST, "locales");
 const RESOURCES_DIR = join(ROOT, "src/i18n/resources");
-const SITE = "https://play.futatoki.app";
+const SITE = `https://${BRAND_CONFIG.domain}`;
 
 type ResourceJson = {
   meta?: { title?: string; description?: string };
@@ -88,7 +89,7 @@ function buildLocaleHtml(template: string, locale: LocaleMeta, res: ResourceJson
 
   const siteName = APP_BRAND[locale.code] ?? APP_BRAND[SOURCE_LOCALE];
   const ogLocale = OG_LOCALE[locale.code] ?? OG_LOCALE[SOURCE_LOCALE];
-  const appleTitle = APPLE_TITLE[locale.code] ?? "Futatoki";
+  const appleTitle = APPLE_TITLE[locale.code] ?? BRAND_CONFIG.defaultTitle;
   const canonicalUrl = localeUrl(locale.code);
 
   let html = template;
