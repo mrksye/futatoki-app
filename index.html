@@ -1,28 +1,30 @@
 <!DOCTYPE html>
-<html lang="ja" translate="no">
+<html lang="%BRAND_SOURCE_LOCALE%" translate="no">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta name="theme-color" content="#f8f0e8" />
+    <meta name="theme-color" content="%BRAND_THEME_COLOR%" />
     <!-- 全 locale ネイティブ翻訳が揃っているため Chrome の自動翻訳 UI を抑制する。
          <html translate="no"> と併せて二重に指示。 -->
     <meta name="google" content="notranslate" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Futatoki" />
+    <meta name="apple-mobile-web-app-title" content="%BRAND_DEFAULT_TITLE%" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
-    <link rel="canonical" href="https://play.futatoki.app/" />
-    <!-- PWA manifest は vite-plugin-pwa が自動注入する (/manifest.webmanifest = 英語デフォルト)。
+    <link rel="canonical" href="https://%BRAND_DOMAIN%/" />
+    <!-- PWA manifest は vite-plugin-pwa が自動注入する (/manifest.webmanifest = FALLBACK_LOCALE デフォルト)。
          下の inline script は SolidJS load 前の早期保険として ?lang URL > localStorage >
          navigator.languages の順で locale を検出し、対応する /manifest.{locale}.webmanifest と
          apple-mobile-web-app-title に差し替える。SolidJS init 後は I18nProvider が同じ
-         apply を再度走らせる (二重防御)。未対応 locale (e.g. vi) では何もせず、英語デフォルト
-         manifest にフォールバックする。 -->
+         apply を再度走らせる (二重防御)。未対応 locale (e.g. vi) では何もせず、FALLBACK_LOCALE
+         デフォルト manifest にフォールバックする。下の inline script と meta tag 内の
+         プレースホルダは vite plugin (brandingAssetsPlugin) の transformIndexHtml が
+         branding/brand.config.ts と src/i18n/brand.ts 由来の値に build / dev 双方で展開する。 -->
     <script>
       (function () {
-        var SUPPORTED = ["en","ja","es","fr","de","it","pt-BR","zh-CN","zh-TW","ko","ru","pl","tr","th","ar","fa","ur","hi","bn","id"];
-        var APPLE_TITLE_OVERRIDE = { ja: "ふたとき" };
+        var SUPPORTED = %BRAND_SUPPORTED_LOCALES_JSON%;
+        var APPLE_TITLE_OVERRIDE = %BRAND_APPLE_TITLE_JSON%;
 
         function match(requested) {
           if (!requested) return null;
@@ -46,13 +48,13 @@
             var q = url.searchParams.get("lang");
             if (q) { var mq = match(q); if (mq) return mq; }
           } catch (e) {
-            try { console.warn("[futatoki-app] inline locale detect (URL) failed:", e); } catch (_) {}
+            try { console.warn("%BRAND_LOG_PREFIX% inline locale detect (URL) failed:", e); } catch (_) {}
           }
           try {
-            var saved = localStorage.getItem("futatoki:locale");
+            var saved = localStorage.getItem("%BRAND_STORAGE_PREFIX%:locale");
             if (saved) { var ms = match(saved); if (ms) return ms; }
           } catch (e) {
-            try { console.warn("[futatoki-app] inline locale detect (localStorage) failed:", e); } catch (_) {}
+            try { console.warn("%BRAND_LOG_PREFIX% inline locale detect (localStorage) failed:", e); } catch (_) {}
           }
           var nav = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ""];
           for (var i = 0; i < nav.length; i++) {
@@ -69,7 +71,7 @@
           var link = document.querySelector('link[rel="manifest"]');
           if (link) link.href = "/manifest." + matched + ".webmanifest";
           var title = document.querySelector('meta[name="apple-mobile-web-app-title"]');
-          if (title) title.setAttribute("content", APPLE_TITLE_OVERRIDE[matched] || "Futatoki");
+          if (title) title.setAttribute("content", APPLE_TITLE_OVERRIDE[matched] || "%BRAND_DEFAULT_TITLE%");
         };
         if (document.readyState === "loading") {
           document.addEventListener("DOMContentLoaded", swap);
@@ -78,29 +80,27 @@
         }
       })();
     </script>
-    <title>知育時計ふたときアプリ | スタート</title>
+    <title>%BRAND_SOURCE_META_TITLE%</title>
 
     <!-- 検索結果スニペット用。description を未指定だと Googlebot が文字盤の数字
          (1〜12, 1〜60) を本文として拾ってしまうため、必ず明示する。
-         "知育時計ふたときアプリ" / "Futatoki the Learning Clock App" のブランド本体は
-         LP (futatoki.app) に持たせ、アプリ側はあくまで「アプリ版」としてポジションを
-         下げる。JS 実行できる UA では I18nProvider が各 locale 値で上書きするため、
-         ここの ja static はクローラ向けデフォルト。 -->
-    <meta name="description" content="詳しい使い方や教え方は futatoki.app で紹介中。ふたとき時計のアプリ版。" />
+         SOURCE locale (= ja default) の formatMetaString 展開値を build 時に注入し、
+         JS 実行できる UA では I18nProvider が各 locale 値で上書きする。 -->
+    <meta name="description" content="%BRAND_SOURCE_META_DESCRIPTION%" />
 
-    <meta property="og:locale" content="ja_JP" />
+    <meta property="og:locale" content="%BRAND_SOURCE_OG_LOCALE%" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="ふたときアプリ" />
-    <meta property="og:title" content="知育時計ふたときアプリ | スタート" />
-    <meta property="og:description" content="詳しい使い方や教え方は futatoki.app で紹介中。ふたとき時計のアプリ版。" />
-    <meta property="og:url" content="https://play.futatoki.app/" />
-    <meta property="og:image" content="https://play.futatoki.app/og.png" />
+    <meta property="og:site_name" content="%BRAND_SOURCE_APP_BRAND%" />
+    <meta property="og:title" content="%BRAND_SOURCE_META_TITLE%" />
+    <meta property="og:description" content="%BRAND_SOURCE_META_DESCRIPTION%" />
+    <meta property="og:url" content="https://%BRAND_DOMAIN%/" />
+    <meta property="og:image" content="https://%BRAND_DOMAIN%/og.png" />
     <meta property="og:image:width" content="1180" />
     <meta property="og:image:height" content="820" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="知育時計ふたときアプリ | スタート" />
-    <meta name="twitter:description" content="詳しい使い方や教え方は futatoki.app で紹介中。ふたとき時計のアプリ版。" />
-    <meta name="twitter:image" content="https://play.futatoki.app/og.png" />
+    <meta name="twitter:title" content="%BRAND_SOURCE_META_TITLE%" />
+    <meta name="twitter:description" content="%BRAND_SOURCE_META_DESCRIPTION%" />
+    <meta name="twitter:image" content="https://%BRAND_DOMAIN%/og.png" />
   </head>
   <body>
     <div id="root"></div>

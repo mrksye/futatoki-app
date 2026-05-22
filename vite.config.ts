@@ -6,12 +6,16 @@ import { copyFileSync, existsSync, readdirSync, readFileSync, statSync } from "n
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { SUPPORTED_LOCALES, SOURCE_LOCALE } from "./src/i18n/locales";
+import { APP_BRAND, APPLE_TITLE, CHARACTER_BRAND, OFFICIAL_BRAND, OG_LOCALE } from "./src/i18n/brand";
+import { BRAND_CONFIG } from "./branding/brand.config";
+import { formatMetaString } from "./src/i18n/format-meta";
 import { buildManifests } from "./build-tools/build-manifests";
 import { buildSeoStatic } from "./build-tools/build-seo-static";
 
 const ROOT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const BRANDING_DIR = resolve(ROOT_DIR, "branding");
 const DIST_DIR = resolve(ROOT_DIR, "dist");
+const RESOURCES_DIR = resolve(ROOT_DIR, "src/i18n/resources");
 
 const BRAND_ASSET_EXTENSIONS = /\.(svg|png|webp|ico)$/;
 const BRAND_ASSET_MIME: Record<string, string> = {
@@ -21,11 +25,43 @@ const BRAND_ASSET_MIME: Record<string, string> = {
   ico: "image/x-icon",
 };
 
+const SOURCE_LOCALE_META = SUPPORTED_LOCALES.find((l) => l.code === SOURCE_LOCALE);
+if (!SOURCE_LOCALE_META) {
+  throw new Error(`SOURCE_LOCALE "${SOURCE_LOCALE}" not in SUPPORTED_LOCALES`);
+}
+const FALLBACK_LOCALE_CODE = "en";
+const FALLBACK_LOCALE_META =
+  SUPPORTED_LOCALES.find((l) => l.code === FALLBACK_LOCALE_CODE) ?? SOURCE_LOCALE_META;
+
+function loadResourceMeta(code: string): { title: string; description: string } {
+  const text = readFileSync(join(RESOURCES_DIR, `${code}.json`), "utf8");
+  const json = JSON.parse(text) as { meta: { title: string; description: string } };
+  return json.meta;
+}
+
+const SOURCE_META = loadResourceMeta(SOURCE_LOCALE);
+const FALLBACK_META = loadResourceMeta(FALLBACK_LOCALE_META.code);
+
+const SOURCE_META_TITLE = formatMetaString(SOURCE_META.title, SOURCE_LOCALE_META);
+const SOURCE_META_DESCRIPTION = formatMetaString(SOURCE_META.description, SOURCE_LOCALE_META);
+const FALLBACK_META_DESCRIPTION = formatMetaString(FALLBACK_META.description, FALLBACK_LOCALE_META);
+
+const SOURCE_OG_LOCALE =
+  OG_LOCALE[SOURCE_LOCALE] ?? OG_LOCALE[FALLBACK_LOCALE_CODE] ?? "en_US";
+const SOURCE_APP_BRAND = APP_BRAND[SOURCE_LOCALE] ?? BRAND_CONFIG.defaultTitle;
+
+const escapeHtmlAttr = (raw: string): string =>
+  raw
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+
 /**
- * branding/ 配下の visual asset (icon, og.png, screenshot.webp 等) を
- * dev 時は middleware で URL ルート相対 (`/icon.svg` 等) で配信し、build 時は
- * dist/ 直下にコピーする。fork 者は branding/icon.svg などを差し替えるだけで
- * 同じ URL path で公開される。
+ * branding/ 配下の visual asset を dev 時 middleware / build 時 dist/ コピーで配信し、
+ * brand-driven 静的 (manifest 20 個 + robots / sitemap) を configResolved で自動生成し、
+ * index.html 内の %BRAND_*% placeholder を build / dev 双方で BRAND_CONFIG と
+ * src/i18n/brand.ts と formatMetaString 由来の値に展開する Forgejo 流の単一 plugin。
  */
 function brandingAssetsPlugin(): Plugin {
   return {
@@ -50,6 +86,24 @@ function brandingAssetsPlugin(): Plugin {
         res.end(readFileSync(filepath));
       });
     },
+    transformIndexHtml(html) {
+      return html
+        .replace(/%BRAND_SOURCE_LOCALE%/g, SOURCE_LOCALE)
+        .replace(/%BRAND_THEME_COLOR%/g, BRAND_CONFIG.themeColor)
+        .replace(/%BRAND_DEFAULT_TITLE%/g, escapeHtmlAttr(BRAND_CONFIG.defaultTitle))
+        .replace(/%BRAND_DOMAIN%/g, BRAND_CONFIG.domain)
+        .replace(/%BRAND_LOG_PREFIX%/g, BRAND_CONFIG.logPrefix)
+        .replace(/%BRAND_STORAGE_PREFIX%/g, BRAND_CONFIG.storagePrefix)
+        .replace(
+          /%BRAND_SUPPORTED_LOCALES_JSON%/g,
+          JSON.stringify(SUPPORTED_LOCALES.map((l) => l.code)),
+        )
+        .replace(/%BRAND_APPLE_TITLE_JSON%/g, JSON.stringify(APPLE_TITLE))
+        .replace(/%BRAND_SOURCE_META_TITLE%/g, escapeHtmlAttr(SOURCE_META_TITLE))
+        .replace(/%BRAND_SOURCE_META_DESCRIPTION%/g, escapeHtmlAttr(SOURCE_META_DESCRIPTION))
+        .replace(/%BRAND_SOURCE_OG_LOCALE%/g, SOURCE_OG_LOCALE)
+        .replace(/%BRAND_SOURCE_APP_BRAND%/g, escapeHtmlAttr(SOURCE_APP_BRAND));
+    },
     closeBundle() {
       if (!existsSync(BRANDING_DIR) || !existsSync(DIST_DIR)) return;
       for (const file of readdirSync(BRANDING_DIR)) {
@@ -62,12 +116,12 @@ function brandingAssetsPlugin(): Plugin {
   };
 }
 
-// ja 以外の locale chunk を PWA precache から除外する glob。
+// SOURCE 以外の locale chunk を PWA precache から除外する glob。
 // locale は src/i18n/resources/*.json を動的 import することで
 // 各 locale ごとの chunk (assets/{code}-{hash}.js) に分割されるが、
 // デフォルトでは VitePWA がそれらを全部 precache してしまうため
 // SW 初回登録時に19言語分を全ダウンロードしてしまう（lazy load の意図と逆）。
-// ja は静的 import なので main chunk に同梱されており対象外。
+// SOURCE_LOCALE は静的 import なので main chunk に同梱されており対象外。
 const nonSourceLocaleChunkIgnores = SUPPORTED_LOCALES
   .filter((l) => l.code !== SOURCE_LOCALE)
   .map((l) => `assets/${l.code}-*.js`);
@@ -82,15 +136,15 @@ export default defineConfig({
       workbox: {
         globIgnores: nonSourceLocaleChunkIgnores,
       },
-      // デフォルト manifest は英語。日本語ブラウザでは index.html の inline JS が
-      // /manifest.ja.webmanifest(public/ 配下に手書き)へ link[rel=manifest] を差し替える。
+      // デフォルト manifest は FALLBACK_LOCALE (en)。SOURCE_LOCALE ブラウザでは index.html
+      // の inline JS が /manifest.{locale}.webmanifest へ link[rel=manifest] を差し替える。
       manifest: {
-        name: "Futatoki the Learning Clock App",
-        short_name: "Futatoki",
-        description: "A kids' educational analog clock app — each hour gets its own color.",
-        lang: "en",
-        theme_color: "#f8f0e8",
-        background_color: "#f8f0e8",
+        name: OFFICIAL_BRAND[FALLBACK_LOCALE_META.code] ?? OFFICIAL_BRAND[SOURCE_LOCALE],
+        short_name: CHARACTER_BRAND[FALLBACK_LOCALE_META.code] ?? BRAND_CONFIG.defaultTitle,
+        description: FALLBACK_META_DESCRIPTION,
+        lang: FALLBACK_LOCALE_META.code,
+        theme_color: BRAND_CONFIG.themeColor,
+        background_color: BRAND_CONFIG.backgroundColor,
         display: "standalone",
         orientation: "any",
         icons: [
