@@ -45,25 +45,27 @@ bun run build
 
 This project is fork-friendly by design. To rebrand:
 
-1. Edit `branding/brand.config.ts` — set your `domain`, `lpDomain`,
+1. Edit `package.json` `name` to your fork's package identity.
+2. Edit `branding/brand.config.ts` — set your `domain`, `lpDomain`,
    `storagePrefix`, `logPrefix`, `defaultTitle`, `themeColor`,
    `backgroundColor`, and `externalLinks.privacy`.
-2. Edit `branding/brand.ts` — set your 5-axis brand names (CHARACTER /
+3. Edit `branding/brand.ts` — set your 5-axis brand names (CHARACTER /
    OFFICIAL / LP / APP / APPLE) for every locale you support. Locales you
    drop should also be removed from `src/i18n/locales.ts`.
-3. (Optional) Edit `src/i18n/resources/{locale}.json` — `meta.title` and
+4. (Optional) Edit `src/i18n/resources/{locale}.json` — `meta.title` and
    `meta.description` use `{characterBrand}` / `{officialBrand}` / `{lpBrand}` /
    `{appBrand}` / `{appDomain}` / `{lpDomain}` placeholders that expand at
    runtime and at build time.
-4. Replace the visual assets in `branding/`:
+5. Replace the visual assets in `branding/`:
    - `branding/icon.svg`, `branding/icon-192.png`, `branding/icon-512.png` (PWA)
    - `branding/og.png` (Open Graph share image, 1180×820 recommended)
    - `branding/screenshot.webp` (README image)
-5. Replace the root `NOTICE` and `README.md` from `branding/NOTICE.example.md`
+6. Replace the root `NOTICE` and `README.md` from `branding/NOTICE.example.md`
    and `branding/README.example.md` (this file).
-6. Run `bun run build` — every PWA manifest (one per locale), `robots.txt`,
+7. Run `bun run build` — every PWA manifest (one per locale), `robots.txt`,
    `sitemap.xml`, and the `index.html` / per-locale HTMLs are regenerated
-   with your brand values.
+   with your brand values. Verify `grep -rE "<your-old-brand>" dist/` returns
+   nothing if you want to be sure no upstream brand leaked through.
 
 ## License
 
