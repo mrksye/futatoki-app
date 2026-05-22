@@ -300,11 +300,10 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                 <line
                   x1={CX + BAND_INNER() * Math.cos(angle())}
                   y1={CY + BAND_INNER() * Math.sin(angle())}
-                  x2={CX + (BAND_OUTER() - 1) * Math.cos(angle())}
-                  y2={CY + (BAND_OUTER() - 1) * Math.sin(angle())}
+                  x2={CX + (BAND_OUTER() - 1.1) * Math.cos(angle())}
+                  y2={CY + (BAND_OUTER() - 1.1) * Math.sin(angle())}
                   stroke="#ffffff"
                   stroke-width="4"
-                  stroke-linecap="round"
                 />
               );
             }}
@@ -315,12 +314,15 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
           <circle cx={CX} cy={CY} r={R()} fill="#ffffff" />
         </Show>
 
-        {/* くぎりモードの分メモリ。monotone-badge では円盤縁の専用メモリを別途描くので抑止。 */}
+        {/* くぎりモードの分メモリ。monotone-badge では円盤縁の専用メモリを別途描くので抑止。
+         *  クォーター (12/3/6/9 = i%15===0) は sector モードの境界線と同じ太さ 4 で他の時メモリより
+         *  さらに強調する (区切り/くわしく どちらでもクォーターが視覚的に同じ重みになる)。 */}
         <Show when={isKuwashiku() && !isMonotoneBadge()}>
           <For each={Array.from({ length: 60 })}>
             {(_, i) => {
               const angle = () => (i() * 6 * Math.PI) / 180 - Math.PI / 2;
               const isHour = () => i() % 5 === 0;
+              const isQuarter = () => i() % 15 === 0;
               const outer = () => OUTER_RING();
               const inner = () => isHour() ? R() - 8 : R() - 3;
               return (
@@ -330,7 +332,7 @@ const ClockFace: Component<ClockFaceProps> = (props) => {
                   x2={CX + outer() * Math.cos(angle())}
                   y2={CY + outer() * Math.sin(angle())}
                   stroke={isHour() ? "#ffffff" : "#ffffff90"}
-                  stroke-width={isHour() ? 2.5 : 1}
+                  stroke-width={isQuarter() ? 4 : isHour() ? 2.5 : 1}
                   stroke-linecap="round"
                 />
               );
