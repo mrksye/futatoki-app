@@ -1,5 +1,10 @@
 # NOTICE
 
+> [!IMPORTANT]
+> This file describes the **Futatoki** brand identity and is NOT part of the
+> MIT-licensed software. Forks MUST replace this file with their own —
+> see [`branding/NOTICE.example.md`](./branding/NOTICE.example.md) for a template.
+
 The source code of this project is MIT-licensed — fork, modify, ship, sell, go wild.
 
 Two small asks, though:
