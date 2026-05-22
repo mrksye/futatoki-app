@@ -7,6 +7,9 @@ import "./lib/kiosk-bootstrap";
 // motion-bootstrap.ts を消し、animateMotion 呼び出しを el.animate に戻し、index.css の
 // body.motion-reduce ブロックを消す。
 import "./lib/motion-bootstrap";
+// dev mode 限定: window.__seedDemoActivities を露出。LP 側 screenshots.mjs から Playwright 経由で
+// 呼ばれ Top hero 動画の「12 種できごと scatter」を録画する。本番 bundle では空。
+import "./lib/demo-seam";
 import App from "./App";
 
 const root = document.getElementById("root");
