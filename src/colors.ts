@@ -129,31 +129,31 @@ export const palettes: Palette[] = [
   {
     id: "primary3",
     am: [
-      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 0時(12) シアン
-      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 1時  マゼンタ
+      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 0時(12) マゼンタ
+      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 1時  シアン
       { bg: "#FCE410", badge: "#FFEE20", text: "#1a1a1a" }, // 2時  イエロー
-      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 3時  シアン
-      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 4時  マゼンタ
+      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 3時  マゼンタ
+      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 4時  シアン
       { bg: "#FCE410", badge: "#FFEE20", text: "#1a1a1a" }, // 5時  イエロー
-      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 6時  シアン
-      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 7時  マゼンタ
+      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 6時  マゼンタ
+      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 7時  シアン
       { bg: "#FCE410", badge: "#FFEE20", text: "#1a1a1a" }, // 8時  イエロー
-      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 9時  シアン
-      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 10時 マゼンタ
+      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 9時  マゼンタ
+      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 10時 シアン
       { bg: "#FCE410", badge: "#FFEE20", text: "#1a1a1a" }, // 11時 イエロー
     ],
     pm: [
-      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 12時 シアン
-      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 13時 マゼンタ
+      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 12時 マゼンタ
+      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 13時 シアン
       { bg: "#FCE410", badge: "#FFEE20", text: "#1a1a1a" }, // 14時 イエロー
-      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 15時 シアン
-      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 16時 マゼンタ
+      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 15時 マゼンタ
+      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 16時 シアン
       { bg: "#FCE410", badge: "#FFEE20", text: "#1a1a1a" }, // 17時 イエロー
-      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 18時 シアン
-      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 19時 マゼンタ
+      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 18時 マゼンタ
+      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 19時 シアン
       { bg: "#FCE410", badge: "#FFEE20", text: "#1a1a1a" }, // 20時 イエロー
-      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 21時 シアン
-      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 22時 マゼンタ
+      { bg: "#E0108C", badge: "#F020A0", text: "#ffffff" }, // 21時 マゼンタ
+      { bg: "#08B4E0", badge: "#18C4F0", text: "#1a1a1a" }, // 22時 シアン
       { bg: "#FCE410", badge: "#FFEE20", text: "#1a1a1a" }, // 23時 イエロー
     ],
   },
