@@ -1,10 +1,6 @@
 import { requestChronostasis } from "../../lib/chronostasis";
 import { animateMotion } from "../../lib/motion";
-import {
-  completeFirstLaunch,
-  deactivateFirstLaunch,
-  firstLaunchActive,
-} from "./state";
+import { deactivateFirstLaunch } from "./state";
 
 /**
  * 初回起動演出 (はつかいきえんしゅつ) のオーケストレータ。
@@ -22,24 +18,19 @@ import {
  *                   (cubic-bezier(.34, 1.56, .64, 1)) で overshoot 付きで両端に押し出される。
  *                   同時に period が "am"/"pm" に切替わり、ClockLayout と同じ AM/PM 配色になる。
  *
- * 二つの時間軸が独立に走る ([[feedback_independent_triggers_dont_merge]]):
+ * 演出シーケンス (Splash の onMount で自動 kick off、pointerdown は trigger ではない):
+ *   DWELL  : 静止単体時計 (phase="single") をちょっと間見せる (~700ms)。
+ *   GUGUGU : shake target (= AM/PM wrapper を包む center container) に「グッ・グッ・グッ」の
+ *            discrete pulse を 6 発 (~500ms)。両 wrapper が同期で揺れて単体時計が震える見え方。
+ *   BURST  : phase を "burst" に切替 → AM/PM の CSS transform が bouncy で両端へ開く (620ms)。
+ *            同時に shake target に scale burst (~360ms)、fade target (= container) に opacity
+ *            フェード (~620ms) を WAAPI で重ねて、「ぱんっ!」と弾けて開いて消える視覚を作る。
+ *   着地   : bouncy 着地まで待って deactivateFirstLaunch() → <Show> 分岐で Splash unmount、
+ *            下層の ClockLayout (clock モード + split AM/PM + 現在時刻) が露出。chronostasis を
+ *            解除して useCurrentTime を再開。
  *
- *   軸 A — 演出シーケンス (時間 trigger):
- *     Splash の onMount で自動 kick off。pointerdown は trigger ではない。
- *       DWELL  : 静止単体時計 (phase="single") をちょっと間見せる (~700ms)。
- *       GUGUGU : shake target (= AM/PM wrapper を包む center container) に「グッ・グッ・グッ」の
- *                discrete pulse を 6 発 (~500ms)。両 wrapper が同期で揺れて単体時計が震える見え方。
- *       BURST  : phase を "burst" に切替 → AM/PM の CSS transform が bouncy で両端へ開く (620ms)。
- *                同時に shake target に scale burst (~360ms)、fade target (= container) に opacity
- *                フェード (~620ms) を WAAPI で重ねて、「ぱんっ!」と弾けて開いて消える視覚を作る。
- *       着地   : bouncy 着地まで待って deactivateFirstLaunch() → <Show> 分岐で Splash unmount、
- *                下層の ClockLayout (clock モード + split AM/PM + 現在時刻) が露出。chronostasis を
- *                解除して useCurrentTime を再開。
- *
- *   軸 B — pointerdown フラグ (永続側、独立):
- *     initFirstLaunch が attach する window pointerdown (capture phase, passive) で最初の 1 回だけ
- *     completeFirstLaunch() を呼ぶ。Splash 内・外を問わずどこかに触れたら立つ。受動視聴のみで
- *     離脱した user は永続フラグが pending=true のまま、次回起動でまた splash を見る。
+ * 「初回」判定の永続化は state.ts に集約され、PWA install 状態を信号源とする。controller 側は
+ * 純粋に演出シーケンスだけを担当する (永続フラグ操作なし、pointerdown listener なし)。
  */
 
 /** 起動 → 単体時計を見せる dwell。短すぎると「画面開いた瞬間ガクガクする」見え方になる。 */
@@ -148,21 +139,4 @@ export const runSplashSequence = async (params: SplashSequenceParams): Promise<v
   } finally {
     release();
   }
-};
-
-/**
- * App body から同期呼び出しすること。永続側フラグの管理だけを担当する (pointerdown 観測 →
- * completeFirstLaunch)。演出は Splash component の onMount から自動で走るのでここでは触らない。
- */
-export const initFirstLaunch = (): void => {
-  if (!firstLaunchActive()) return;
-
-  let pointerdownObserved = false;
-  const onPointerDown = () => {
-    if (pointerdownObserved) return;
-    pointerdownObserved = true;
-    window.removeEventListener("pointerdown", onPointerDown, { capture: true });
-    completeFirstLaunch();
-  };
-  window.addEventListener("pointerdown", onPointerDown, { capture: true, passive: true });
 };

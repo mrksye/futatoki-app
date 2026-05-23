@@ -1,1 +1,1 @@
-export { initFirstLaunch } from "./controller";
+export { firstLaunchActive } from "./state";
