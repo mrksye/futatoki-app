@@ -151,12 +151,7 @@ const SettingsPopover: Component = () => {
                   const gaps = isWheel ? SWATCH_GAPS_WHEEL : SWATCH_GAPS_DEFAULT;
                   return (
                   <button
-                    class={
-                      "flex items-center gap-1.5 px-2 py-1 tablet:px-3 tablet:py-2 rounded-full border active:scale-95 transition-all before:hidden " +
-                      (paletteId() === p.id
-                        ? "border-gray-800 bg-gray-100"
-                        : "border-gray-200 bg-white")
-                    }
+                    class={`${pillBtn} flex items-center gap-1.5 before:hidden ${paletteId() === p.id ? pillActive : pillInactive}`}
                     aria-label={t(`palette.${p.id}` as never)}
                     onClick={() => selectPalette(p.id)}
                   >
@@ -167,12 +162,14 @@ const SettingsPopover: Component = () => {
                             class={
                               "inline-block w-3 h-3 rounded-full border relative " +
                               // 白盤面 (ものとーん) は border-white だと dot が完全消失するので
-                              // 内側に薄めの黒線で外形を見せる。外側の border を黒に変えると
-                              // ものとーんだけ円が大きく見えるので、border-transparent で寸法を
-                              // 揃えたうえで inner ring に切替える。他 palette は隣接 dot 同士の
-                              // 重なりを区切るため border-white を保持。
+                              // 内側に薄めの線で外形を見せる。外側の border を変えると ものとーん
+                              // だけ円が大きく見えるので、border-transparent で寸法を揃えたうえで
+                              // inner ring に切替える。inactive (白背景) は ring-black/30、active
+                              // (黒反転背景) では ring-black/30 が背景に埋もれるので中間グレー
+                              // ring-gray-400 に振り、両 state で同じ「グレーの線」感を維持する。
+                              // 他 palette は隣接 dot 同士の重なりを区切るため border-white を保持。
                               (p.id === "monotone"
-                                ? "border-transparent ring-1 ring-inset ring-black/30"
+                                ? `border-transparent ring-1 ring-inset ${paletteId() === p.id ? "ring-gray-400" : "ring-black/30"}`
                                 : "border-white")
                             }
                             style={{
@@ -191,9 +188,7 @@ const SettingsPopover: Component = () => {
                         )}
                       </For>
                     </span>
-                    <span class="text-xs tablet:text-base">
-                      {t(`palette.${p.id}` as never)}
-                    </span>
+                    <span>{t(`palette.${p.id}` as never)}</span>
                   </button>
                   );
                 }}
