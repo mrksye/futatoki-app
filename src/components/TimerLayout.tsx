@@ -1,6 +1,7 @@
 import { createEffect, createMemo, createSignal, onCleanup, Show, type Component } from "solid-js";
 import ClockFace from "./ClockFace";
 import HandsLayer from "./HandsLayer";
+import TimerWedge from "../features/timer/TimerWedge";
 import { useOrientation } from "../hooks/useOrientation";
 import { useViewport } from "../hooks/useViewport";
 import { useI18n } from "../i18n";
@@ -136,13 +137,16 @@ const TimerLayout: Component = () => {
           </div>
         </div>
 
-        {/* PM 位置: タイマー盤。グレー現在針 (ghost) + 黒い終了マーカー針。 */}
+        {/* PM 位置: タイマー盤。黒い現在針 + グレーの終了マーカー針 + その間を塗るタイマー扇。
+            扇は ClockFace の children = ベースと数字の間に入り、現在針から残り時間ぶん塗る。 */}
         <div
           class="relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
           classList={{ "-ml-3": isLandscape(), "-mt-3": !isLandscape() }}
         >
           <div class="relative" style={{ width: `${clockSize()}px`, height: `${clockSize()}px` }}>
-            <ClockFace period="merged" hours={refHours()} />
+            <ClockFace period="merged" hours={refHours()}>
+              <TimerWedge fromMinute={refMinuteFloat()} spanMinutes={(remainingSeconds() ?? 0) / 60} />
+            </ClockFace>
             <HandsLayer
               hours={refHours()}
               minutes={refMinuteFloat()}
