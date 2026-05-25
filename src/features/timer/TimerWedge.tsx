@@ -1,5 +1,6 @@
 import { Show, type Component } from "solid-js";
 import { colorMode } from "../settings/color-mode";
+import { paletteId } from "../settings/palette";
 import { CENTER, clockRadius, pieSectorPath } from "../../components/clockface-layers/geometry";
 
 /**
@@ -7,8 +8,9 @@ import { CENTER, clockRadius, pieSectorPath } from "../../components/clockface-l
  * までの扇 (pie) で塗る。ClockFace の children として BaseFace と FaceDetail の間に差し込まれ、背景色の
  * 上・色扇/バッジ/数字の下に乗る (数字は扇の上で読める)。
  *
- * 色は colorMode 依存: くぎりは白 (色扇が opacity 0.8 で上に重なるのでその区画が明るく抜ける)、ばっじは
- * 区切り盤面と同じグレー #ececec (白盤面の上に出す)。
+ * 色: 白い扇が効くのは「上に乗る opacity 0.8 の色扇を明るく抜く」非ものとーんの くぎり だけ。ばっじ
+ * (盤面が白) と ものとーん (区切り/ばっじとも盤面が白) では白い扇は白に溶けるので、区切り盤面と同じ
+ * グレー #ececec を白盤面の上に出す。
  */
 interface TimerWedgeProps {
   /** 現在針の位置 (分, 0..60 小数)。扇の始端。 */
@@ -18,7 +20,7 @@ interface TimerWedgeProps {
 }
 
 const TimerWedge: Component<TimerWedgeProps> = (props) => {
-  const fill = () => (colorMode() === "sector" ? "#ffffff" : "#ececec");
+  const fill = () => (colorMode() === "sector" && paletteId() !== "monotone" ? "#ffffff" : "#ececec");
   const startAngle = () => props.fromMinute * 6 - 90;
   return (
     <Show when={props.spanMinutes > 0}>

@@ -203,7 +203,9 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
 
   return (
     <>
-      <Show when={colorMode() === "sector"}>
+      {/* 色扇 + 区切り線。ものとーんは白盤面に白の扇/線で「境目が消える」設計＝完全に不可視なので
+          描かない (軽量化 + 下層に敷かれた層を白で覆い隠さずに済む)。 */}
+      <Show when={colorMode() === "sector" && paletteId() !== "monotone"}>
         <For each={colors()}>
           {(color, i) => (
             <path
@@ -364,6 +366,9 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
               <Show when={colorMode() === "badge" && !isMonotoneBadge()}>
                 <circle cx={x()} cy={y()} r={isKuwashiku() ? BADGE_RADIUS_KUWASHIKU : BADGE_RADIUS_SUKKIRI} fill={color()!.badge} />
               </Show>
+              {/* monotone-badge の non-cardinal は白塗りでなく none。白盤面では同じく不可視だが、下に何か
+                  (timer 扇など) が敷かれても浮かず常に不可視を保つ。fill 無しはグリフを塗らないだけで合成
+                  コストもなく白塗りより軽い。 */}
               <text
                 ref={textRef}
                 x={x()}
@@ -375,7 +380,7 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                 font-family="Clockface Bengali, Clockface Western, sans-serif"
                 fill={
                   isMonotoneBadge()
-                    ? (isCardinal ? "#111111" : "#ffffff")
+                    ? (isCardinal ? "#111111" : "none")
                     : (colorMode() === "badge" ? color()!.text : "#111111")
                 }
                 stroke={colorMode() === "sector" ? "#ffffff" : "none"}
