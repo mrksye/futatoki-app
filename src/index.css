@@ -149,6 +149,15 @@ html, body, #root {
   background: linear-gradient(160deg, #fef6e4 0%, #fce4ec 35%, #e8eaf6 65%, #e0f7fa 100%);
 }
 
+/* タイマーモード専用の背景。既定パステル (上) より少し落ち着いた集中向けの静的グラデに、中央のほんのり
+   暖かい光だまり (radial) を重ねて視線を中央の時計へ寄せる。盤面 (merged = グレー基調) と相性のよい
+   クール寄りの色。静的なので animation は無し。 */
+.timer-background {
+  background:
+    radial-gradient(110% 80% at 50% 40%, #fdf6ec 0%, rgba(253, 246, 236, 0) 56%),
+    linear-gradient(160deg, #e8e6f1 0%, #dfe1ee 40%, #d9e4ec 72%, #e0ebee 100%);
+}
+
 /* per-lang font stack。lang 別に「Noto → Apple → Microsoft」の地域 OS ネイティブを優先指定する。
    既存の --font-sans は JP 系 (Hiragino Maru Gothic 等) 主体で、zh-TW / zh-CN / ko でも JP
    フォントが Han 字に当たってしまう。その結果「。」等の punctuation 位置が JP 流 (左下) で

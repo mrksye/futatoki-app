@@ -147,6 +147,8 @@ const TimerLayout: Component = () => {
 
   return (
     <>
+      {/* 集中向けの静的背景 (中央に光だまり)。盤面の後ろに敷く decorative レイヤー。 */}
+      <div class="timer-background absolute inset-0 pointer-events-none" />
       <div class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}>
         {/* AM 位置: 現在時刻の合体時計 (通常の黒針)。z-10 は ClockLayout の split と揃える。 */}
         <div
