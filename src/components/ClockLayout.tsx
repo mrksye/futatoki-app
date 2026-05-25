@@ -525,6 +525,35 @@ export const ClockLayout: Component = () => {
   const amSplitVisible = createMemo(() => (!mergedVisible() || transitioning()) && (isAm() || !dragging()));
   const pmSplitVisible = createMemo(() => (!mergedVisible() || transitioning()) && (!isAm() || !dragging()));
 
+  /** SkyBackground の mount/unmount は大きな subtree 生成を伴い、同フレームに走る AM/PM wrapper の
+   *  合体/分離 transition の baseline を強制 reflow で奪う (= wrapper が中央へ寄らず最終位置へ
+   *  スナップする)。そこで mount/unmount を transition のフレームからずらす:
+   *    - 入室 (回転モードへ): mount を double rAF で遅らせ、wrapper の合体 transition を先に発火させる。
+   *    - 退室 (clock へ): 分離 transition が終わる (transitioning が落ちる) まで保持してから unmount。
+   *  double rAF は paint を確実に 1 回挟むための保険 (merge-animation の mergedRevealed と同型)。 */
+  const [skyVisible, setSkyVisible] = createSignal(isRotating());
+  let skyRaf1: number | null = null;
+  let skyRaf2: number | null = null;
+  const cancelSkyRaf = () => {
+    if (skyRaf1 !== null) { cancelAnimationFrame(skyRaf1); skyRaf1 = null; }
+    if (skyRaf2 !== null) { cancelAnimationFrame(skyRaf2); skyRaf2 = null; }
+  };
+  createEffect(on([isRotating, transitioning], () => {
+    if (isRotating()) {
+      if (!skyVisible() && skyRaf1 === null) {
+        skyRaf1 = requestAnimationFrame(() => {
+          skyRaf1 = null;
+          skyRaf2 = requestAnimationFrame(() => { skyRaf2 = null; setSkyVisible(true); });
+        });
+      }
+    } else if (!transitioning()) {
+      cancelSkyRaf();
+      setSkyVisible(false);
+    }
+    // 退室 transition 中 (回転 false / transitioning true) は保持して何もしない。
+  }));
+  onCleanup(cancelSkyRaf);
+
   return (
     <div class="w-full h-full overflow-hidden relative">
       {/* timer モードは別レイアウト (両盤面を濃く表示する合体時計 2 個)。clock / 回転モードの
@@ -535,7 +564,7 @@ export const ClockLayout: Component = () => {
       </Show>
 
       <Show when={!isTimerMode()}>
-        <Show when={isRotating()}>
+        <Show when={skyVisible()}>
           <SkyBackground totalMinutes={rotateMinutes()} />
         </Show>
 
