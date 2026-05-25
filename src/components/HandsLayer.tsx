@@ -27,14 +27,13 @@ interface HandsLayerProps {
   minutes: number;
   shakeKey?: Accessor<number>;
   minuteTickKey?: Accessor<number>;
-  /** 分針 (長針) の黒い本体だけの不透明度。白い縁取りは常に不透明のまま残るので、timer モードの
-   *  「設定先」盤面では輪郭がくっきりしたゴースト針になる。時針・中心ネジも常に不透明。
-   *  未指定なら 1 (通常表示)。 */
-  minuteHandOpacity?: number;
-  /** 2 本目の分針 (マーカー) を描く位置 (分)。timer の黒い終了マーカー針に使う。primary 分針と同じ
-   *  geometry を solid (不透明) で重ねるだけで、shake / tick の WAAPI animation は乗らない静的な針。
+  /** 2 本目の分針 (マーカー) を描く位置 (分)。timer の終了マーカー針 (= タイマーの目標) に使う。
+   *  primary 分針と同じ geometry を重ねるだけで、shake / tick の WAAPI animation は乗らない静的な針。
    *  時針マーカーは描かない (分タイマーなので短針は無視)。未指定なら描画しない。 */
   markerMinutes?: number;
+  /** マーカー針 (長針) の黒い本体だけの不透明度。白い縁取りは常に不透明のまま残るので、timer モードの
+   *  目標マーカーは輪郭がくっきりしたゴースト針になる。未指定なら 1 (不透明)。 */
+  markerHandOpacity?: number;
 }
 
 const VIEW = 340;
@@ -153,8 +152,7 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
         </g>
 
         {/* 分針 (同じ outline 思想で padding 1.25)。shake 用の外側 wrapper <g> で囲む。
-            opacity は黒い針本体の line だけに載せ、白い縁取りは不透明のまま残す (timer の
-            ゴースト表示でも輪郭はくっきり見える)。時針・中心ネジは別 <g>/<circle> なので不変。 */}
+            時針・中心ネジは別 <g>/<circle>。 */}
         <g
           ref={minuteHandWrapperRef}
           style={{
@@ -169,18 +167,20 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
             <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
               stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
             <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
-              stroke="#111111" stroke-width="3.5" stroke-linecap="round"
-              opacity={props.minuteHandOpacity ?? 1} />
+              stroke="#111111" stroke-width="3.5" stroke-linecap="round" />
           </g>
         </g>
 
-        {/* 2 本目の分針 (timer の黒い終了マーカー)。primary と同 geometry を不透明で重ねる静的な針。 */}
+        {/* 2 本目の分針 (timer の終了マーカー = タイマーの目標)。primary と同 geometry を重ねる静的な針。
+            opacity は黒い本体の line だけに載せ、白い縁取りは不透明のまま残す (ゴースト表示でも輪郭は
+            くっきり見える)。 */}
         <Show when={props.markerMinutes !== undefined}>
           <g transform={`rotate(${(props.markerMinutes ?? 0) * 6} ${CENTER} ${CENTER})`}>
             <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
               stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
             <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
-              stroke="#111111" stroke-width="3.5" stroke-linecap="round" />
+              stroke="#111111" stroke-width="3.5" stroke-linecap="round"
+              opacity={props.markerHandOpacity ?? 1} />
           </g>
         </Show>
 

@@ -17,41 +17,40 @@ import {
  * 操作 (せっと / すたーと / とりけし / リングメニュー) は TimerActions が担当し、本ファイルは
  * timer/state の signal を読んで「見せる」だけ。
  *
- * 基準時刻 (entry) はモード入室時に 1 回だけ捕えて固定する。setup 中 (unset / picking / armed) は
- * この frozen 値で両盤面が止まり、タイマー設定中に時計が動く問題を断つ。running に入ると現在時刻を
- * 250ms ごとに取り直して (nowMs)、グレーの現在針がリアルタイムで進む。
+ * 両盤面の時刻はモード入室から 250ms ごとに live で進み続ける。setup 中 (unset / picking / armed) も
+ * 止めない。armed の黒い終了マーカーは「現在時刻 + 選択分」を live で追うので、現在針との間隔は選択
+ * 分のぶんで一定に保たれる (時計が進んでもプレビューの残り時間がズレない)。running に入ると開始時刻
+ * (runStartMs) 基準の固定マーカーへ切り替わり、現在針がそこへ近づいて重なった (終了時刻に到達した)
+ * ところで clamp して止まる = 鳴り終わりに現在針が終了マーカーちょうどに重なる。
  *
  * 盤面の役割:
  *  - AM 位置 (landscape 左 / portrait 上): 現在時刻の合体時計 (通常の黒針)。
- *  - PM 位置 (landscape 右 / portrait 下): タイマー盤。グレーの現在針 (長針, ghost) + 黒い終了
- *    マーカー針 (markerMinutes)。終了マーカーは分を選んだ瞬間 (armed) から出て、running 中は固定。
- *    現在針がそこへ近づき、重なったら終了。短針 (時針) は黒マーカーを出さない (分タイマーなので無視)。
+ *  - PM 位置 (landscape 右 / portrait 下): タイマー盤。黒い現在針 (長針) + グレーの終了マーカー針
+ *    (markerMinutes, タイマーの目標 ghost)。終了マーカーは分を選んだ瞬間 (armed) から出て、running 中
+ *    は固定。現在針がそこへ近づき、重なったら終了。短針 (時針) はマーカーを出さない (分タイマーなので無視)。
  */
 
-/** PM 位置のグレー現在針 (長針 ghost) の不透明度。黒い終了マーカー (不透明) との対比で薄く見せる。 */
-const NOW_MINUTE_HAND_OPACITY = 0.2;
+/** PM 位置の終了マーカー針 (タイマーの目標, 長針 ghost) の不透明度。黒い現在針 (不透明) との対比で
+ *  薄く見せる。 */
+const TARGET_MARKER_OPACITY = 0.2;
 
 const TimerLayout: Component = () => {
   const isLandscape = useOrientation();
   const viewport = useViewport();
   const { formatNumeral } = useI18n();
 
-  // モード入室時の現在時刻を 1 回だけ固定 (frozen reference)。setup 中の基準。
-  const entryMs = Date.now();
-  // running 中だけ 250ms ごとに更新する現在時刻。setup 中は参照されない。
-  const [nowMs, setNowMs] = createSignal(entryMs);
+  // timer モード中ずっと 250ms ごとに更新する現在時刻。両盤面の針はこれを基準に live で進む。
+  const [nowMs, setNowMs] = createSignal(Date.now());
 
-  /** running 中は live、それ以外は entry に固定した基準時刻 (ms)。 */
-  const refMs = () => (timerPhase() === "running" ? nowMs() : entryMs);
-  const refDate = createMemo(() => new Date(refMs()));
+  const refDate = createMemo(() => new Date(nowMs()));
   const refHours = () => refDate().getHours();
   /** 秒も混ぜた分 (小数) → running 中の現在針がカクつかず滑らかに進む。 */
   const refMinuteFloat = () => refDate().getMinutes() + refDate().getSeconds() / 60;
 
   const hasSelection = () => timerPhase() === "armed" || timerPhase() === "running";
 
-  /** カウントダウン終了時刻 (ms)。armed は entry 基準のプレビュー、running は開始押下時刻 (runStartMs)
-   *  基準。未選択なら null。 */
+  /** カウントダウン終了時刻 (ms)。armed は現在時刻 live 基準のプレビュー (時計と一緒に前へ滑り、現在針
+   *  との間隔は選択分のまま一定)、running は開始押下時刻 (runStartMs) 基準で固定。未選択なら null。 */
   const endMs = (): number | null => {
     const sel = selectedMinutes();
     if (sel === null) return null;
@@ -59,7 +58,7 @@ const TimerLayout: Component = () => {
       const start = runStartMs();
       return start === null ? null : start + sel * 60000;
     }
-    return entryMs + sel * 60000;
+    return nowMs() + sel * 60000;
   };
 
   /** 黒い終了マーカー針の位置 (分, 小数)。armed / running のときだけ値を返す。 */
@@ -91,17 +90,21 @@ const TimerLayout: Component = () => {
     return `${pad2(Math.floor(r / 60))}:${pad2(r % 60)}`;
   };
 
-  // running 中だけ現在時刻を取り直す。終了時刻に達したら clamp して interval を止める。
+  // timer モード中ずっと 250ms ごとに現在時刻を取り直し、両盤面の針を live で進める。phase を読んで
+  // 遷移ごとに interval を張り直す (running 終了で止めた後に とりけし で復帰させるため)。running 中は
+  // 終了時刻に達したら clamp して interval を止め、現在針を終了マーカーちょうどに止める (= 鳴り終わり)。
   createEffect(() => {
-    if (timerPhase() !== "running") return;
+    const phase = timerPhase();
     setNowMs(Date.now());
     const id = setInterval(() => {
       const now = Date.now();
-      const e = endMs();
-      if (e !== null && now >= e) {
-        setNowMs(e);
-        clearInterval(id);
-        return;
+      if (phase === "running") {
+        const e = endMs();
+        if (e !== null && now >= e) {
+          setNowMs(e);
+          clearInterval(id);
+          return;
+        }
       }
       setNowMs(now);
     }, 250);
@@ -143,8 +146,8 @@ const TimerLayout: Component = () => {
             <HandsLayer
               hours={refHours()}
               minutes={refMinuteFloat()}
-              minuteHandOpacity={NOW_MINUTE_HAND_OPACITY}
               markerMinutes={markerMinutes()}
+              markerHandOpacity={TARGET_MARKER_OPACITY}
             />
           </div>
         </div>
