@@ -27,7 +27,10 @@
     "set": "设置",
     "start": "开始",
     "cancel": "取消",
-    "minuteOption": "{n} 分钟"
+    "minuteOption": "{n} 分钟",
+    "pause": "暂停",
+    "resume": "继续",
+    "done": "完成"
   },
   "section": {
     "color": "配色",

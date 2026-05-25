@@ -27,7 +27,10 @@
     "set": "Einstellen",
     "start": "Start",
     "cancel": "Abbrechen",
-    "minuteOption": "{n} Min"
+    "minuteOption": "{n} Min",
+    "pause": "Pause",
+    "resume": "Weiter",
+    "done": "Fertig"
   },
   "section": {
     "color": "Farben",

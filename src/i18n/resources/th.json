@@ -27,7 +27,10 @@
     "set": "ตั้งค่า",
     "start": "เริ่ม",
     "cancel": "ยกเลิก",
-    "minuteOption": "{n} นาที"
+    "minuteOption": "{n} นาที",
+    "pause": "หยุดชั่วคราว",
+    "resume": "ทำต่อ",
+    "done": "เสร็จแล้ว"
   },
   "section": {
     "color": "สี",

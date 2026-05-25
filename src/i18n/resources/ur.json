@@ -27,7 +27,10 @@
     "set": "سیٹ",
     "start": "شروع",
     "cancel": "منسوخ",
-    "minuteOption": "{n} منٹ"
+    "minuteOption": "{n} منٹ",
+    "pause": "وقفہ",
+    "resume": "جاری رکھیں",
+    "done": "ہو گیا"
   },
   "section": {
     "color": "رَنگ",

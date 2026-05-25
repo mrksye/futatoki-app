@@ -27,7 +27,10 @@
     "set": "설정",
     "start": "시작",
     "cancel": "취소",
-    "minuteOption": "{n}분"
+    "minuteOption": "{n}분",
+    "pause": "멈춤",
+    "resume": "계속",
+    "done": "끝"
   },
   "section": {
     "color": "색상",

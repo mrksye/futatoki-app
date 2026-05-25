@@ -27,7 +27,10 @@
     "set": "সেট",
     "start": "শুরু",
     "cancel": "বাতিল",
-    "minuteOption": "{n} মিনিট"
+    "minuteOption": "{n} মিনিট",
+    "pause": "বিরতি",
+    "resume": "চালিয়ে যান",
+    "done": "হয়ে গেছে"
   },
   "section": {
     "color": "রঙ",

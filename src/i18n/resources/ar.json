@@ -27,7 +27,10 @@
     "set": "ضَبْط",
     "start": "بَدْء",
     "cancel": "إِلْغَاء",
-    "minuteOption": "{n} دقيقة"
+    "minuteOption": "{n} دقيقة",
+    "pause": "إِيقَاف مُؤَقَّت",
+    "resume": "مُتَابَعَة",
+    "done": "تَمَّ"
   },
   "section": {
     "color": "أَلْوَان",

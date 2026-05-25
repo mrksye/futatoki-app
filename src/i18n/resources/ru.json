@@ -27,7 +27,10 @@
     "set": "Задать",
     "start": "Старт",
     "cancel": "Отмена",
-    "minuteOption": "{n} мин"
+    "minuteOption": "{n} мин",
+    "pause": "Пауза",
+    "resume": "Продолжить",
+    "done": "Готово"
   },
   "section": {
     "color": "Цвета",

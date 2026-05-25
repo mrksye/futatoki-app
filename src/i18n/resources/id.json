@@ -27,7 +27,10 @@
     "set": "Atur",
     "start": "Mulai",
     "cancel": "Batal",
-    "minuteOption": "{n} mnt"
+    "minuteOption": "{n} mnt",
+    "pause": "Jeda",
+    "resume": "Lanjut",
+    "done": "Selesai"
   },
   "section": {
     "color": "Warna",

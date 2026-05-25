@@ -27,7 +27,10 @@
     "set": "Ayarla",
     "start": "Başlat",
     "cancel": "İptal",
-    "minuteOption": "{n} dk"
+    "minuteOption": "{n} dk",
+    "pause": "Duraklat",
+    "resume": "Devam",
+    "done": "Bitti"
   },
   "section": {
     "color": "Renkler",

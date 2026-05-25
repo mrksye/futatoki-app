@@ -27,7 +27,10 @@
     "set": "सेट",
     "start": "शुरू",
     "cancel": "रद्द",
-    "minuteOption": "{n} मिनट"
+    "minuteOption": "{n} मिनट",
+    "pause": "रोकें",
+    "resume": "जारी रखें",
+    "done": "हो गया"
   },
   "section": {
     "color": "रंग",
