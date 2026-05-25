@@ -10,6 +10,7 @@ import { colorMode, toggleColorMode } from "../features/settings/color-mode";
 import { detailMode, toggleDetailMode } from "../features/settings/detail-mode";
 import { timeFormat, toggleTimeFormat } from "../features/settings/time-format";
 import { paletteId, selectPalette } from "../features/settings/palette";
+import { knockingOnPilotModesDoor } from "../features/zusatz_pilot-mode";
 import {
   availableNumeralSystems,
   formatBySystem,
@@ -153,7 +154,7 @@ const SettingsPopover: Component = () => {
                   <button
                     class={`${pillBtn} flex items-center gap-1.5 before:hidden ${paletteId() === p.id ? pillActive : pillInactive}`}
                     aria-label={t(`palette.${p.id}` as never)}
-                    onClick={() => selectPalette(p.id)}
+                    onClick={() => { selectPalette(p.id); knockingOnPilotModesDoor(p.id); }}
                   >
                     <span class="flex">
                       <For each={indices}>
