@@ -242,15 +242,21 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
 
       {/* くぎりモードの分メモリ。monotone-badge では円盤縁の専用メモリを別途描くので抑止。
        *  クォーター (12/3/6/9 = i%15===0) は sector モードの境界線と同じ太さ 4 で他の時メモリより
-       *  さらに強調する (区切り/くわしく どちらでもクォーターが視覚的に同じ重みになる)。 */}
+       *  さらに強調する (区切り/くわしく どちらでもクォーターが視覚的に同じ重みになる)。
+       *  ものとーんは線が白で盤面 (白) では内側部分が不可視、ベゼル (R〜R+3) でだけ見える。内側 R-8/R-3
+       *  まで引くと、下に敷かれるタイマー扇の上で白い内側が浮いて汚いので、内端を盤面縁 R に留めて
+       *  ベゼルの目盛りだけ残す。先端も round → butt (スクエア) にする (非ものとーんは色扇の上に乗せる
+       *  従来どおりの内側食い込み + round)。 */}
       <Show when={isKuwashiku() && !isMonotoneBadge()}>
         <For each={Array.from({ length: 60 })}>
           {(_, i) => {
             const angle = () => (i() * 6 * Math.PI) / 180 - Math.PI / 2;
             const isHour = () => i() % 5 === 0;
             const isQuarter = () => i() % 15 === 0;
+            const isMonotone = () => paletteId() === "monotone";
             const outer = () => outerRing();
-            const inner = () => isHour() ? clockRadius() - 8 : clockRadius() - 3;
+            const inner = () =>
+              isMonotone() ? clockRadius() : isHour() ? clockRadius() - 8 : clockRadius() - 3;
             return (
               <line
                 x1={CENTER + inner() * Math.cos(angle())}
@@ -259,7 +265,7 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                 y2={CENTER + outer() * Math.sin(angle())}
                 stroke={isHour() ? "#ffffff" : "#ffffff90"}
                 stroke-width={isQuarter() ? 4 : isHour() ? 2.5 : 1}
-                stroke-linecap="round"
+                stroke-linecap={isMonotone() ? "butt" : "round"}
               />
             );
           }}
