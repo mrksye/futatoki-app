@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "Ustaw",
-    "start": "Start",
     "cancel": "Anuluj",
     "minuteOption": "{n} min",
     "pause": "Pauza",

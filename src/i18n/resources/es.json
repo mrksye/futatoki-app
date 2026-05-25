@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "Ajustar",
-    "start": "Iniciar",
     "cancel": "Cancelar",
     "minuteOption": "{n} min",
     "pause": "Pausa",

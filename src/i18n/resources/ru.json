@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "Задать",
-    "start": "Старт",
     "cancel": "Отмена",
     "minuteOption": "{n} мин",
     "pause": "Пауза",

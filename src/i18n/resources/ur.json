@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "سیٹ",
-    "start": "شروع",
     "cancel": "منسوخ",
     "minuteOption": "{n} منٹ",
     "pause": "وقفہ",

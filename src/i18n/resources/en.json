@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "Set",
-    "start": "Start",
     "cancel": "Cancel",
     "minuteOption": "{n} min",
     "pause": "Pause",

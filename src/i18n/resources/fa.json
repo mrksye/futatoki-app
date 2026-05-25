@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "تنظیم",
-    "start": "شروع",
     "cancel": "لغو",
     "minuteOption": "{n} دقیقه",
     "pause": "توقف",

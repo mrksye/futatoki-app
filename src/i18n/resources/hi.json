@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "सेट",
-    "start": "शुरू",
     "cancel": "रद्द",
     "minuteOption": "{n} मिनट",
     "pause": "रोकें",

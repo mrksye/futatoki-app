@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "সেট",
-    "start": "শুরু",
     "cancel": "বাতিল",
     "minuteOption": "{n} মিনিট",
     "pause": "বিরতি",

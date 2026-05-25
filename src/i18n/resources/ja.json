@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "せっと",
-    "start": "すたーと",
     "cancel": "とりけし",
     "minuteOption": "{n}ふん",
     "pause": "とめる",

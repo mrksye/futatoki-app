@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "Atur",
-    "start": "Mulai",
     "cancel": "Batal",
     "minuteOption": "{n} mnt",
     "pause": "Jeda",

@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "Imposta",
-    "start": "Avvia",
     "cancel": "Annulla",
     "minuteOption": "{n} min",
     "pause": "Pausa",

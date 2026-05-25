@@ -25,7 +25,6 @@
   },
   "timer": {
     "set": "设置",
-    "start": "开始",
     "cancel": "取消",
     "minuteOption": "{n} 分钟",
     "pause": "暂停",
