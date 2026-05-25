@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, on, onCleanup, onMount, Show } from "solid-js";
+import { createEffect, createMemo, createSignal, lazy, on, onCleanup, onMount, Show, Suspense } from "solid-js";
 import type { Component, ParentComponent } from "solid-js";
 import ClockFace from "./ClockFace";
 import HandsLayer from "./HandsLayer";
@@ -10,8 +10,10 @@ import RotationActions from "./RotationActions";
 import SecondsBar from "./SecondsBar";
 import SettingsPopover from "./SettingsPopover";
 import SkyBackground from "./SkyBackground";
-import TimerLayout from "./TimerLayout";
-import TimerActions from "./TimerActions";
+// timer 機能 (howler + 音源参照を含む) は pilot 限定 + 重いので lazy 分割し main バンドルから外す。
+// 分割された chunk/音源は vite-plugin-pwa の precache 対象なのでオフラインでも動く。
+const TimerLayout = lazy(() => import("./TimerLayout"));
+const TimerActions = lazy(() => import("./TimerActions"));
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { useOrientation } from "../hooks/useOrientation";
 import { useViewport } from "../hooks/useViewport";
@@ -561,7 +563,9 @@ export const ClockLayout: Component = () => {
           表示ツリー (下の Show) とは排他で、TimerLayout は ClockLayout の回転 machinery を一切知らない。
           ModePicker 等の floating controls は外に出して両モードで共有する。 */}
       <Show when={isTimerMode()}>
-        <TimerLayout />
+        <Suspense>
+          <TimerLayout />
+        </Suspense>
       </Show>
 
       <Show when={!isTimerMode()}>
@@ -768,7 +772,9 @@ export const ClockLayout: Component = () => {
       <RotationActions />
 
       <Show when={isTimerMode()}>
-        <TimerActions />
+        <Suspense>
+          <TimerActions />
+        </Suspense>
       </Show>
 
       <ActivityPicker />

@@ -8,6 +8,8 @@ import {
   closePicker,
   selectMinutes,
   startTimer,
+  pauseTimer,
+  resumeTimer,
   cancelTimer,
   TIMER_MINUTE_OPTIONS,
   type RingOrigin,
@@ -16,7 +18,9 @@ import { closeActivePopover } from "../lib/exclusive-popover";
 import { animateMotion, motionAllowed } from "../lib/motion";
 import StopwatchIcon from "./icons/StopwatchIcon";
 import PlayIcon from "./icons/PlayIcon";
+import PauseIcon from "./icons/PauseIcon";
 import CancelIcon from "./icons/CancelIcon";
+import CheckIcon from "./icons/CheckIcon";
 
 /**
  * 分タイマーの操作 UI。timer モード中だけ ClockLayout から mount される floating レイヤーで、表示専用の
@@ -25,7 +29,9 @@ import CancelIcon from "./icons/CancelIcon";
  * 右下に FAB を置き、上方向へ展開する:
  *  - unset:   「せっと」(ストップウォッチ) 1 個。押すとリングメニューを開く。
  *  - armed:   「すたーと」(▶, 下=primary) +「とりけし」(✕, 上)。
- *  - running: 「とりけし」(✕) 1 個。押すと unset に戻る (停止)。
+ *  - running: 「いちじていし」(⏸, 下=primary) +「とりけし」(✕, 上)。
+ *  - paused:  「さいかい」(▶, 下=primary) +「とりけし」(✕, 上)。
+ *  - done:    「完了」(✓) 1 個。押すと音を止めて unset に戻る。
  *
  * リングメニューはできごと picker (ActivityPicker) の構築を参考にした TimerRingMenu (下記)。
  * mount/unmount は timer モードの出入りに同期するので、unmount 時に cancelTimer で状態を unset へ
@@ -74,9 +80,30 @@ const TimerActions: Component = () => {
           </button>
         </Show>
 
+        {/* running: いちじていし (▢ primary, 最下段) + とりけし (上)。 */}
         <Show when={timerPhase() === "running"}>
+          <button class={FAB_CLASS} aria-label={t("timer.pause")} onClick={pauseTimer}>
+            <PauseIcon class={iconClass} />
+          </button>
           <button class={FAB_CLASS} aria-label={t("timer.cancel")} onClick={cancelTimer}>
             <CancelIcon class={iconClass} />
+          </button>
+        </Show>
+
+        {/* paused: さいかい (▶ primary, 最下段) + とりけし (上)。 */}
+        <Show when={timerPhase() === "paused"}>
+          <button class={FAB_CLASS} aria-label={t("timer.resume")} onClick={resumeTimer}>
+            <PlayIcon class={iconClass} />
+          </button>
+          <button class={FAB_CLASS} aria-label={t("timer.cancel")} onClick={cancelTimer}>
+            <CancelIcon class={iconClass} />
+          </button>
+        </Show>
+
+        {/* done: 完了 (✓) 1 個。音を止めて unset に戻す。 */}
+        <Show when={timerPhase() === "done"}>
+          <button class={FAB_CLASS} aria-label={t("timer.done")} onClick={cancelTimer}>
+            <CheckIcon class={iconClass} />
           </button>
         </Show>
       </div>

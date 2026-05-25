@@ -203,6 +203,10 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       workbox: {
+        // 既定の js/css/html に加えて音源 (m4a/AAC) も precache し、オフラインでもタイマー終了音が
+        // 鳴るようにする。timer 機能は lazy chunk に分割されるが js なので glob 対象 = 同じく precache
+        // され、オフラインでもタイマーモードが動く。
+        globPatterns: ["**/*.{js,css,html,m4a}"],
         globIgnores: nonSourceLocaleChunkIgnores,
       },
       // デフォルト manifest は FALLBACK_LOCALE (en)。SOURCE_LOCALE ブラウザでは index.html

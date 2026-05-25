@@ -9,7 +9,10 @@ import {
   timerPhase,
   selectedMinutes,
   runStartMs,
+  pausedRemainingMs,
+  completeTimer,
 } from "../features/timer/state";
+import { useTimerEndSound } from "../features/timer/timer-sound";
 
 /**
  * 分タイマーモードの表示レイヤー。clock / 回転モードの表示ツリー (ClockLayout) とは排他で、回転
@@ -26,14 +29,13 @@ import {
  *
  * 盤面の役割:
  *  - AM 位置 (landscape 左 / portrait 上): 現在時刻の合体時計 (通常の黒針)。
- *  - PM 位置 (landscape 右 / portrait 下): タイマー盤。黒い現在針 (長針) + グレーの終了マーカー針
- *    (markerMinutes, タイマーの目標 ghost)。終了マーカーは分を選んだ瞬間 (armed) から出て、running 中
- *    は固定。現在針がそこへ近づき、重なったら終了。短針 (時針) はマーカーを出さない (分タイマーなので無視)。
+ *  - PM 位置 (landscape 右 / portrait 下): タイマー盤。グレーの現在針 (長針 ghost) + 黒い終了マーカー針
+ *    (markerMinutes, タイマーの目標)。終了マーカーは分を選んだ瞬間 (armed) から出て、running 中は固定。
+ *    現在針がそこへ近づき、重なったら終了。短針 (時針) はマーカーを出さない (分タイマーなので無視)。
  */
 
-/** PM 位置の終了マーカー針 (タイマーの目標, 長針 ghost) の不透明度。黒い現在針 (不透明) との対比で
- *  薄く見せる。 */
-const TARGET_MARKER_OPACITY = 0.2;
+/** PM 位置のグレー現在針 (長針 ghost) の黒本体の不透明度。黒い終了マーカー (不透明) との対比で薄く見せる。 */
+const NOW_HAND_OPACITY = 0.2;
 
 const TimerLayout: Component = () => {
   const isLandscape = useOrientation();
@@ -48,21 +50,30 @@ const TimerLayout: Component = () => {
   /** 秒も混ぜた分 (小数) → running 中の現在針がカクつかず滑らかに進む。 */
   const refMinuteFloat = () => refDate().getMinutes() + refDate().getSeconds() / 60;
 
-  const hasSelection = () => timerPhase() === "armed" || timerPhase() === "running";
+  const hasSelection = () =>
+    timerPhase() === "armed" || timerPhase() === "running" ||
+    timerPhase() === "paused" || timerPhase() === "done";
 
-  /** カウントダウン終了時刻 (ms)。armed は現在時刻 live 基準のプレビュー (時計と一緒に前へ滑り、現在針
-   *  との間隔は選択分のまま一定)、running は開始押下時刻 (runStartMs) 基準で固定。未選択なら null。 */
+  /** カウントダウン終了時刻 (ms)。
+   *  - running / done: 開始押下時刻 (runStartMs) 基準で固定 (done は nowMs を完了時刻に clamp 済みなので
+   *    現在針と重なる)。
+   *  - paused: 現在時刻 + 凍結した残り → 時計が進むとマーカーも一緒に動き、扇 (残り) の幅は一定に保つ。
+   *  - armed: 現在時刻 + 選択分 の live プレビュー (同上で間隔一定)。 */
   const endMs = (): number | null => {
     const sel = selectedMinutes();
     if (sel === null) return null;
-    if (timerPhase() === "running") {
+    if (timerPhase() === "running" || timerPhase() === "done") {
       const start = runStartMs();
       return start === null ? null : start + sel * 60000;
+    }
+    if (timerPhase() === "paused") {
+      const rem = pausedRemainingMs();
+      return rem === null ? null : nowMs() + rem;
     }
     return nowMs() + sel * 60000;
   };
 
-  /** 黒い終了マーカー針の位置 (分, 小数)。armed / running のときだけ値を返す。 */
+  /** 終了マーカー針の位置 (分, 小数)。選択済み (armed / running / paused / done) のときだけ値を返す。 */
   const markerMinutes = (): number | undefined => {
     if (!hasSelection()) return undefined;
     const e = endMs();
@@ -71,17 +82,25 @@ const TimerLayout: Component = () => {
     return d.getMinutes() + d.getSeconds() / 60;
   };
 
-  /** 残り秒。armed は選択分の満タン、running は実時間で減る。 */
+  /** 残り秒。armed=選択分の満タン / running=実時間で減る / paused=凍結した残り / done=0。 */
   const remainingSeconds = (): number | null => {
     const sel = selectedMinutes();
     if (sel === null) return null;
     if (timerPhase() === "armed") return sel * 60;
+    if (timerPhase() === "done") return 0;
+    if (timerPhase() === "paused") {
+      const rem = pausedRemainingMs();
+      return rem === null ? null : Math.ceil(rem / 1000);
+    }
     if (timerPhase() === "running") {
       const e = endMs();
       return e === null ? null : Math.max(0, Math.ceil((e - nowMs()) / 1000));
     }
     return null;
   };
+
+  // 完了 (done) でループ音を鳴らす / running 中 preload / 離脱・完了・とりけし で停止。
+  useTimerEndSound();
 
   /** ロケール数字で 2 桁ゼロ埋め (formatNumeral は桁数を保たないので 1 桁は zero glyph を前置)。 */
   const pad2 = (v: number) => (v < 10 ? formatNumeral(0) + formatNumeral(v) : formatNumeral(v));
@@ -91,11 +110,13 @@ const TimerLayout: Component = () => {
     return `${pad2(Math.floor(r / 60))}:${pad2(r % 60)}`;
   };
 
-  // timer モード中ずっと 250ms ごとに現在時刻を取り直し、両盤面の針を live で進める。phase を読んで
-  // 遷移ごとに interval を張り直す (running 終了で止めた後に とりけし で復帰させるため)。running 中は
-  // 終了時刻に達したら clamp して interval を止め、現在針を終了マーカーちょうどに止める (= 鳴り終わり)。
+  // timer モード中は 250ms ごとに現在時刻を取り直し、両盤面の針を live で進める (paused でも時計は実時刻
+  // のまま進み、扇=残りだけ凍結)。phase を読んで遷移ごとに interval を張り直す。running 中は終了時刻に
+  // 達したら現在時刻を完了時刻に clamp して done へ遷移する (現在針が終了マーカーちょうどに重なって止まる)。
+  // done は完了時刻で盤面を凍結するので tick しない。
   createEffect(() => {
     const phase = timerPhase();
+    if (phase === "done") return;
     setNowMs(Date.now());
     const id = setInterval(() => {
       const now = Date.now();
@@ -103,6 +124,7 @@ const TimerLayout: Component = () => {
         const e = endMs();
         if (e !== null && now >= e) {
           setNowMs(e);
+          completeTimer();
           clearInterval(id);
           return;
         }
@@ -137,7 +159,7 @@ const TimerLayout: Component = () => {
           </div>
         </div>
 
-        {/* PM 位置: タイマー盤。黒い現在針 + グレーの終了マーカー針 + その間を塗るタイマー扇。
+        {/* PM 位置: タイマー盤。グレーの現在針 (ghost) + 黒い終了マーカー針 + その間を塗るタイマー扇。
             扇は ClockFace の children = ベースと数字の間に入り、現在針から残り時間ぶん塗る。 */}
         <div
           class="relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
@@ -150,8 +172,8 @@ const TimerLayout: Component = () => {
             <HandsLayer
               hours={refHours()}
               minutes={refMinuteFloat()}
+              minuteHandOpacity={NOW_HAND_OPACITY}
               markerMinutes={markerMinutes()}
-              markerHandOpacity={TARGET_MARKER_OPACITY}
             />
           </div>
         </div>
