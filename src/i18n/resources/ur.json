@@ -20,7 +20,14 @@
     "picker": "موڈ",
     "auto": "خودکار",
     "free": "آزاد",
-    "clock": "گَھڑی"
+    "clock": "گَھڑی",
+    "timer": "ٹائمر"
+  },
+  "timer": {
+    "set": "سیٹ",
+    "start": "شروع",
+    "cancel": "منسوخ",
+    "minuteOption": "{n} منٹ"
   },
   "section": {
     "color": "رَنگ",

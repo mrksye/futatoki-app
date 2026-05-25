@@ -20,7 +20,14 @@
     "picker": "मोड",
     "auto": "ऑटो",
     "free": "स्वतंत्र",
-    "clock": "घड़ी"
+    "clock": "घड़ी",
+    "timer": "टाइमर"
+  },
+  "timer": {
+    "set": "सेट",
+    "start": "शुरू",
+    "cancel": "रद्द",
+    "minuteOption": "{n} मिनट"
   },
   "section": {
     "color": "रंग",

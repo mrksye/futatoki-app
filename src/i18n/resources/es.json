@@ -20,7 +20,14 @@
     "picker": "Modo",
     "auto": "Auto",
     "free": "Libre",
-    "clock": "Reloj"
+    "clock": "Reloj",
+    "timer": "Temporizador"
+  },
+  "timer": {
+    "set": "Ajustar",
+    "start": "Iniciar",
+    "cancel": "Cancelar",
+    "minuteOption": "{n} min"
   },
   "section": {
     "color": "Colores",

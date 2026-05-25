@@ -1,4 +1,4 @@
-import { createEffect, onCleanup, type Accessor, type Component } from "solid-js";
+import { createEffect, onCleanup, Show, type Accessor, type Component } from "solid-js";
 import { detailMode } from "../features/settings/detail-mode";
 import { colorMode } from "../features/settings/color-mode";
 import { paletteId } from "../features/settings/palette";
@@ -27,6 +27,13 @@ interface HandsLayerProps {
   minutes: number;
   shakeKey?: Accessor<number>;
   minuteTickKey?: Accessor<number>;
+  /** 分針 (長針) だけの不透明度。timer モードの「設定先」盤面で長針をゴースト表示する用途。
+   *  時針・中心ネジは常に不透明のまま。未指定なら 1 (通常表示)。 */
+  minuteHandOpacity?: number;
+  /** 2 本目の分針 (マーカー) を描く位置 (分)。timer の黒い終了マーカー針に使う。primary 分針と同じ
+   *  geometry を solid (不透明) で重ねるだけで、shake / tick の WAAPI animation は乗らない静的な針。
+   *  時針マーカーは描かない (分タイマーなので短針は無視)。未指定なら描画しない。 */
+  markerMinutes?: number;
 }
 
 const VIEW = 340;
@@ -144,10 +151,15 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
             stroke="#111111" stroke-width="7" stroke-linecap="round" />
         </g>
 
-        {/* 分針 (同じ outline 思想で padding 1.25)。shake 用の外側 wrapper <g> で囲む。 */}
+        {/* 分針 (同じ outline 思想で padding 1.25)。shake 用の外側 wrapper <g> で囲む。
+            opacity は wrapper に載せて長針だけ薄くする (時針・中心ネジは別 <g>/<circle> なので不変)。 */}
         <g
           ref={minuteHandWrapperRef}
-          style={{ "transform-box": "view-box", "transform-origin": "50% 50%" }}
+          style={{
+            "transform-box": "view-box",
+            "transform-origin": "50% 50%",
+            opacity: props.minuteHandOpacity ?? 1,
+          }}
         >
           <g
             transform={`rotate(${minuteAngle() + 90} ${CENTER} ${CENTER})`}
@@ -159,6 +171,16 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
               stroke="#111111" stroke-width="3.5" stroke-linecap="round" />
           </g>
         </g>
+
+        {/* 2 本目の分針 (timer の黒い終了マーカー)。primary と同 geometry を不透明で重ねる静的な針。 */}
+        <Show when={props.markerMinutes !== undefined}>
+          <g transform={`rotate(${(props.markerMinutes ?? 0) * 6} ${CENTER} ${CENTER})`}>
+            <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
+              stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
+            <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
+              stroke="#111111" stroke-width="3.5" stroke-linecap="round" />
+          </g>
+        </Show>
 
         {/* 中心ネジ */}
         <circle cx={CENTER} cy={CENTER} r="7" fill="white" />

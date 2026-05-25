@@ -25,6 +25,7 @@ const ITEMS: ModeItem[] = [
   { mode: "clock", labelKey: "mode.clock" },
   { mode: "freeRotate", labelKey: "mode.free" },
   { mode: "autoRotate", labelKey: "mode.auto" },
+  { mode: "timer", labelKey: "mode.timer" },
 ];
 
 /** 1 ボタンあたりの stagger 間隔。展開時は上から、たたみ時は下から消えるよう delay を逆順に

@@ -20,7 +20,14 @@
     "picker": "Tryb",
     "auto": "Auto",
     "free": "Swobodny",
-    "clock": "Zegar"
+    "clock": "Zegar",
+    "timer": "Minutnik"
+  },
+  "timer": {
+    "set": "Ustaw",
+    "start": "Start",
+    "cancel": "Anuluj",
+    "minuteOption": "{n} min"
   },
   "section": {
     "color": "Kolory",

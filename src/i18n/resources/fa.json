@@ -20,7 +20,14 @@
     "picker": "حالَت",
     "auto": "خودکار",
     "free": "آزاد",
-    "clock": "ساعَت"
+    "clock": "ساعَت",
+    "timer": "تایمر"
+  },
+  "timer": {
+    "set": "تنظیم",
+    "start": "شروع",
+    "cancel": "لغو",
+    "minuteOption": "{n} دقیقه"
   },
   "section": {
     "color": "رَنگ‌ها",

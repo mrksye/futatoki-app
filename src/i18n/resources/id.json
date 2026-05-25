@@ -20,7 +20,14 @@
     "picker": "Mode",
     "auto": "Otomatis",
     "free": "Bebas",
-    "clock": "Jam"
+    "clock": "Jam",
+    "timer": "Timer"
+  },
+  "timer": {
+    "set": "Atur",
+    "start": "Mulai",
+    "cancel": "Batal",
+    "minuteOption": "{n} mnt"
   },
   "section": {
     "color": "Warna",

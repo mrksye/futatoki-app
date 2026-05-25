@@ -20,7 +20,14 @@
     "picker": "মোড",
     "auto": "অটো",
     "free": "মুক্ত",
-    "clock": "ঘড়ি"
+    "clock": "ঘড়ি",
+    "timer": "টাইমার"
+  },
+  "timer": {
+    "set": "সেট",
+    "start": "শুরু",
+    "cancel": "বাতিল",
+    "minuteOption": "{n} মিনিট"
   },
   "section": {
     "color": "রঙ",

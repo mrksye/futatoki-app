@@ -20,7 +20,14 @@
     "picker": "もーど",
     "auto": "じどう",
     "free": "じゆう",
-    "clock": "とけい"
+    "clock": "とけい",
+    "timer": "たいむ"
+  },
+  "timer": {
+    "set": "せっと",
+    "start": "すたーと",
+    "cancel": "とりけし",
+    "minuteOption": "{n}ふん"
   },
   "section": {
     "color": "はいしょく",

@@ -20,7 +20,14 @@
     "picker": "Режим",
     "auto": "Авто",
     "free": "Свободно",
-    "clock": "Часы"
+    "clock": "Часы",
+    "timer": "Таймер"
+  },
+  "timer": {
+    "set": "Задать",
+    "start": "Старт",
+    "cancel": "Отмена",
+    "minuteOption": "{n} мин"
   },
   "section": {
     "color": "Цвета",

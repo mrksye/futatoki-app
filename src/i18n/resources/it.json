@@ -20,7 +20,14 @@
     "picker": "Modo",
     "auto": "Auto",
     "free": "Libero",
-    "clock": "Orologio"
+    "clock": "Orologio",
+    "timer": "Timer"
+  },
+  "timer": {
+    "set": "Imposta",
+    "start": "Avvia",
+    "cancel": "Annulla",
+    "minuteOption": "{n} min"
   },
   "section": {
     "color": "Colori",

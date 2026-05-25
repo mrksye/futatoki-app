@@ -7,11 +7,17 @@ import { createSignal } from "solid-js";
  *   clock      : 現在時刻表示。AM/PM バッジ + 長押しプレビュー。layout は構造的に意味なし。
  *   freeRotate : ドラッグで時刻変更、1 ふんもどす、ランダム、かさね/わけ切替
  *   autoRotate : 1 日 24 秒で自動進行
+ *   timer      : 分タイマー。両盤面を濃く表示する別レイアウトで、rotateMinutes には依存しない。
+ *
+ * 回転モード (freeRotate / autoRotate) は rotateMinutes をドラッグ/自動進行で動かす。clock / timer は
+ * その意味で「静的モード」で、rotateMinutes を操作しない。`isRotating` はこの回転モード 2 種だけを指す
+ * (clock も timer も false)。
  *
  * 許可する遷移 (実 UI に存在するパスのみ):
- *   clock      -> freeRotate
- *   freeRotate -> clock | autoRotate
- *   autoRotate -> clock | freeRotate
+ *   clock      -> freeRotate | timer
+ *   freeRotate -> clock | autoRotate | timer
+ *   autoRotate -> clock | freeRotate | timer
+ *   timer      -> clock | freeRotate | autoRotate
  *   (clock -> autoRotate は UI パスが無いので table で禁止。直接遷移したい場合はまず freeRotate を経由する。)
  *
  * 「clock モードで merged 表示にならない」排他性は構造で強制している:
@@ -29,7 +35,10 @@ import { createSignal } from "solid-js";
  * 等の下流 (merge-animation, crank) は callback 内で `if (curr === prev) return;` で値ベースに dedup する。
  */
 
-export type ClockMode = "clock" | "freeRotate" | "autoRotate";
+export type ClockMode = "clock" | "freeRotate" | "autoRotate" | "timer";
+
+/** rotateMinutes を動かす回転モードか。clock / timer は静的モードで false。 */
+const isRotationMode = (m: ClockMode) => m === "freeRotate" || m === "autoRotate";
 
 type Layout = "merged" | "separated";
 
@@ -44,17 +53,21 @@ const [layout, setLayoutRaw] = createSignal<Layout>("merged");
 
 export { clockMode, rotateMinutes };
 
-/** clock モード以外 (freeRotate または autoRotate) にいるか。 */
-export const isRotating = () => clockMode() !== "clock";
+/** 回転モード (freeRotate または autoRotate) にいるか。timer は静的モードなので false。 */
+export const isRotating = () => isRotationMode(clockMode());
+
+/** 分タイマーモードにいるか。 */
+export const isTimerMode = () => clockMode() === "timer";
 
 /** merged (かさね) 表示が実際に出ているか。clock モード中は構造的に常に false
  *  (排他性を構造で担保するため、外に露出する layout 関連 accessor はこれのみ)。 */
 export const mergedVisible = () => isRotating() && layout() === "merged";
 
 const ALLOWED_TRANSITIONS: Record<ClockMode, readonly ClockMode[]> = {
-  clock:      ["freeRotate"],
-  freeRotate: ["clock", "autoRotate"],
-  autoRotate: ["clock", "freeRotate"],
+  clock:      ["freeRotate", "timer"],
+  freeRotate: ["clock", "autoRotate", "timer"],
+  autoRotate: ["clock", "freeRotate", "timer"],
+  timer:      ["clock", "freeRotate", "autoRotate"],
 };
 
 const canTransition = (from: ClockMode, to: ClockMode) =>
@@ -62,13 +75,14 @@ const canTransition = (from: ClockMode, to: ClockMode) =>
 
 /**
  * 主モードの遷移。許可されていない遷移は no-op。
- * clock からの脱出時 (= rotation に入る時) のみ rotateMinutes を現在時刻にスナップし layout を merged に初期化。
- * freeRotate <-> autoRotate の往復では rotateMinutes と layout を保持 (ユーザの意図を維持)。
+ * 静的モード (clock / timer) から回転モードに入る時のみ rotateMinutes を現在時刻にスナップし
+ * layout を merged に初期化。freeRotate <-> autoRotate の往復では rotateMinutes と layout を保持
+ * (ユーザの意図を維持)。
  */
 export const transition = (next: ClockMode) => {
   const current = clockMode();
   if (!canTransition(current, next)) return;
-  if (current === "clock") {
+  if (!isRotationMode(current) && isRotationMode(next)) {
     setMinutesRaw(nowAsMinutes());
     setLayoutRaw("merged");
   }

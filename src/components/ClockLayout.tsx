@@ -10,6 +10,8 @@ import RotationActions from "./RotationActions";
 import SecondsBar from "./SecondsBar";
 import SettingsPopover from "./SettingsPopover";
 import SkyBackground from "./SkyBackground";
+import TimerLayout from "./TimerLayout";
+import TimerActions from "./TimerActions";
 import { useCurrentTime } from "../hooks/useCurrentTime";
 import { useOrientation } from "../hooks/useOrientation";
 import { useViewport } from "../hooks/useViewport";
@@ -19,7 +21,7 @@ import {
   paletteMaxBtnHeight,
   computeMaxClockSize,
 } from "../features/layout/palette-clearance";
-import { clockMode, isRotating, rotateMinutes, seekRotate, transition } from "../features/free-rotation/state";
+import { clockMode, isRotating, isTimerMode, rotateMinutes, seekRotate, transition } from "../features/free-rotation/state";
 import { useAutoRotateTick } from "../features/free-rotation/auto-rotate";
 import { useIdleExitTimer } from "../features/free-rotation/idle-exit";
 import {
@@ -525,206 +527,219 @@ export const ClockLayout: Component = () => {
 
   return (
     <div class="w-full h-full overflow-hidden relative">
-      <Show when={isRotating()}>
-        <SkyBackground totalMinutes={rotateMinutes()} />
+      {/* timer モードは別レイアウト (両盤面を濃く表示する合体時計 2 個)。clock / 回転モードの
+          表示ツリー (下の Show) とは排他で、TimerLayout は ClockLayout の回転 machinery を一切知らない。
+          ModePicker 等の floating controls は外に出して両モードで共有する。 */}
+      <Show when={isTimerMode()}>
+        <TimerLayout />
       </Show>
 
-      <div
-        ref={containerRef}
-        class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}
-        style={{
-          "touch-action": clockMode() === "freeRotate" ? "none" : "auto",
-          cursor:
-            clockMode() === "freeRotate"
-              ? (dragging() ? "grabbing" : "grab")
-              : "default",
-        }}
-        onPointerDown={onDragStart}
-        onPointerMove={onDragMove}
-        onPointerUp={onDragEnd}
-        onPointerCancel={onDragEnd}
-      >
-        {/* 負マージンで中央へオーバーラップ → 盤面サイズを保ちつつ四隅にボタン余白を作る。
-            AM wrapper を z-10 にすることでかさね/わけ transition の overlap 中に AM (表) が PM (裏) の
-            手前に来る。DOM 順だけだと後ろの PM が手前になり、表/裏が逆転する。 */}
-        <div
-          ref={amWrapperRef}
-          class="clock-wrapper-transition relative z-10 flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
-          classList={{
-            "-mr-3": isLandscape(),
-            "-mb-3": !isLandscape(),
-            "selection-dim-instant": selectionDimInstant(),
-            "merge-hidden": mergedVisible(),
-          }}
-          style={{
-            transform: amTransform(mergedVisible(), isLandscape()),
-            "will-change": transitioning() ? "transform" : "auto",
-          }}
-        >
-          <Show when={amSplitVisible()}>
-            <ClockSlot size={maxClockSize()}>
-              <DimOverlay opacity={amSelectionOpacity()}>
-                <ClockFace period="am" hours={amTime().hours} />
-              </DimOverlay>
-              {/* ActivityLayer は dim 階層の外。merge transition 中 / autoRotate 中は外す
-                  (620ms 合成負荷 / autoRotate の高速回転による合成負荷を回避)。 */}
-              <Show when={!transitioning() && clockMode() !== "autoRotate"}>
-                <ActivityLayer
-                  period="am"
-                  dimmed={!isAm()}
-                  displayedMinutes={displayedMinutesTotal()}
-                />
-              </Show>
-              {/* document order が後ろ → できごとアイコンの上に乗る */}
-              <DimOverlay opacity={amSelectionOpacity()}>
-                <HandsLayer hours={amTime().hours} minutes={amTime().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
-              </DimOverlay>
-            </ClockSlot>
-          </Show>
-        </div>
+      <Show when={!isTimerMode()}>
+        <Show when={isRotating()}>
+          <SkyBackground totalMinutes={rotateMinutes()} />
+        </Show>
 
         <div
-          ref={pmWrapperRef}
-          class="clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
-          classList={{
-            "-ml-3": isLandscape(),
-            "-mt-3": !isLandscape(),
-            "selection-dim-instant": selectionDimInstant(),
-            "merge-hidden": mergedVisible(),
-          }}
+          ref={containerRef}
+          class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}
           style={{
-            transform: pmTransform(mergedVisible(), isLandscape()),
-            "will-change": transitioning() ? "transform" : "auto",
-          }}
-        >
-          <Show when={pmSplitVisible()}>
-            <ClockSlot size={maxClockSize()}>
-              <DimOverlay opacity={pmSelectionOpacity()}>
-                <ClockFace period="pm" hours={pmTime().hours} />
-              </DimOverlay>
-              <Show when={!transitioning() && clockMode() !== "autoRotate"}>
-                <ActivityLayer
-                  period="pm"
-                  dimmed={isAm()}
-                  displayedMinutes={displayedMinutesTotal()}
-                />
-              </Show>
-              <DimOverlay opacity={pmSelectionOpacity()}>
-                <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
-              </DimOverlay>
-            </ClockSlot>
-          </Show>
-        </div>
-      </div>
-
-      {/* かさねモード container。clockMode 遷移時も滑らかに消えるよう、見えうる間
-          (mergedVisible || transitioning) は DOM に保持する。
-          opacity / transform は mergedRevealed 経由 (false→true 時に 1 frame 遅延 → fresh mount でも
-          CSS transition が発火する。詳細は merge-animation.ts)。 */}
-      <Show when={mergedVisible() || transitioning()}>
-        {/* pointer-events-none のままでも子 (icon 等) からの bubble は handler に届くので、merged β
-            内の icon ドラッグも autoRotate→freeRotate / drag に拾える。touch-action は icon 等の祖先を辿る
-            ので、ここに none を置かないと browser が touch を panning に取られる (containerRef は
-            別 subtree なので touch-action が継承されない)。 */}
-        <div
-          ref={mergedContainerRef}
-          class="clock-merged-container-transition absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
-          classList={{
-            "flex-row": isLandscape(),
-            "flex-col": !isLandscape(),
-            "merge-revealed": mergedRevealed(),
-          }}
-          style={{
-            transform: mergedTransform(mergedRevealed()),
-            "transform-origin": "center",
-            "will-change": transitioning() ? "transform, opacity" : "auto",
             "touch-action": clockMode() === "freeRotate" ? "none" : "auto",
+            cursor:
+              clockMode() === "freeRotate"
+                ? (dragging() ? "grabbing" : "grab")
+                : "default",
           }}
           onPointerDown={onDragStart}
           onPointerMove={onDragMove}
           onPointerUp={onDragEnd}
           onPointerCancel={onDragEnd}
         >
+          {/* 負マージンで中央へオーバーラップ → 盤面サイズを保ちつつ四隅にボタン余白を作る。
+              AM wrapper を z-10 にすることでかさね/わけ transition の overlap 中に AM (表) が PM (裏) の
+              手前に来る。DOM 順だけだと後ろの PM が手前になり、表/裏が逆転する。 */}
           <div
-            ref={(el) => (mergedInnerRef = el)}
-            class={
-              "relative flex items-center justify-center " +
-              (isLandscape() ? "w-1/2 h-full" : "w-full h-1/2")
-            }
-            style={{
-              "pointer-events": "auto",
+            ref={amWrapperRef}
+            class="clock-wrapper-transition relative z-10 flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
+            classList={{
+              "-mr-3": isLandscape(),
+              "-mb-3": !isLandscape(),
+              "selection-dim-instant": selectionDimInstant(),
+              "merge-hidden": mergedVisible(),
             }}
-            onPointerDown={onMergedClockPointerDown}
-            onPointerUp={onMergedClockPointerUp}
-            onPointerCancel={cancelMergedPress}
+            style={{
+              transform: amTransform(mergedVisible(), isLandscape()),
+              "will-change": transitioning() ? "transform" : "auto",
+            }}
           >
-            <ClockFace period="merged" hours={displayed().hours} />
-            {/* 重ね表示: 現在 period を前 + 不透明、反対側を dimOpacity=0.15 で後ろに重ねる。
-                z-index は使わない (正の z は z-auto の HandsLayer を覆う)。
-                merge transition 中 / autoRotate 中は二重描画コスト回避で外す。 */}
-            <Show when={!transitioning() && clockMode() !== "autoRotate"}>
-              <Show
-                when={displayed().hours < 12}
-                fallback={<>
-                  <ActivityLayer period="am" dimmed dimOpacity={0.15} scale={0.85}
-                    displayedMinutes={displayedMinutesTotal()} />
-                  <ActivityLayer period="pm" showResetCancelRect={false}
-                    displayedMinutes={displayedMinutesTotal()} />
-                </>}
-              >
-                <ActivityLayer period="pm" dimmed dimOpacity={0.15} scale={0.85}
-                  displayedMinutes={displayedMinutesTotal()} />
-                <ActivityLayer period="am" showResetCancelRect={false}
-                  displayedMinutes={displayedMinutesTotal()} />
-              </Show>
+            <Show when={amSplitVisible()}>
+              <ClockSlot size={maxClockSize()}>
+                <DimOverlay opacity={amSelectionOpacity()}>
+                  <ClockFace period="am" hours={amTime().hours} />
+                </DimOverlay>
+                {/* ActivityLayer は dim 階層の外。merge transition 中 / autoRotate 中は外す
+                    (620ms 合成負荷 / autoRotate の高速回転による合成負荷を回避)。 */}
+                <Show when={!transitioning() && clockMode() !== "autoRotate"}>
+                  <ActivityLayer
+                    period="am"
+                    dimmed={!isAm()}
+                    displayedMinutes={displayedMinutesTotal()}
+                  />
+                </Show>
+                {/* document order が後ろ → できごとアイコンの上に乗る */}
+                <DimOverlay opacity={amSelectionOpacity()}>
+                  <HandsLayer hours={amTime().hours} minutes={amTime().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
+                </DimOverlay>
+              </ClockSlot>
             </Show>
-            {/* document order が最後 = z-auto 最前面 → できごとアイコンの上に乗る */}
-            <HandsLayer hours={displayed().hours} minutes={displayed().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
+          </div>
+
+          <div
+            ref={pmWrapperRef}
+            class="clock-wrapper-transition relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
+            classList={{
+              "-ml-3": isLandscape(),
+              "-mt-3": !isLandscape(),
+              "selection-dim-instant": selectionDimInstant(),
+              "merge-hidden": mergedVisible(),
+            }}
+            style={{
+              transform: pmTransform(mergedVisible(), isLandscape()),
+              "will-change": transitioning() ? "transform" : "auto",
+            }}
+          >
+            <Show when={pmSplitVisible()}>
+              <ClockSlot size={maxClockSize()}>
+                <DimOverlay opacity={pmSelectionOpacity()}>
+                  <ClockFace period="pm" hours={pmTime().hours} />
+                </DimOverlay>
+                <Show when={!transitioning() && clockMode() !== "autoRotate"}>
+                  <ActivityLayer
+                    period="pm"
+                    dimmed={isAm()}
+                    displayedMinutes={displayedMinutesTotal()}
+                  />
+                </Show>
+                <DimOverlay opacity={pmSelectionOpacity()}>
+                  <HandsLayer hours={pmTime().hours} minutes={pmTime().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
+                </DimOverlay>
+              </ClockSlot>
+            </Show>
           </div>
         </div>
-      </Show>
 
-      <Show when={!isRotating()}>
-        <div class="absolute top-0 left-0 right-0 z-10 pointer-events-none print:hidden">
-          <SecondsBar seconds={displayed().seconds} hours={displayed().hours} />
+        {/* かさねモード container。clockMode 遷移時も滑らかに消えるよう、見えうる間
+            (mergedVisible || transitioning) は DOM に保持する。
+            opacity / transform は mergedRevealed 経由 (false→true 時に 1 frame 遅延 → fresh mount でも
+            CSS transition が発火する。詳細は merge-animation.ts)。 */}
+        <Show when={mergedVisible() || transitioning()}>
+          {/* pointer-events-none のままでも子 (icon 等) からの bubble は handler に届くので、merged β
+              内の icon ドラッグも autoRotate→freeRotate / drag に拾える。touch-action は icon 等の祖先を辿る
+              ので、ここに none を置かないと browser が touch を panning に取られる (containerRef は
+              別 subtree なので touch-action が継承されない)。 */}
+          <div
+            ref={mergedContainerRef}
+            class="clock-merged-container-transition absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+            classList={{
+              "flex-row": isLandscape(),
+              "flex-col": !isLandscape(),
+              "merge-revealed": mergedRevealed(),
+            }}
+            style={{
+              transform: mergedTransform(mergedRevealed()),
+              "transform-origin": "center",
+              "will-change": transitioning() ? "transform, opacity" : "auto",
+              "touch-action": clockMode() === "freeRotate" ? "none" : "auto",
+            }}
+            onPointerDown={onDragStart}
+            onPointerMove={onDragMove}
+            onPointerUp={onDragEnd}
+            onPointerCancel={onDragEnd}
+          >
+            <div
+              ref={(el) => (mergedInnerRef = el)}
+              class={
+                "relative flex items-center justify-center " +
+                (isLandscape() ? "w-1/2 h-full" : "w-full h-1/2")
+              }
+              style={{
+                "pointer-events": "auto",
+              }}
+              onPointerDown={onMergedClockPointerDown}
+              onPointerUp={onMergedClockPointerUp}
+              onPointerCancel={cancelMergedPress}
+            >
+              <ClockFace period="merged" hours={displayed().hours} />
+              {/* 重ね表示: 現在 period を前 + 不透明、反対側を dimOpacity=0.15 で後ろに重ねる。
+                  z-index は使わない (正の z は z-auto の HandsLayer を覆う)。
+                  merge transition 中 / autoRotate 中は二重描画コスト回避で外す。 */}
+              <Show when={!transitioning() && clockMode() !== "autoRotate"}>
+                <Show
+                  when={displayed().hours < 12}
+                  fallback={<>
+                    <ActivityLayer period="am" dimmed dimOpacity={0.15} scale={0.85}
+                      displayedMinutes={displayedMinutesTotal()} />
+                    <ActivityLayer period="pm" showResetCancelRect={false}
+                      displayedMinutes={displayedMinutesTotal()} />
+                  </>}
+                >
+                  <ActivityLayer period="pm" dimmed dimOpacity={0.15} scale={0.85}
+                    displayedMinutes={displayedMinutesTotal()} />
+                  <ActivityLayer period="am" showResetCancelRect={false}
+                    displayedMinutes={displayedMinutesTotal()} />
+                </Show>
+              </Show>
+              {/* document order が最後 = z-auto 最前面 → できごとアイコンの上に乗る */}
+              <HandsLayer hours={displayed().hours} minutes={displayed().minutes} shakeKey={resistTrigger} minuteTickKey={minuteTickKey} />
+            </div>
+          </div>
+        </Show>
+
+        <Show when={!isRotating()}>
+          <div class="absolute top-0 left-0 right-0 z-10 pointer-events-none print:hidden">
+            <SecondsBar seconds={displayed().seconds} hours={displayed().hours} />
+          </div>
+        </Show>
+
+        {/* AM/PM バッジ。とけい/かいてん 切替で freeRotate 側のできごと追加ボタンとスロット位置を
+            共有し、560ms の bouncy 位置 transition でスライドしつつ、overshoot 折返し付近
+            (280-380ms) で 100ms の短いクロスフェードでできごと追加ボタンと入れ替わる。always-mount で
+            opacity 0/1 を切り替えることで View Transitions API を使わず CSS 完結。 */}
+        <div
+          class={
+            "absolute z-20 px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-black shadow-md cursor-pointer slot-crossfade " +
+            (isLandscape()
+              ? (mergedVisible()
+                  ? "left-[82%] top-[var(--safe-edge-top)] -translate-x-1/2"
+                  : "left-1/2 top-[var(--safe-edge-top)] -translate-x-1/2")
+              : (mergedVisible()
+                  ? "left-[var(--safe-edge-left)] top-[80%] -translate-y-1/2"
+                  : "left-[var(--safe-edge-left)] top-1/2 -translate-y-1/2"))
+          }
+          style={{
+            "background-color": isAm() ? "#0080D8" : "#E02068",
+            color: "#ffffff",
+            "touch-action": "none",
+            opacity: !isRotating() ? 1 : 0,
+            "pointer-events": !isRotating() ? "auto" : "none",
+          }}
+          onPointerDown={startHold}
+          onPointerUp={clearHold}
+          onPointerLeave={clearHold}
+          onPointerCancel={clearHold}
+        >
+          {isAm() ? t("badge.am") : t("badge.pm")}
         </div>
       </Show>
-
-      {/* AM/PM バッジ。とけい/かいてん 切替で freeRotate 側のできごと追加ボタンとスロット位置を
-          共有し、560ms の bouncy 位置 transition でスライドしつつ、overshoot 折返し付近
-          (280-380ms) で 100ms の短いクロスフェードでできごと追加ボタンと入れ替わる。always-mount で
-          opacity 0/1 を切り替えることで View Transitions API を使わず CSS 完結。 */}
-      <div
-        class={
-          "absolute z-20 px-2.5 py-1 tablet:px-6 tablet:py-4 rounded-full text-base tablet:text-xl font-black shadow-md cursor-pointer slot-crossfade " +
-          (isLandscape()
-            ? (mergedVisible()
-                ? "left-[82%] top-[var(--safe-edge-top)] -translate-x-1/2"
-                : "left-1/2 top-[var(--safe-edge-top)] -translate-x-1/2")
-            : (mergedVisible()
-                ? "left-[var(--safe-edge-left)] top-[80%] -translate-y-1/2"
-                : "left-[var(--safe-edge-left)] top-1/2 -translate-y-1/2"))
-        }
-        style={{
-          "background-color": isAm() ? "#0080D8" : "#E02068",
-          color: "#ffffff",
-          "touch-action": "none",
-          opacity: !isRotating() ? 1 : 0,
-          "pointer-events": !isRotating() ? "auto" : "none",
-        }}
-        onPointerDown={startHold}
-        onPointerUp={clearHold}
-        onPointerLeave={clearHold}
-        onPointerCancel={clearHold}
-      >
-        {isAm() ? t("badge.am") : t("badge.pm")}
-      </div>
 
       <ModePicker />
 
       <SettingsPopover />
 
       <RotationActions />
+
+      <Show when={isTimerMode()}>
+        <TimerActions />
+      </Show>
 
       <ActivityPicker />
 

@@ -20,7 +20,14 @@
     "picker": "모드",
     "auto": "자동",
     "free": "자유",
-    "clock": "시계"
+    "clock": "시계",
+    "timer": "타이머"
+  },
+  "timer": {
+    "set": "설정",
+    "start": "시작",
+    "cancel": "취소",
+    "minuteOption": "{n}분"
   },
   "section": {
     "color": "색상",

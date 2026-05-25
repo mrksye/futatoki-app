@@ -20,7 +20,14 @@
     "picker": "โหมด",
     "auto": "อัตโนมัติ",
     "free": "อิสระ",
-    "clock": "นาฬิกา"
+    "clock": "นาฬิกา",
+    "timer": "ตัวจับเวลา"
+  },
+  "timer": {
+    "set": "ตั้งค่า",
+    "start": "เริ่ม",
+    "cancel": "ยกเลิก",
+    "minuteOption": "{n} นาที"
   },
   "section": {
     "color": "สี",

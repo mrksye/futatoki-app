@@ -20,7 +20,14 @@
     "picker": "模式",
     "auto": "自动",
     "free": "自由",
-    "clock": "时钟"
+    "clock": "时钟",
+    "timer": "计时器"
+  },
+  "timer": {
+    "set": "设置",
+    "start": "开始",
+    "cancel": "取消",
+    "minuteOption": "{n} 分钟"
   },
   "section": {
     "color": "配色",

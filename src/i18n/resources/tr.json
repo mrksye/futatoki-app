@@ -20,7 +20,14 @@
     "picker": "Mod",
     "auto": "Otomatik",
     "free": "Serbest",
-    "clock": "Saat"
+    "clock": "Saat",
+    "timer": "Zamanlayıcı"
+  },
+  "timer": {
+    "set": "Ayarla",
+    "start": "Başlat",
+    "cancel": "İptal",
+    "minuteOption": "{n} dk"
   },
   "section": {
     "color": "Renkler",
