@@ -219,6 +219,21 @@ html, body, #root {
   50% { opacity: 1; }
 }
 
+/* 入室時に太陽/月を「ポンッ」と置く scale pop。親 div の translate (位置決め) とは別要素 (svg) に
+   かけるので transform 競合は起きない。transform-origin 中央で中心から膨らむ。 */
+@keyframes sky-celestial-pop {
+  0%   { transform: scale(0); }
+  62%  { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+.sky-celestial-pop {
+  transform-origin: 50% 50%;
+  animation: sky-celestial-pop 380ms cubic-bezier(.34, 1.56, .64, 1) both;
+}
+body.motion-reduce .sky-celestial-pop {
+  animation: none;
+}
+
 /* chronostasis 中 (lib/chronostasis/) は body.chronostasis が付与され CSS animation を一括 pause。
    tick 系 (setInterval / rAF) は lib/chronostasis/solid の useChronostasis() 観測で個別停止。 */
 body.chronostasis .star-twinkle {

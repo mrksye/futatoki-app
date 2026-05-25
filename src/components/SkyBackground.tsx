@@ -1,4 +1,4 @@
-import { For, Show, createMemo } from "solid-js";
+import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import type { Component } from "solid-js";
 import { isFullMoonActive } from "../features/full-moon-easter-egg";
 
@@ -124,6 +124,10 @@ interface SkyBackgroundProps {
   totalMinutes: number;
 }
 
+/** 入室時に星を 1 フレームあたり何個ずつ mount するか。30 個を一括生成すると弱 GPU で reflow
+ *  スパイクが出て合体 transition のフレームを落とすので、数フレームに分散する。 */
+const STAR_REVEAL_PER_FRAME = 3;
+
 const SkyBackground: Component<SkyBackgroundProps> = (props) => {
   /** 2 分刻みに量子化した分。目で差がわからない粒度で repaint 頻度を下げる。 */
   const quantizedMin = createMemo(() => Math.floor(props.totalMinutes / 2) * 2);
@@ -132,6 +136,25 @@ const SkyBackground: Component<SkyBackgroundProps> = (props) => {
   const moon = createMemo(() => moonPosition(props.totalMinutes));
   const starOp = createMemo(() => Math.max(0, nightness(quantizedMin()) - 0.3) * 1.4);
   const starsVisible = createMemo(() => starOp() > 0.01);
+
+  /** 入室アニメ用の段階表示。mount 直後は gradient だけを出し (= 軽い reflow で合体 transition の
+   *  baseline を奪わない)、星を数個ずつ増やしてから最後に太陽/月を pop で置く。mount コストを複数
+   *  フレームに分散させて弱 GPU でも合体アニメのフレームを落とさない。 */
+  const [revealedStars, setRevealedStars] = createSignal(0);
+  const [celestialReady, setCelestialReady] = createSignal(false);
+  let revealRaf = 0;
+  onMount(() => {
+    let n = 0;
+    const step = () => {
+      n = Math.min(STARS.length, n + STAR_REVEAL_PER_FRAME);
+      setRevealedStars(n);
+      if (n < STARS.length) revealRaf = requestAnimationFrame(step);
+      else setCelestialReady(true);
+    };
+    revealRaf = requestAnimationFrame(step);
+  });
+  onCleanup(() => cancelAnimationFrame(revealRaf));
+  const visibleStars = createMemo(() => STARS.slice(0, revealedStars()));
 
   return (
     <div
@@ -146,7 +169,7 @@ const SkyBackground: Component<SkyBackgroundProps> = (props) => {
           class="absolute inset-0"
           style={{ opacity: starOp(), transition: "opacity 0.8s ease" }}
         >
-          <For each={STARS}>
+          <For each={visibleStars()}>
             {(s) => (
               <div
                 class="absolute rounded-full bg-white star-twinkle"
@@ -164,7 +187,7 @@ const SkyBackground: Component<SkyBackgroundProps> = (props) => {
         </div>
       </Show>
 
-      <Show when={sun().visible}>
+      <Show when={sun().visible && celestialReady()}>
         <div
           class="absolute top-0 left-0"
           style={{
@@ -174,7 +197,8 @@ const SkyBackground: Component<SkyBackgroundProps> = (props) => {
             "will-change": "transform",
           }}
         >
-          <svg viewBox="-60 -60 120 120" class="w-full h-full">
+          {/* 親 div が translate で位置決め、内側 svg が scale pop = transform 競合なし */}
+          <svg viewBox="-60 -60 120 120" class="w-full h-full sky-celestial-pop">
             {/* 外側の光彩 (drop-shadow を避けて透明ディスク重ねで代替) */}
             <circle cx="0" cy="0" r="54" fill="#FFE880" opacity="0.25" />
             <circle cx="0" cy="0" r="44" fill="#FFE060" opacity="0.35" />
@@ -210,7 +234,7 @@ const SkyBackground: Component<SkyBackgroundProps> = (props) => {
         </div>
       </Show>
 
-      <Show when={moon().visible}>
+      <Show when={moon().visible && celestialReady()}>
         <div
           class="absolute top-0 left-0"
           style={{
@@ -220,7 +244,8 @@ const SkyBackground: Component<SkyBackgroundProps> = (props) => {
             "will-change": "transform",
           }}
         >
-          <svg viewBox="-42 -42 84 84" class="w-full h-full">
+          {/* 親 div が translate で位置決め、内側 svg が scale pop = transform 競合なし */}
+          <svg viewBox="-42 -42 84 84" class="w-full h-full sky-celestial-pop">
             <defs>
               {/* 満月から少し右上に欠けた円を差し引いて三日月にする */}
               <mask id="crescent-mask">

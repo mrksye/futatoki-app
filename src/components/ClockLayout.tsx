@@ -525,12 +525,13 @@ export const ClockLayout: Component = () => {
   const amSplitVisible = createMemo(() => (!mergedVisible() || transitioning()) && (isAm() || !dragging()));
   const pmSplitVisible = createMemo(() => (!mergedVisible() || transitioning()) && (!isAm() || !dragging()));
 
-  /** SkyBackground の mount/unmount は大きな subtree 生成を伴い、同フレームに走る AM/PM wrapper の
-   *  合体/分離 transition の baseline を強制 reflow で奪う (= wrapper が中央へ寄らず最終位置へ
-   *  スナップする)。そこで mount/unmount を transition のフレームからずらす:
+  /** SkyBackground の mount/unmount は (gradient div 1 枚でも) DOM 挿入の強制 reflow が、同フレームに走る
+   *  AM/PM wrapper の合体/分離 transform transition の baseline を奪い、wrapper が中央へ寄らず最終位置へ
+   *  スナップさせる。そこで mount/unmount を transition のフレームからずらす:
    *    - 入室 (回転モードへ): mount を double rAF で遅らせ、wrapper の合体 transition を先に発火させる。
    *    - 退室 (clock へ): 分離 transition が終わる (transitioning が落ちる) まで保持してから unmount。
-   *  double rAF は paint を確実に 1 回挟むための保険 (merge-animation の mergedRevealed と同型)。 */
+   *  double rAF は paint を確実に 1 回挟むための保険 (merge-animation の mergedRevealed と同型)。
+   *  mount 後の重い子要素 (星 30 個 / 太陽月) の生成スパイクは SkyBackground 側で段階表示に分散する。 */
   const [skyVisible, setSkyVisible] = createSignal(isRotating());
   let skyRaf1: number | null = null;
   let skyRaf2: number | null = null;
