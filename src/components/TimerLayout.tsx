@@ -21,16 +21,15 @@ import { useTimerEndSound } from "../features/timer/timer-sound";
  * 操作 (せっと / すたーと / とりけし / リングメニュー) は TimerActions が担当し、本ファイルは
  * timer/state の signal を読んで「見せる」だけ。
  *
- * 両盤面の時刻はモード入室から 250ms ごとに live で進み続ける。setup 中 (unset / picking / armed) も
- * 止めない。armed の黒い終了マーカーは「現在時刻 + 選択分」を live で追うので、現在針との間隔は選択
- * 分のぶんで一定に保たれる (時計が進んでもプレビューの残り時間がズレない)。running に入ると開始時刻
- * (runStartMs) 基準の固定マーカーへ切り替わり、現在針がそこへ近づいて重なった (終了時刻に到達した)
- * ところで clamp して止まる = 鳴り終わりに現在針が終了マーカーちょうどに重なる。
+ * 両盤面の時刻はモード入室から 250ms ごとに live で進み続ける。setup 中 (unset / picking) も止めない。
+ * リングで分を選ぶと即 running に入り、開始時刻 (runStartMs) 基準の固定マーカーへ向けて現在針が進む。
+ * 現在針がマーカーに重なった (終了時刻に到達した) ところで clamp して止まる = 鳴り終わりに現在針が
+ * 終了マーカーちょうどに重なる。
  *
  * 盤面の役割:
  *  - AM 位置 (landscape 左 / portrait 上): 現在時刻の合体時計 (通常の黒針)。
  *  - PM 位置 (landscape 右 / portrait 下): タイマー盤。グレーの現在針 (長針 ghost) + 黒い終了マーカー針
- *    (markerMinutes, タイマーの目標)。終了マーカーは分を選んだ瞬間 (armed) から出て、running 中は固定。
+ *    (markerMinutes, タイマーの目標)。終了マーカーは分を選んだ瞬間 (= 即 running) から出て固定。
  *    現在針がそこへ近づき、重なったら終了。短針 (時針) はマーカーを出さない (分タイマーなので無視)。
  */
 
@@ -51,14 +50,13 @@ const TimerLayout: Component = () => {
   const refMinuteFloat = () => refDate().getMinutes() + refDate().getSeconds() / 60;
 
   const hasSelection = () =>
-    timerPhase() === "armed" || timerPhase() === "running" ||
-    timerPhase() === "paused" || timerPhase() === "done";
+    timerPhase() === "running" || timerPhase() === "paused" || timerPhase() === "done";
 
   /** カウントダウン終了時刻 (ms)。
    *  - running / done: 開始押下時刻 (runStartMs) 基準で固定 (done は nowMs を完了時刻に clamp 済みなので
    *    現在針と重なる)。
    *  - paused: 現在時刻 + 凍結した残り → 時計が進むとマーカーも一緒に動き、扇 (残り) の幅は一定に保つ。
-   *  - armed: 現在時刻 + 選択分 の live プレビュー (同上で間隔一定)。 */
+   *  - unset / picking (sel=null): null。 */
   const endMs = (): number | null => {
     const sel = selectedMinutes();
     if (sel === null) return null;
@@ -70,10 +68,10 @@ const TimerLayout: Component = () => {
       const rem = pausedRemainingMs();
       return rem === null ? null : nowMs() + rem;
     }
-    return nowMs() + sel * 60000;
+    return null;
   };
 
-  /** 終了マーカー針の位置 (分, 小数)。選択済み (armed / running / paused / done) のときだけ値を返す。 */
+  /** 終了マーカー針の位置 (分, 小数)。選択済み (running / paused / done) のときだけ値を返す。 */
   const markerMinutes = (): number | undefined => {
     if (!hasSelection()) return undefined;
     const e = endMs();
@@ -82,11 +80,10 @@ const TimerLayout: Component = () => {
     return d.getMinutes() + d.getSeconds() / 60;
   };
 
-  /** 残り秒。armed=選択分の満タン / running=実時間で減る / paused=凍結した残り / done=0。 */
+  /** 残り秒。running=実時間で減る / paused=凍結した残り / done=0。 */
   const remainingSeconds = (): number | null => {
     const sel = selectedMinutes();
     if (sel === null) return null;
-    if (timerPhase() === "armed") return sel * 60;
     if (timerPhase() === "done") return 0;
     if (timerPhase() === "paused") {
       const rem = pausedRemainingMs();
@@ -182,7 +179,7 @@ const TimerLayout: Component = () => {
       </div>
 
       {/* デジタル残り時間。AM/PM バッジと同じスロット位置 (portrait 中央左 / landscape 中央上)。
-          armed / running のときだけ出す。情報表示なのでタップは透過 (pointer-events-none)。 */}
+          running / paused / done のとき出す。情報表示なのでタップは透過 (pointer-events-none)。 */}
       <Show when={digital() !== null}>
         <div
           class={

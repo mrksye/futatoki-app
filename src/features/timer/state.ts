@@ -6,8 +6,7 @@ import { createSignal } from "solid-js";
  *
  * フェーズは結合した状態なので FSM (timerPhase) で表す:
  *   unset   : まだ分を選んでいない。「せっと」ボタンだけ。
- *   picking : 分を選ぶリングメニューを開いている。
- *   armed   : 分を選択済みでまだ開始していない。「すたーと」+「とりけし」。黒い終了マーカー針を表示。
+ *   picking : 分を選ぶリングメニューを開いている。分を選んだ瞬間に running へ直行する (armed は廃止)。
  *   running : カウントダウン中。現在針がリアルタイムで終了マーカーへ近づく。「いちじていし」+「とりけし」。
  *   paused  : カウントダウン一時停止中。残り時間を凍結 (時計は実時刻のまま、扇=残りだけ固定)。
  *             「さいかい」+「とりけし」。
@@ -21,7 +20,7 @@ import { createSignal } from "solid-js";
  *  5 分刻みで 60 まで = 16 択。 */
 export const TIMER_MINUTE_OPTIONS = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60] as const;
 
-export type TimerPhase = "unset" | "picking" | "armed" | "running" | "paused" | "done";
+export type TimerPhase = "unset" | "picking" | "running" | "paused" | "done";
 
 /** リングメニューが bloom する起点 (= せっとボタン中心の viewport 座標)。できごと picker の
  *  PickerOrigin と同じ役割で、数字ボタンがこの点から放射状に飛び出す演出に使う。 */
@@ -32,7 +31,7 @@ export interface RingOrigin {
 
 const [timerPhase, setPhaseRaw] = createSignal<TimerPhase>("unset");
 const [selectedMinutes, setSelectedMinutesRaw] = createSignal<number | null>(null);
-/** running 開始時の epoch(ms)。unset / armed では null。カウントダウンの基準。 */
+/** running 開始時の epoch(ms)。unset / picking では null。カウントダウンの基準。 */
 const [runStartMs, setRunStartMsRaw] = createSignal<number | null>(null);
 /** 一時停止時に凍結した残り時間 (ms)。paused 以外では null。 */
 const [pausedRemainingMs, setPausedRemainingMsRaw] = createSignal<number | null>(null);
@@ -48,21 +47,16 @@ export const openPicker = (origin?: RingOrigin) => {
   setPhaseRaw("picking");
 };
 
-/** リングメニューを閉じる (外側タップ等)。選択済みなら armed、未選択なら unset に戻る。 */
+/** リングメニューを閉じる (選択せず外側タップ等)。unset (= せっと) に戻る。 */
 export const closePicker = () => {
   if (timerPhase() !== "picking") return;
-  setPhaseRaw(selectedMinutes() === null ? "unset" : "armed");
+  setPhaseRaw("unset");
 };
 
-/** リングメニューで分を選択 → armed へ。黒い終了マーカーはこの時点から見える。 */
+/** リングメニューで分を選択 → 即 running 開始 (armed を挟まず、選んだ瞬間にカウントダウン)。現在時刻を
+ *  開始基準に固定する。 */
 export const selectMinutes = (m: number) => {
   setSelectedMinutesRaw(m);
-  setPhaseRaw("armed");
-};
-
-/** 「すたーと」。armed からのみ。現在時刻を開始基準に固定して running へ。 */
-export const startTimer = () => {
-  if (timerPhase() !== "armed" || selectedMinutes() === null) return;
   setRunStartMsRaw(Date.now());
   setPhaseRaw("running");
 };

@@ -7,7 +7,6 @@ import {
   openPicker,
   closePicker,
   selectMinutes,
-  startTimer,
   pauseTimer,
   resumeTimer,
   cancelTimer,
@@ -28,8 +27,7 @@ import CheckIcon from "./icons/CheckIcon";
  *
  * 右下に FAB を置き、上方向へ展開する:
  *  - unset:   「せっと」(ストップウォッチ) 1 個。押すとリングメニューを開く。
- *  - armed:   「すたーと」(▶, 下=primary) +「とりけし」(✕, 上)。
- *  - running: 「いちじていし」(⏸, 下=primary) +「とりけし」(✕, 上)。
+ *  - running: 「いちじていし」(⏸, 下=primary) +「とりけし」(✕, 上)。リングで分を選ぶと即この状態。
  *  - paused:  「さいかい」(▶, 下=primary) +「とりけし」(✕, 上)。
  *  - done:    「完了」(✓) 1 個。押すと音を止めて unset に戻る。
  *
@@ -71,16 +69,7 @@ const TimerActions: Component = () => {
           </button>
         </Show>
 
-        <Show when={timerPhase() === "armed"}>
-          <button class={FAB_CLASS} aria-label={t("timer.start")} onClick={startTimer}>
-            <PlayIcon class={iconClass} />
-          </button>
-          <button class={FAB_CLASS} aria-label={t("timer.cancel")} onClick={cancelTimer}>
-            <CancelIcon class={iconClass} />
-          </button>
-        </Show>
-
-        {/* running: いちじていし (▢ primary, 最下段) + とりけし (上)。 */}
+        {/* running: いちじていし (⏸ primary, 最下段) + とりけし (上)。リングで分を選んだ瞬間にここへ来る。 */}
         <Show when={timerPhase() === "running"}>
           <button class={FAB_CLASS} aria-label={t("timer.pause")} onClick={pauseTimer}>
             <PauseIcon class={iconClass} />
@@ -119,7 +108,7 @@ const TimerActions: Component = () => {
  *    慣性、ホイールでも回る。見切れた数字は回して手元に持ってきてタップする。
  *  - 数字ボタンは origin から放射状に scale 0→1 + opacity で stagger bloom し、円周に着地する。
  *    子ボタンは親リングの回転を打ち消して数字を常に upright に保つ。
- *  - 数字タップ (または隙間タップで最寄りへ snap) で確定 → armed へ遷移しリングは unmount。
+ *  - 数字タップ (または隙間タップで最寄りへ snap) で確定 → 即 running へ遷移しリングは unmount。
  *
  * timer setup 中は背景の時計が frozen (TimerLayout) なので、blur は 1 回 paint されたら以降は
  * compositing cache に乗り合成負荷ゼロ。できごと picker のような chronostasis 連動は不要。
