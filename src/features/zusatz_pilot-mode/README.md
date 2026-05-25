@@ -13,8 +13,9 @@ PilotMode (= 実験モード / ExperimentalMode)。開発中・実験的な機�
 
 > もも咲く朝、いそいそいそぐ
 
-の順（各パレット名の頭文字 = 13 手）でタップすると解錠される。解錠中は画面の縁に金色オーラが
-ゆっくり脈打つ。解錠は **session 限り** — リロード / 再起動で解ける（永続化しない／痕跡を残さない）。
+の順（各パレット名の頭文字 = 13 手）でタップすると解錠される。解錠した瞬間に下部トーストで知らせ、
+解錠中は画面の縁に金色オーラがゆっくり脈打つ。解錠は **session 限り** — リロード / 再起動で解ける
+（永続化しない／痕跡を残さない）。
 
 解錠すると、モード切替に実験的な項目（現状は「たいむ」）が現れる。
 
@@ -41,4 +42,5 @@ PilotMode (= 実験モード / ExperimentalMode)。開発中・実験的な機�
 | `state.ts` | `inPilotMode` signal + 解錠検出 `knockingOnPilotModesDoor` |
 | `sequence.ts` | 合言葉（解錠シーケンス） |
 | `golden-aura.ts` | 解錠中の金色オーラを `document.body` へ直接ねじ込む黒魔術 |
+| `toast.ts` | 解錠した瞬間に下部から出て自動で消える通知トースト（同じく DOM 直注入） |
 | `index.ts` | 公開 API（`inPilotMode` / `knockingOnPilotModesDoor`） |

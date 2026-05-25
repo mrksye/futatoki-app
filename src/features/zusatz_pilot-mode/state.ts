@@ -1,6 +1,7 @@
 import { createSignal } from "solid-js";
 import { PILOT_SEQUENCE } from "./sequence";
 import { summonGoldenAura } from "./golden-aura";
+import { showPilotModeToast } from "./toast";
 
 /**
  * PilotMode (= 実験モード / ExperimentalMode) の状態と解錠検出。開発中・実験的な機能を、知っている人
@@ -12,7 +13,8 @@ import { summonGoldenAura } from "./golden-aura";
  *
  * 結合点 (公開 API はこの 2 関数だけ。視覚は host に差し込まず DOM へ直接ねじ込む = JSX 行は増えない):
  *   - knockingOnPilotModesDoor(id): 解錠操作の入力 (配色ボタンが押されるたびに id を流し込む)。最後の
- *     1 手で解錠した瞬間、golden-aura.ts が document.body へ金色オーラの生 DOM をねじ込む (黒魔術)。
+ *     1 手で解錠した瞬間、golden-aura.ts が金色オーラを、toast.ts が下部トーストを document.body へ
+ *     直接ねじ込む (黒魔術 = host に行を足さない)。
  *   - inPilotMode():               解錠済みかを読む (実験機能の出し分けに使う側が参照)。
  *
  * ── 手早く封印するだけ (1 行削除 + 警告) ──
@@ -45,6 +47,7 @@ export const knockingOnPilotModesDoor = (paletteId: string): void => {
       progress = 0;
       setInPilotMode(true);
       summonGoldenAura();
+      showPilotModeToast();
     }
     return;
   }
