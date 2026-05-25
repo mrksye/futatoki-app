@@ -125,9 +125,10 @@ const TimerActions: Component = () => {
  * compositing cache に乗り合成負荷ゼロ。できごと picker のような chronostasis 連動は不要。
  */
 
-/** リング上に並べる数字。8 択を 2 周ぶん並べる (= せっとボタンが角にあって円が見切れても、どの値も
- *  近場に必ず 1 個現れて、少しの回転で届く)。 */
-const RING_ITEMS: readonly number[] = [...TIMER_MINUTE_OPTIONS, ...TIMER_MINUTE_OPTIONS];
+/** リング上に並べる数字 = 分の選択肢 16 個を円周に 1 周。せっとボタンが角にあって円は端で見切れるので、
+ *  見えてる側に無い値はリングを回して手元へ持ってくる。16 個で半径いっぱいなので 2 周は重なって不可
+ *  (8 択時代は 2 周ぶん複製して reachability を稼いでいた)。 */
+const RING_ITEMS: readonly number[] = [...TIMER_MINUTE_OPTIONS];
 
 // 16 個入るので円を大きめに (隣接ボタンが重ならない半径)。
 const RING_RADIUS_MOBILE_PX = 168;
