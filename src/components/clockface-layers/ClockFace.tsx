@@ -1,8 +1,8 @@
 import type { ParentComponent } from "solid-js";
-import { useI18n } from "../i18n";
-import { VIEW } from "./clockface-layers/geometry";
-import BaseFace from "./clockface-layers/BaseFace";
-import FaceDetail from "./clockface-layers/FaceDetail";
+import { useI18n } from "../../i18n";
+import { VIEW } from "./geometry";
+import BaseFace from "./BaseFace";
+import FaceDetail from "./FaceDetail";
 
 /**
  * 時計盤を 1 枚の SVG にレイヤー合成する facade。下から:

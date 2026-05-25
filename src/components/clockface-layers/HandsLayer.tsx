@@ -1,8 +1,8 @@
 import { createEffect, onCleanup, Show, type Accessor, type Component } from "solid-js";
-import { detailMode } from "../features/settings/detail-mode";
-import { colorMode } from "../features/settings/color-mode";
-import { paletteId } from "../features/settings/palette";
-import { clockMode } from "../features/free-rotation/state";
+import { detailMode } from "../../features/settings/detail-mode";
+import { colorMode } from "../../features/settings/color-mode";
+import { paletteId } from "../../features/settings/palette";
+import { clockMode } from "../../features/free-rotation/state";
 
 /**
  * 時計の針 (時針・分針・中心ネジ) を描画するレイヤー。ClockFace を包む div の中に絶対配置で重ね、

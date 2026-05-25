@@ -7,7 +7,7 @@ import { getPalette, type HourColor } from "../../colors";
 import { animateMotion } from "../../lib/motion";
 import { prerollKey, PULSE_MS } from "../../features/settings/time-format-preroll";
 import { useI18n } from "../../i18n";
-import TimeFormatPrerollFx from "../TimeFormatPrerollFx";
+import TimeFormatPrerollFx from "./TimeFormatPrerollFx";
 import {
   CENTER,
   BADGE_RADIUS_KUWASHIKU,

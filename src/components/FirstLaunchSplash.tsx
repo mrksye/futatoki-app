@@ -1,6 +1,6 @@
 import { createMemo, createSignal, onMount, type Component } from "solid-js";
-import ClockFace from "./ClockFace";
-import HandsLayer from "./HandsLayer";
+import ClockFace from "./clockface-layers/ClockFace";
+import HandsLayer from "./clockface-layers/HandsLayer";
 import { useOrientation } from "../hooks/useOrientation";
 import { useViewport } from "../hooks/useViewport";
 import { runSplashSequence } from "../features/first-launch/controller";

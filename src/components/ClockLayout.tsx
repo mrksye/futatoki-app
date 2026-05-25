@@ -1,8 +1,8 @@
 import { createEffect, createMemo, createSignal, lazy, on, onCleanup, onMount, Show, Suspense } from "solid-js";
 import type { Component, ParentComponent } from "solid-js";
-import ClockFace from "./ClockFace";
-import HandsLayer from "./HandsLayer";
-import ActivityLayer from "./ActivityLayer";
+import ClockFace from "./clockface-layers/ClockFace";
+import HandsLayer from "./clockface-layers/HandsLayer";
+import ActivityLayer from "./clockface-layers/ActivityLayer";
 import ActivityPicker from "./ActivityPicker";
 import LanguagePicker from "./LanguagePicker";
 import ModePicker from "./ModePicker";

@@ -4,8 +4,8 @@ import {
   prerollKey,
   PULSE_MS,
   SHOCKWAVE_MS,
-} from "../features/settings/time-format-preroll";
-import { animateMotion } from "../lib/motion";
+} from "../../features/settings/time-format-preroll";
+import { animateMotion } from "../../lib/motion";
 
 /**
  * 12h ⇄ 24h トグル時の preroll: 12 を震源にした衝撃波リング担当。

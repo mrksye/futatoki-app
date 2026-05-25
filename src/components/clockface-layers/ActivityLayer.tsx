@@ -1,7 +1,7 @@
 import { For, Show, createEffect, createMemo, on, onCleanup } from "solid-js";
 import type { Component } from "solid-js";
-import { activity, type ActivityEvent } from "../features/activity/state";
-import { getActivityIcon } from "../features/activity/icons";
+import { activity, type ActivityEvent } from "../../features/activity/state";
+import { getActivityIcon } from "../../features/activity/icons";
 import {
   interaction,
   cancelWarning,
@@ -9,12 +9,12 @@ import {
   triggerResetDelete,
   RESET_STAGGER_MS,
   DELETE_ANIMATION_MS,
-} from "../features/activity/interaction";
-import { isRotating } from "../features/free-rotation/state";
-import { detailMode } from "../features/settings/detail-mode";
-import { colorMode } from "../features/settings/color-mode";
-import { paletteId } from "../features/settings/palette";
-import { animateMotion, playPoyon3, playShakeNo } from "../lib/motion";
+} from "../../features/activity/interaction";
+import { isRotating } from "../../features/free-rotation/state";
+import { detailMode } from "../../features/settings/detail-mode";
+import { colorMode } from "../../features/settings/color-mode";
+import { paletteId } from "../../features/settings/palette";
+import { animateMotion, playPoyon3, playShakeNo } from "../../lib/motion";
 
 /**
  * 時計の上にできごとアイコンを描画するレイヤー。ClockFace を包む div の中に絶対配置で重ねる
