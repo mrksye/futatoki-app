@@ -125,10 +125,19 @@ const TimerActions: Component = () => {
  * compositing cache に乗り合成負荷ゼロ。できごと picker のような chronostasis 連動は不要。
  */
 
+/** 初期表示の左回りローテート個数。先頭からこの数だけ末尾へ送る = 円の起点 (12 時) に来る値が後ろへ
+ *  ずれる (= 見た目は左回りに N 個ずれる)。数を変えるだけで初期位置を調整できる。 */
+const RING_LEFT_ROTATE = 8;
+
 /** リング上に並べる数字 = 分の選択肢 16 個を円周に 1 周。せっとボタンが角にあって円は端で見切れるので、
  *  見えてる側に無い値はリングを回して手元へ持ってくる。16 個で半径いっぱいなので 2 周は重なって不可
- *  (8 択時代は 2 周ぶん複製して reachability を稼いでいた)。 */
-const RING_ITEMS: readonly number[] = [...TIMER_MINUTE_OPTIONS];
+ *  (8 択時代は 2 周ぶん複製して reachability を稼いでいた)。
+ *  RING_LEFT_ROTATE 個ぶん配列を左ローテートして初期の並びをずらす。回転 transform は bloom と干渉して
+ *  バグるので、配列の並べ替えで実現する。 */
+const RING_ITEMS: readonly number[] = [
+  ...TIMER_MINUTE_OPTIONS.slice(RING_LEFT_ROTATE),
+  ...TIMER_MINUTE_OPTIONS.slice(0, RING_LEFT_ROTATE),
+];
 
 // 16 個入るので円を大きめに (隣接ボタンが重ならない半径)。
 const RING_RADIUS_MOBILE_PX = 168;
