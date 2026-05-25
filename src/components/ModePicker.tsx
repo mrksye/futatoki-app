@@ -8,7 +8,6 @@ import {
   closeActivePopover,
   togglePopover,
 } from "../lib/exclusive-popover";
-import { inPilotMode } from "../features/zusatz_pilot-mode";
 
 /** clock からは freeRotate にしか transition できない FSM ルール (state.ts の ALLOWED_TRANSITIONS)
  *  を満たすため、autoRotate を選んだ時は freeRotate を経由する。 */
@@ -108,7 +107,7 @@ const ModePicker: Component = () => {
           style={{ "pointer-events": expanded() ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
         >
-          <For each={ITEMS.filter((it) => it.mode !== "timer" || inPilotMode())}>
+          <For each={ITEMS}>
             {(it, idx) => (
               <button
                 class={`${baseClass} ${clockMode() === it.mode ? activeClass : inactiveClass}`}
