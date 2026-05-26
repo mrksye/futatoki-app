@@ -32,10 +32,11 @@ import {
  * 操作 (せっと / すたーと / とりけし / リングメニュー) は TimerActions が担当し、本ファイルは
  * timer/state の signal を読んで「見せる」だけ。
  *
- * 両盤面の時刻はモード入室から 250ms ごとに live で進み続ける。setup 中 (unset / picking) も止めない。
- * リングで分を選ぶと即 running に入り、開始時刻 (runStartMs) 基準の固定マーカーへ向けて現在針が進む。
- * 現在針がマーカーに重なった (終了時刻に到達した) ところで clamp して止まる = 鳴り終わりに現在針が
- * 終了マーカーちょうどに重なる。
+ * 左の合体時計 (AM 位置) の時刻はモード入室から 250ms ごとに live で進み続け、done になっても止めない
+ * (タイマーが鳴り終わっても現在時刻はずっと進む)。setup 中 (unset / picking) も止めない。
+ * リングで分を選ぶと即 running に入り、タイマー盤 (PM 位置) では開始時刻 (runStartMs) 基準の固定マーカーへ
+ * 向けて現在針が進む。現在針がマーカーに重なった (終了時刻に到達した) ところでタイマー盤だけが終了時刻に
+ * 凍結する = 鳴り終わりに現在針が終了マーカーちょうどに重なって止まる。
  *
  * 盤面の役割:
  *  - AM 位置 (landscape 左 / portrait 上): 現在時刻の合体時計 (通常の黒針)。
@@ -93,6 +94,19 @@ const TimerLayout: Component = () => {
     return null;
   };
 
+  /** タイマー盤 (PM 位置) の基準時刻。running / paused は live の現在時刻、done は終了時刻で凍結する。
+   *  左の合体時計 (AM 位置) は refDate (live の nowMs) のまま進み続けるが、タイマー盤の針・扇だけは
+   *  この boardDate を読むことで終了位置にとどまる (鳴り終わりに現在針が終了マーカーへ重なって止まる)。 */
+  const boardDate = createMemo(() => {
+    if (timerPhase() === "done") {
+      const e = endMs();
+      if (e !== null) return new Date(e);
+    }
+    return refDate();
+  });
+  const boardHours = () => boardDate().getHours();
+  const boardMinuteFloat = () => boardDate().getMinutes() + boardDate().getSeconds() / 60;
+
   /** 終了マーカー針の位置 (分, 小数)。選択済み (running / paused / done) のときだけ値を返す。 */
   const markerMinutes = (): number | undefined => {
     if (!hasSelection()) return undefined;
@@ -126,22 +140,17 @@ const TimerLayout: Component = () => {
     return `${pad2(Math.floor(r / 60))}:${pad2(r % 60)}`;
   };
 
-  // timer モード中は requestAnimationFrame で現在時刻を取り直し、両盤面の針を live で進める (paused でも
-  // 時計は実時刻のまま進み、扇=残りだけ凍結)。setInterval ではなく rAF なのは、背景タブでは自動的に止まり
-  // 計時を無駄に進めないため。計時の真実は endMs - Date.now() のままで、rAF は表示専用 (値の積算はしない)。
-  // running 中に終了時刻へ達したら現在時刻を完了時刻に clamp し、done へ遷移してアラームを鳴らす
-  // (フォアグラウンド発火経路)。画面消灯下の発火と復帰時の取りこぼし回収は timer-alarm 側の setInterval
-  // 監視 (keepalive がページを生かす) と visibilitychange 照合が担当する。done は完了時刻で盤面を凍結する
-  // ので tick しない。
+  // timer モード中は全フェーズで requestAnimationFrame を回し、現在時刻 (nowMs) を取り直して左の合体時計を
+  // live で進める。setInterval ではなく rAF なのは、背景タブでは自動的に止まり計時を無駄に進めないため。
+  // 計時の真実は endMs - Date.now() のままで、rAF は表示専用 (値の積算はしない)。running 中に終了時刻へ
+  // 達したら done へ遷移してアラームを鳴らす (フォアグラウンド発火経路)。画面消灯下の発火と復帰時の
+  // 取りこぼし回収は timer-alarm 側の setInterval 監視 (keepalive がページを生かす) と visibilitychange
+  // 照合が担当する。done でも nowMs は進み続け左の合体時計は止めない。終了位置で凍るのはタイマー盤だけで、
+  // それは boardDate が done のとき終了時刻を返すことで実現する (この effect は時刻ソースを止めない)。
   createEffect(() => {
     const phase = timerPhase();
-    if (phase === "done") {
-      const e = endMs();
-      if (e !== null) setNowMs(e);
-      return;
-    }
     let animationFrameId = 0;
-    // 表示の commit (setNowMs → 両盤の針 SVG 再描画) は 4fps に間引く。針はゆっくり動くので 60fps は不要で、
+    // 表示の commit (setNowMs → 針 SVG 再描画) は 4fps に間引く。針はゆっくり動くので 60fps は不要で、
     // 毎フレーム再描画すると弱 GPU を圧迫する。rAF ループ自体は前景のみで回り (背景タブで自動停止)、
     // running の完了判定は毎フレーム精度のまま (now >= endMs を間引かず見る)。
     let lastCommitMs = 0;
@@ -150,7 +159,7 @@ const TimerLayout: Component = () => {
       if (phase === "running") {
         const e = endMs();
         if (e !== null && now >= e) {
-          setNowMs(e);
+          setNowMs(now);
           completeTimer();
           timerAlarm()?.ensureAlarmPlaying();
           if (typeof navigator.vibrate === "function") navigator.vibrate(ALARM_VIBRATE_PATTERN);
@@ -257,12 +266,12 @@ const TimerLayout: Component = () => {
               class="relative"
               style={{ width: `${timerBoardSize()}px`, height: `${timerBoardSize()}px`, "transform-origin": "center" }}
             >
-              <ClockFace period="merged" hours={refHours()} bezel="gold">
-                <TimerWedge fromMinute={refMinuteFloat()} spanMinutes={(remainingSeconds() ?? 0) / 60} />
+              <ClockFace period="merged" hours={boardHours()} bezel="gold">
+                <TimerWedge fromMinute={boardMinuteFloat()} spanMinutes={(remainingSeconds() ?? 0) / 60} />
               </ClockFace>
               <HandsLayer
-                hours={refHours()}
-                minutes={refMinuteFloat()}
+                hours={boardHours()}
+                minutes={boardMinuteFloat()}
                 minuteHandOpacity={NOW_HAND_OPACITY}
                 markerMinutes={markerMinutes()}
               />
