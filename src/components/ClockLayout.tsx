@@ -560,15 +560,15 @@ export const ClockLayout: Component = () => {
   useAutoRotateTick();
   useIdleExitTimer();
 
-  /** AM 側 selection dim opacity (アクティブ=1, 薄い側=0.25)。
+  /** AM 側 selection dim opacity (アクティブ=1, 薄い側=0.3)。
    *
    *  dim opacity は 2 軸構造:
    *    - merge dim (mergedVisible? 0 : 1): wrapper inline opacity で 380ms smooth fade
    *    - selection dim (これ): 内側 DimOverlay の .fade-on-dim、.selection-dim-instant 中だけ 0ms
    *  この分離で merge 切替時の transitioning timing race を構造的に防ぐ。 */
-  const amSelectionOpacity = createMemo(() => isAm() ? 1 : 0.25);
+  const amSelectionOpacity = createMemo(() => isAm() ? 1 : 0.3);
   /** PM 側 selection dim opacity (詳細は amSelectionOpacity の JSDoc 参照)。 */
-  const pmSelectionOpacity = createMemo(() => isAm() ? 0.25 : 1);
+  const pmSelectionOpacity = createMemo(() => isAm() ? 0.3 : 1);
 
   /** wrapper への .selection-dim-instant 付与条件 (= 子の .fade-on-dim を 0ms 即時切替に上書き):
    *    1. AM/PM プレビュー長押し中 (押下=即時, 離す=380ms フェード)
