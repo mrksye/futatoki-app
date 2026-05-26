@@ -202,6 +202,21 @@ const SPLIT_QUAKE_AMPLITUDE_SCALE = 2.6;
 export const playSplitAnticipation = (el: Element): Animation | null =>
   playQuake(el, EXIT_ANTICIPATION_MS, BOING_MS, SPLIT_QUAKE_AMPLITUDE_SCALE);
 
+/** 退室 (たいむ→回転) で timer 盤が去るときの「バイバイッ」。右下を支点 (transform-origin: 100% 100%) に
+ *  弧を描いて素早く 2 回振り、最後にフェード+縮小で消える。回転モードには連れて行かれない盤のお別れ演出。
+ *  fill:forwards で消えたまま保持 (直後に unmount)。すげ替えられるよう実装点はこの 1 関数に閉じる。 */
+const WAVE_GOODBYE_MS = 650;
+const WAVE_GOODBYE_KEYFRAMES: Keyframe[] = [
+  { transform: "rotate(0deg) scale(1)", opacity: 1, transformOrigin: "100% 100%", offset: 0 },
+  { transform: "rotate(-2deg) scale(1)", transformOrigin: "100% 100%", offset: 0.16 },
+  { transform: "rotate(1deg) scale(1)", transformOrigin: "100% 100%", offset: 0.36 },
+  { transform: "rotate(-0.5deg) scale(1)", transformOrigin: "100% 100%", offset: 0.54 },
+  { transform: "rotate(0deg) scale(1)", opacity: 1, transformOrigin: "100% 100%", offset: 0.64 },
+  { transform: "rotate(0deg) scale(0.35)", opacity: 0, transformOrigin: "100% 100%", offset: 1 },
+];
+export const playWaveGoodbye = (el: Element): Animation | null =>
+  animateMotion(el, WAVE_GOODBYE_KEYFRAMES, { duration: WAVE_GOODBYE_MS, easing: "ease-in-out", fill: "forwards" });
+
 /**
  * 遷移フェーズを送る effect 配線。ClockLayout から 1 回だけ呼ぶ。phase / kind / mergedRevealed の
  * module-level signal を駆動する。
@@ -270,11 +285,13 @@ export const useTimerTransition = () => {
         setKind(exitKind);
         setMergedRevealed(true);
         setPhase("exitBoing");
+        // exitBoing: splitSide は 盤を裏へ退ける (BOING) + merged クエイク (EXIT_ANTICIPATION)。
+        //            centerSlide は timer 盤がバイバイッと振って去る (WAVE_GOODBYE)。
+        const exitBoingMs = exitKind === "centerSlide" ? WAVE_GOODBYE_MS : BOING_MS + EXIT_ANTICIPATION_MS;
+        // exitDiverge: splitSide は PM 盤の生み出し (BOING)、centerSlide は merged の中央スライド (CONVERGE)。
         const divergeMs = exitKind === "centerSlide" ? CONVERGE_MS : BOING_MS;
-        // exitBoing = BOING (盤を裏へ退ける) + クエイク (merged が自分自身を分裂させる前に震える魅せ)。
-        // その後 exitDiverge で分離 (PM 盤の生み出し) / 中央スライド。
-        after(BOING_MS + EXIT_ANTICIPATION_MS, () => setPhase("exitDiverge"));
-        after(BOING_MS + EXIT_ANTICIPATION_MS + divergeMs, () => {
+        after(exitBoingMs, () => setPhase("exitDiverge"));
+        after(exitBoingMs + divergeMs, () => {
           setPhase("idle");
           setTimerLayoutMounted(false); // 退室完了で TimerLayout を unmount
         });

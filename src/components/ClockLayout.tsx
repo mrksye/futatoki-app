@@ -597,7 +597,12 @@ export const ClockLayout: Component = () => {
     if (skyRaf1 !== null) { cancelAnimationFrame(skyRaf1); skyRaf1 = null; }
     if (skyRaf2 !== null) { cancelAnimationFrame(skyRaf2); skyRaf2 = null; }
   };
-  createEffect(on([isRotating, transitioning], () => {
+  createEffect(on([isRotating, transitioning, timerTransitioning], () => {
+    // たいむ遷移中 (出入り) は sky の mount/unmount を保留する。SkyBackground は clock ツリー側 = DOM 上
+    // TimerLayout より後ろ = 重ね順で上にあり、遷移中に mount すると timer 盤を覆って去り際アニメ
+    // (バイバイッ等) を隠す + reflow が WAAPI を殺す。遷移完了 (timerTransitioning が false) で再評価され、
+    // isRotating に応じて mount/unmount される。
+    if (timerTransitioning()) return;
     if (isRotating()) {
       if (!skyVisible() && skyRaf1 === null) {
         skyRaf1 = requestAnimationFrame(() => {

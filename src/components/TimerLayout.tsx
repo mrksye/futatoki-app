@@ -22,6 +22,7 @@ import {
   playRetreatBehindLeft,
   playMergeAnticipation,
   playSplitAnticipation,
+  playWaveGoodbye,
   MERGE_ANTICIPATION_MS,
 } from "../features/timer/timer-transition";
 
@@ -197,11 +198,14 @@ const TimerLayout: Component = () => {
           boardAnimation = playEmergeFromBehindLeft(timerBoardRef, isLandscape(), MERGE_ANTICIPATION_MS);
         }
       } else if (phase === "exitBoing") {
-        if (timerBoardRef) boardAnimation = playRetreatBehindLeft(timerBoardRef, isLandscape());
-        // クエイクは splitSide (→並列時計) の「自己分裂」だけ。centerSlide (→回転) は合体時計のまま中央へ
-        // スライドする = 分離しないので震わさない。
-        if (leftFaceRef && timerTransitionKind() === "splitSide") {
-          leftFaceAnimation = playSplitAnticipation(leftFaceRef);
+        if (timerTransitionKind() === "centerSlide") {
+          // →回転: 合体時計はそのまま中央へ行くので分離せず、timer 盤だけがバイバイッと振って去る
+          //        (右下支点の弧 + フェード縮小)。merged は震わさない (クエイクは分離専用)。
+          if (timerBoardRef) boardAnimation = playWaveGoodbye(timerBoardRef);
+        } else {
+          // →並列時計: timer 盤を裏へ退け、merged が自己分裂する前にググッとクエイクする。
+          if (timerBoardRef) boardAnimation = playRetreatBehindLeft(timerBoardRef, isLandscape());
+          if (leftFaceRef) leftFaceAnimation = playSplitAnticipation(leftFaceRef);
         }
       }
     }),
