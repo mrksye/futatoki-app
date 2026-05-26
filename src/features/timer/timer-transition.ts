@@ -119,31 +119,43 @@ export const timerMergedTransform = (atLeft: boolean, revealed: boolean, isLands
 export const timerPmWrapperTransform = (isLandscape: boolean): string =>
   isLandscape ? "translateX(-100%) scale(0.96)" : "translateY(-100%) scale(0.96)";
 
-// ── たいむ盤 boing (マージ時計の裏からスライドで生み出す / 裏へ退く) ──
+// ── 盤を L 盤の裏から R へ出し入れするスライド (入りの timer盤 / 出りの PM盤 で共通) ──
 
-/** たいむ盤 (R) を merged 盤 (L) の裏まで寄せる平行移動量。R 中心(75%)→L 中心(25%) = 画面 1/2 ぶん。
- *  盤自身の幅は clockSize で可変なので、確実に L へ重ねるため viewport 基準 (vw/vh) で寄せる。
- *  z 順は board(PM, z-auto) < 左顔(AM, z-10) なので、ここに居る間は merged の裏に隠れる。 */
-const boardBehindMergedTransform = (isLandscape: boolean): string =>
+/** R 位置の盤を L 盤の裏まで寄せる平行移動量。R 中心(75%)→L 中心(25%) = 画面 1/2 ぶん。盤自身の幅は
+ *  clockSize で可変なので、確実に L へ重ねるため viewport 基準 (vw/vh) で寄せる。z 順は R 盤 (z-auto) <
+ *  L 盤 (z-10) なので、ここに居る間は L 盤の裏に隠れる。 */
+const behindLeftClockTransform = (isLandscape: boolean): string =>
   isLandscape ? "translateX(-50vw)" : "translateY(-50vh)";
 
-/** boing-in。merged の裏 (L) から R へ back-out で弾性スライド (「びよッ」と生み出される)。overshoot は
- *  左収束より控えめ (1.4) にして行き過ぎを抑える。fill:backwards で開始前から裏位置に置きチラ見え防止。 */
-export const playTimerBoardBoingIn = (el: Element, isLandscape: boolean): Animation | null =>
+/** L 盤の裏 (L) から自位置 (R) へ back-out で弾性スライド (「びよッ」と裏から生み出される)。overshoot は
+ *  左収束より控えめ (1.4)。fill:backwards で開始前から裏位置に置きチラ見え防止。入りの timer盤・出りの
+ *  PM盤の両方で使う (同一モーション)。 */
+export const playEmergeFromBehindLeft = (el: Element, isLandscape: boolean): Animation | null =>
   animateMotion(
     el,
-    [{ transform: boardBehindMergedTransform(isLandscape) }, { transform: "translate(0, 0)" }],
+    [{ transform: behindLeftClockTransform(isLandscape) }, { transform: "translate(0, 0)" }],
     { duration: BOING_MS, easing: "cubic-bezier(.34, 1.4, .64, 1)", fill: "backwards" },
   );
 
-/** boing-out。R から merged の裏 (L) へ ease-in でスッと退く。fill:forwards で裏に隠れたまま保持
- *  (直後に盤は unmount される)。 */
-export const playTimerBoardBoingOut = (el: Element, isLandscape: boolean): Animation | null =>
+/** 自位置 (R) から L 盤の裏 (L) へ ease-in でスッと退く。fill:forwards で裏に隠れたまま保持 (直後に
+ *  unmount される)。出りの timer盤で使う。 */
+export const playRetreatBehindLeft = (el: Element, isLandscape: boolean): Animation | null =>
   animateMotion(
     el,
-    [{ transform: "translate(0, 0)" }, { transform: boardBehindMergedTransform(isLandscape) }],
+    [{ transform: "translate(0, 0)" }, { transform: behindLeftClockTransform(isLandscape) }],
     { duration: BOING_MS, easing: "cubic-bezier(.4, 0, .7, 1)", fill: "forwards" },
   );
+
+/** merged 盤を L 着地位置から中央 C へスライド (出りの centerSlide = たいむ→回転)。L は container 全幅の
+ *  1/4 ぶん寄せた位置 (timerMergedTransform と同じ)、C は無変位。fill:backwards で開始前から L に置く。 */
+export const playMergedSlideToCenter = (el: Element, isLandscape: boolean): Animation | null => {
+  const atLeft = isLandscape ? "translateX(-25%)" : "translateY(-25%)";
+  return animateMotion(
+    el,
+    [{ transform: `${atLeft} scale(1)` }, { transform: "translate(0, 0) scale(1)" }],
+    { duration: CONVERGE_MS, easing: "cubic-bezier(.4, 0, .2, 1)", fill: "backwards" },
+  );
+};
 
 /**
  * 遷移フェーズを送る effect 配線。ClockLayout から 1 回だけ呼ぶ。phase / kind / mergedRevealed の

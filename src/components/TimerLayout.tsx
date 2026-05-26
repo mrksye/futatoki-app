@@ -17,8 +17,8 @@ import {
   timerTransitionPhase,
   timerShowsLeftFace,
   timerBoardHidden,
-  playTimerBoardBoingIn,
-  playTimerBoardBoingOut,
+  playEmergeFromBehindLeft,
+  playRetreatBehindLeft,
 } from "../features/timer/timer-transition";
 
 /**
@@ -184,10 +184,10 @@ const TimerLayout: Component = () => {
       if (prev === undefined || phase === prev || !timerBoardRef) return;
       if (phase === "enterBoing") {
         cancelBoing();
-        boingAnimation = playTimerBoardBoingIn(timerBoardRef, isLandscape());
+        boingAnimation = playEmergeFromBehindLeft(timerBoardRef, isLandscape());
       } else if (phase === "exitBoing") {
         cancelBoing();
-        boingAnimation = playTimerBoardBoingOut(timerBoardRef, isLandscape());
+        boingAnimation = playRetreatBehindLeft(timerBoardRef, isLandscape());
       }
     }),
   );

@@ -36,6 +36,8 @@ import {
 import {
   useTimerTransition,
   timerTransitioning,
+  timerTransitionPhase,
+  timerTransitionKind,
   clockTreeMounted,
   timerTreeMounted,
   clockTreeShowsClocks,
@@ -46,6 +48,8 @@ import {
   timerMergedRevealed,
   timerMergedTransform,
   timerPmWrapperTransform,
+  playEmergeFromBehindLeft,
+  playMergedSlideToCenter,
 } from "../features/timer/timer-transition";
 import { useAmPmPreviewHold } from "../features/debug/am-pm-preview-lock";
 import { computeVisibleMinutes, useReleaseSnap } from "../features/free-rotation/release-snap";
@@ -481,6 +485,28 @@ export const ClockLayout: Component = () => {
   // たいむモードへの出入りトランジションのフェーズ送りを仕込む (回転の合体機構とは別軸)。phase は
   // timer-transition の module-level signal なので TimerLayout 側も同じものを読む。
   useTimerTransition();
+
+  // 出り発散 (exitDiverge) の WAAPI スライド。splitSide (→とけい) は PM 盤が L 盤 (= AM に変化した merged)
+  // の裏から R へ「びよッ」と生み出される (入りの timer盤と同一モーション)。centerSlide (→回転) は merged
+  // 盤が L→C へスライドして中央かさねに戻る。timer盤の retreat (exitBoing) は TimerLayout 側が担当。
+  // fill 付き WAAPI は前回分を必ず cancel + onCleanup で解放 (timeline 蓄積による弱 GPU の drop を防ぐ)。
+  let exitSlideAnimation: Animation | null = null;
+  const cancelExitSlide = () => {
+    exitSlideAnimation?.cancel();
+    exitSlideAnimation = null;
+  };
+  createEffect(
+    on(timerTransitionPhase, (phase, prev) => {
+      if (prev === undefined || phase === prev || phase !== "exitDiverge") return;
+      cancelExitSlide();
+      if (timerTransitionKind() === "centerSlide") {
+        if (mergedContainerRef) exitSlideAnimation = playMergedSlideToCenter(mergedContainerRef, isLandscape());
+      } else if (pmWrapperRef) {
+        exitSlideAnimation = playEmergeFromBehindLeft(pmWrapperRef, isLandscape());
+      }
+    }),
+  );
+  onCleanup(cancelExitSlide);
 
   /** わける/かさねる 切替中 (transitioning) は body に slot-transitioning を付与し、index.css の
    *  `body.slot-transitioning .slot-crossfade` rule で slot-crossfade ボタン (できごと追加 / 1ふん
