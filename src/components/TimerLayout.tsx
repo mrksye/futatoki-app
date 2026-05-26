@@ -20,6 +20,7 @@ import {
   playEmergeFromBehindLeft,
   playRetreatBehindLeft,
   playMergeAnticipation,
+  playSplitAnticipation,
   MERGE_ANTICIPATION_MS,
 } from "../features/timer/timer-transition";
 
@@ -177,25 +178,27 @@ const TimerLayout: Component = () => {
   let timerBoardRef: HTMLDivElement | undefined;
   let leftFaceRef: HTMLDivElement | undefined;
   let boardAnimation: Animation | null = null;
-  let mergeAnticipationAnimation: Animation | null = null;
+  let leftFaceAnimation: Animation | null = null; // 入りはリンリン、出りはクエイク (同じ merged 左顔に当てる)
   const cancelTransitionAnimations = () => {
     boardAnimation?.cancel();
     boardAnimation = null;
-    mergeAnticipationAnimation?.cancel();
-    mergeAnticipationAnimation = null;
+    leftFaceAnimation?.cancel();
+    leftFaceAnimation = null;
   };
   createEffect(
     on(timerTransitionPhase, (phase, prev) => {
       if (prev === undefined || phase === prev) return;
       cancelTransitionAnimations();
       if (phase === "enterBoing") {
-        // merged を L で 1 回チリンと魅せてから (MERGE_ANTICIPATION_MS 後) timer 盤を裏から生み出す。
-        if (leftFaceRef) mergeAnticipationAnimation = playMergeAnticipation(leftFaceRef);
+        // 呼び出し: merged が鈴で 1 回チリンと鳴らして timer 盤を呼び出す → (リンリン後) 盤が裏から生み出される。
+        if (leftFaceRef) leftFaceAnimation = playMergeAnticipation(leftFaceRef);
         if (timerBoardRef) {
           boardAnimation = playEmergeFromBehindLeft(timerBoardRef, isLandscape(), MERGE_ANTICIPATION_MS);
         }
-      } else if (phase === "exitBoing" && timerBoardRef) {
-        boardAnimation = playRetreatBehindLeft(timerBoardRef, isLandscape());
+      } else if (phase === "exitBoing") {
+        // 分離: timer 盤を裏へ退け、merged が自分自身を分裂させる前にググッとクエイクする (リンリンとは混ぜない)。
+        if (timerBoardRef) boardAnimation = playRetreatBehindLeft(timerBoardRef, isLandscape());
+        if (leftFaceRef) leftFaceAnimation = playSplitAnticipation(leftFaceRef);
       }
     }),
   );

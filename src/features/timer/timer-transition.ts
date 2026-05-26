@@ -50,10 +50,11 @@ export type TimerTransitionKind = "splitSide" | "centerSlide";
 const CONVERGE_MS = 560;
 /** たいむ盤の boing (びよっ) 時間。 */
 const BOING_MS = 440;
-/** 合体時計が L に単独で居る状態を見せる「ためし」の間 (出りで使用、まだ無演出の静止ホールド)。 */
-export const TIMER_MERGE_HOLD_MS = 200;
+/** 退室で合体時計が分離する前の「魅せ」演出 (クエイク) の長さ。盤を裏へ退けてから merged がこの間ググッと
+ *  震え、終わると分離 (PM 盤の生み出し / 中央スライド) に入る。入りのリンリンに対する退室版。 */
+const EXIT_ANTICIPATION_MS = 360;
 /** 入りで合体時計が timer 盤を産み出す前の「魅せ」演出 (リンリン 1 回) の長さ。この間 merged が L に単独で
- *  居て鈴のように 1 回揺れ、終わると産み出し (クエイク + 盤の生み出しスライド) に入る。 */
+ *  居て鈴のように 1 回揺れ、終わると産み出し (盤の生み出しスライド) に入る。 */
 export const MERGE_ANTICIPATION_MS = 280;
 
 const [phase, setPhase] = createSignal<TimerTransitionPhase>("idle");
@@ -153,14 +154,21 @@ export const playEmergeFromBehindLeft = (
   );
 };
 
-/** 自位置 (R) から L 盤の裏 (L) へ ease-in でスッと退く。fill:forwards で裏に隠れたまま保持 (直後に
- *  unmount される)。出りの timer盤で使う。 */
-export const playRetreatBehindLeft = (el: Element, isLandscape: boolean): Animation | null =>
-  animateMotion(
+/** 自位置 (R) から L 盤の裏 (L) へ ease-in でスッと退き、退ききった瞬間に visibility:hidden で消す。
+ *  fill:forwards で裏に隠れたまま保持 (直後の退室クエイク中に裏の盤が覗かない / その後 unmount される)。
+ *  出りの timer盤で使う。 */
+export const playRetreatBehindLeft = (el: Element, isLandscape: boolean): Animation | null => {
+  const behind = behindLeftClockTransform(isLandscape);
+  return animateMotion(
     el,
-    [{ transform: "translate(0, 0)" }, { transform: behindLeftClockTransform(isLandscape) }],
+    [
+      { transform: "translate(0, 0)", visibility: "visible", offset: 0 },
+      { transform: behind, visibility: "visible", offset: 0.999 },
+      { transform: behind, visibility: "hidden", offset: 1 },
+    ],
     { duration: BOING_MS, easing: "cubic-bezier(.4, 0, .7, 1)", fill: "forwards" },
   );
+};
 
 /** merged 盤を L 着地位置から中央 C へスライド (出りの centerSlide = たいむ→回転)。L は container 全幅の
  *  1/4 ぶん寄せた位置 (timerMergedTransform と同じ)、C は無変位。fill:backwards で開始前から L に置く。 */
@@ -187,12 +195,12 @@ const RIN_RIN_KEYFRAMES: Keyframe[] = [
 export const playMergeAnticipation = (el: Element): Animation | null =>
   animateMotion(el, RIN_RIN_KEYFRAMES, { duration: MERGE_ANTICIPATION_MS, easing: "ease-out", fill: "none" });
 
-/** 産み出しの瞬間に merged を震わせるクエイク (はつかいき splash の「ググググーッ」を共通利用)。リンリンの
- *  後に走るよう MERGE_ANTICIPATION_MS だけ遅延し、盤の生み出しスライド (BOING_MS) と同尺・同時で走る。
- *  時計サイズの要素に当てるので splash の素の振幅では埋もれる → amplitudeScale を上げて見えるようにする。 */
-const PRODUCE_QUAKE_AMPLITUDE_SCALE = 2.6;
-export const playProduceQuake = (el: Element): Animation | null =>
-  playQuake(el, BOING_MS, MERGE_ANTICIPATION_MS, PRODUCE_QUAKE_AMPLITUDE_SCALE);
+/** 退室 (たいむ→並列時計) の「魅せ」: 盤を裏へ退けてから (BOING_MS 待ち) merged が分離する前にググッと
+ *  クエイクする。入りのリンリン (playMergeAnticipation) に対する退室版で、すげ替えられるよう実装点はこの
+ *  1 関数に閉じる。はつかいき splash の「ググググーッ」(playQuake) を共通利用 (時計サイズ向けに振幅を上げる)。 */
+const SPLIT_QUAKE_AMPLITUDE_SCALE = 2.6;
+export const playSplitAnticipation = (el: Element): Animation | null =>
+  playQuake(el, EXIT_ANTICIPATION_MS, BOING_MS, SPLIT_QUAKE_AMPLITUDE_SCALE);
 
 /**
  * 遷移フェーズを送る effect 配線。ClockLayout から 1 回だけ呼ぶ。phase / kind / mergedRevealed の
@@ -253,8 +261,8 @@ export const useTimerTransition = () => {
         // clock ツリーの合体スライドを先に 1 paint 走らせてから TimerLayout を mount。
         scheduleTimerMount();
         after(CONVERGE_MS, () => setPhase("enterBoing"));
-        // enterBoing = リンリン (merged を L で揺らして魅せる) + 産み出し (クエイク + 盤の生み出しスライド)。
-        // 産み出し系は MERGE_ANTICIPATION_MS だけ遅延して走る (下流 TimerLayout)。
+        // enterBoing = リンリン (merged が鈴で timer 盤を呼び出す魅せ) + 盤の生み出しスライド。
+        // 盤の生み出しは MERGE_ANTICIPATION_MS だけ遅延して走る (下流 TimerLayout)。
         after(CONVERGE_MS + MERGE_ANTICIPATION_MS + BOING_MS, () => setPhase("idle"));
       } else {
         // 退室先が回転モードなら中央 merged 着地 (centerSlide)、clock なら split 着地 (splitSide)。
@@ -263,9 +271,10 @@ export const useTimerTransition = () => {
         setMergedRevealed(true);
         setPhase("exitBoing");
         const divergeMs = exitKind === "centerSlide" ? CONVERGE_MS : BOING_MS;
-        // exitBoing = BOING (盤を裏へ退ける) + HOLD (merged を L で見せる)。その後 exitDiverge で分離/スライド。
-        after(BOING_MS + TIMER_MERGE_HOLD_MS, () => setPhase("exitDiverge"));
-        after(BOING_MS + TIMER_MERGE_HOLD_MS + divergeMs, () => {
+        // exitBoing = BOING (盤を裏へ退ける) + クエイク (merged が自分自身を分裂させる前に震える魅せ)。
+        // その後 exitDiverge で分離 (PM 盤の生み出し) / 中央スライド。
+        after(BOING_MS + EXIT_ANTICIPATION_MS, () => setPhase("exitDiverge"));
+        after(BOING_MS + EXIT_ANTICIPATION_MS + divergeMs, () => {
           setPhase("idle");
           setTimerLayoutMounted(false); // 退室完了で TimerLayout を unmount
         });
