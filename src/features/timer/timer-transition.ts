@@ -124,9 +124,14 @@ export const timerMergedTransform = (atLeft: boolean, revealed: boolean, isLands
   return `${translate} ${revealed ? "scale(1)" : "scale(0.85)"}`;
 };
 
-/** split の PM wrapper を L (AM の位置) まで飛ばす transform。PM wrapper は右半分なので自幅 100% ぶん。 */
+/** split の PM wrapper を L (AM の位置) まで飛ばす transform。PM wrapper は右半分なので自幅 100% ぶん
+ *  寄せると AM に重なるが、AM/PM の負マージン (-mr-3/-ml-3 = 計 1.5rem) のぶん PM が左へ行き過ぎて
+ *  AM の左からはみ出す。1.5rem 戻して PM を AM の真上にぴったり重ね、はみ出しをほぼゼロにする
+ *  (behindLeftClockTransform と同じ補正)。 */
 export const timerPmWrapperTransform = (isLandscape: boolean): string =>
-  isLandscape ? "translateX(-100%) scale(0.96)" : "translateY(-100%) scale(0.96)";
+  isLandscape
+    ? "translateX(calc(-100% + 1.5rem)) scale(0.96)"
+    : "translateY(calc(-100% + 1.5rem)) scale(0.96)";
 
 // ── 盤を L 盤の裏から R へ出し入れするスライド (入りの timer盤 / 出りの PM盤 で共通) ──
 
