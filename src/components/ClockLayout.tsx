@@ -50,6 +50,7 @@ import {
   timerPmWrapperTransform,
   playEmergeFromBehindLeft,
   playMergedSlideToCenter,
+  playMergedSlideFromCenter,
 } from "../features/timer/timer-transition";
 import { useAmPmPreviewHold } from "../features/debug/am-pm-preview-lock";
 import { computeVisibleMinutes, useReleaseSnap } from "../features/free-rotation/release-snap";
@@ -488,28 +489,37 @@ export const ClockLayout: Component = () => {
   // timer-transition の module-level signal なので TimerLayout 側も同じものを読む。
   useTimerTransition();
 
-  // 出り発散 (exitDiverge) の WAAPI スライド。splitSide (→とけい) は PM 盤が L 盤 (= AM に変化した merged)
-  // の裏から R へ「びよッ」と生み出される (入りの timer盤と同一モーション)。centerSlide (→回転) は merged
-  // 盤が L→C へスライドして中央かさねに戻る。timer盤の retreat (exitBoing) は TimerLayout 側が担当。
+  // 入り収束 (enterConverge) / 出り発散 (exitDiverge) の merged 盤 WAAPI スライド。
+  //   - 入り centerSlide (回転→たいむ): merged を C→L へスライド (中央かさね → たいむ L 着地)。
+  //   - 出り centerSlide (たいむ→回転): merged を L→C へスライド (たいむ L → 中央かさね)。
+  //   - 出り splitSide (たいむ→とけい): PM 盤が L 盤の裏から R へ「びよッ」と生み出される。
+  // 入り splitSide (とけい→たいむ) の PM 収束と timer盤の retreat (exitBoing) は別経路 (CSS / TimerLayout)。
+  // CSS transition では回転からの reflow で baseline を奪われ盤がスナップするので merged スライドは WAAPI で明示。
   // fill 付き WAAPI は前回分を必ず cancel + onCleanup で解放 (timeline 蓄積による弱 GPU の drop を防ぐ)。
-  let exitSlideAnimation: Animation | null = null;
-  const cancelExitSlide = () => {
-    exitSlideAnimation?.cancel();
-    exitSlideAnimation = null;
+  let transitionSlideAnimation: Animation | null = null;
+  const cancelTransitionSlide = () => {
+    transitionSlideAnimation?.cancel();
+    transitionSlideAnimation = null;
   };
   createEffect(
     on(timerTransitionPhase, (phase, prev) => {
-      if (prev === undefined || phase === prev || phase !== "exitDiverge") return;
-      cancelExitSlide();
-      if (timerTransitionKind() === "centerSlide") {
-        if (mergedContainerRef) exitSlideAnimation = playMergedSlideToCenter(mergedContainerRef, isLandscape());
-      } else if (pmWrapperRef) {
-        // merged を L で見せる「ためし」は exitBoing 末尾で済むので、ここ (exitDiverge) では即 emerge。
-        exitSlideAnimation = playEmergeFromBehindLeft(pmWrapperRef, isLandscape());
+      if (prev === undefined || phase === prev) return;
+      cancelTransitionSlide();
+      if (phase === "enterConverge" && timerTransitionKind() === "centerSlide") {
+        if (mergedContainerRef) {
+          transitionSlideAnimation = playMergedSlideFromCenter(mergedContainerRef, isLandscape());
+        }
+      } else if (phase === "exitDiverge") {
+        if (timerTransitionKind() === "centerSlide") {
+          if (mergedContainerRef) transitionSlideAnimation = playMergedSlideToCenter(mergedContainerRef, isLandscape());
+        } else if (pmWrapperRef) {
+          // merged を L で見せる「ためし」は exitBoing 末尾で済むので、ここ (exitDiverge) では即 emerge。
+          transitionSlideAnimation = playEmergeFromBehindLeft(pmWrapperRef, isLandscape());
+        }
       }
     }),
   );
-  onCleanup(cancelExitSlide);
+  onCleanup(cancelTransitionSlide);
 
   /** わける/かさねる 切替中 (transitioning) は body に slot-transitioning を付与し、index.css の
    *  `body.slot-transitioning .slot-crossfade` rule で slot-crossfade ボタン (できごと追加 / 1ふん
@@ -598,11 +608,16 @@ export const ClockLayout: Component = () => {
     if (skyRaf2 !== null) { cancelAnimationFrame(skyRaf2); skyRaf2 = null; }
   };
   createEffect(on([isRotating, transitioning, timerTransitioning], () => {
-    // たいむ遷移中 (出入り) は sky の mount/unmount を保留する。SkyBackground は clock ツリー側 = DOM 上
-    // TimerLayout より後ろ = 重ね順で上にあり、遷移中に mount すると timer 盤を覆って去り際アニメ
-    // (バイバイッ等) を隠す + reflow が WAAPI を殺す。遷移完了 (timerTransitioning が false) で再評価され、
-    // isRotating に応じて mount/unmount される。
-    if (timerTransitioning()) return;
+    // たいむ遷移中 (出入り) は sky を必ず畳む。SkyBackground は clock ツリー側 = DOM 上 TimerLayout より
+    // 後ろ = 重ね順で上にあり、出ていると timer 盤の生み出し/去り際アニメ (z-auto) を覆って隠す。
+    // 入室 (回転→たいむ) では sky が出たままだと産み出し盤を覆うので、保持ではなく unmount する。
+    // 遷移中の timer アニメは全て WAAPI なのでこの unmount の reflow では死なない。遷移完了
+    // (timerTransitioning が false) で再評価され、isRotating に応じて出し直す。
+    if (timerTransitioning()) {
+      cancelSkyRaf();
+      setSkyVisible(false);
+      return;
+    }
     if (isRotating()) {
       if (!skyVisible() && skyRaf1 === null) {
         skyRaf1 = requestAnimationFrame(() => {

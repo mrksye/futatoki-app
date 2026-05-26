@@ -181,6 +181,18 @@ export const playMergedSlideToCenter = (el: Element, isLandscape: boolean): Anim
   );
 };
 
+/** merged 盤を中央 C から L 着地位置へスライド (入りの centerSlide = 回転→たいむ)。playMergedSlideToCenter
+ *  の逆再生。回転からの入室は rotation merge + sky の reflow で CSS transition の baseline が奪われ盤が
+ *  スナップするので、出りと対称に WAAPI で明示する。fill:backwards で開始前から C に置く。 */
+export const playMergedSlideFromCenter = (el: Element, isLandscape: boolean): Animation | null => {
+  const atLeft = isLandscape ? "translateX(-25%)" : "translateY(-25%)";
+  return animateMotion(
+    el,
+    [{ transform: "translate(0, 0) scale(1)" }, { transform: `${atLeft} scale(1)` }],
+    { duration: CONVERGE_MS, easing: "cubic-bezier(.4, 0, .2, 1)", fill: "backwards" },
+  );
+};
+
 /** 「リンッ」: 鈴をチリンと鳴らすような揺れ 1 回。上部頂点を支点 (transform-origin: 50% 0%) に弧を描く
  *  横振りで、damped に振り戻して止まる。merged が timer 盤を産み出す前の「魅せ」。
  *  あとで別演出 (ジャンプ等) にすげ替える可能性があるので、産み出し前演出の実装点はこの 1 関数に閉じる
