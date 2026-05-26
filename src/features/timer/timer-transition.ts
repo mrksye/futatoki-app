@@ -138,8 +138,12 @@ const behindLeftClockTransform = (isLandscape: boolean): string =>
 
 /** L 盤の裏 (L) から自位置 (R) へ back-out で弾性スライド (「びよッ」と裏から生み出される)。overshoot は
  *  左収束より控えめ (1.4)。delayMs で出現を遅らせられる (入りはリンリンのぶん遅らせる)。delay 中は
- *  fill:backwards で first keyframe (visibility: hidden) に張り付いて不可視のまま待ち、スライド開始の瞬間に
- *  visible にする (delay 中に裏の盤が覗くのを防ぐ)。入りの timer盤・出りの PM盤の両方で使う (同一モーション)。 */
+ *  fill:backwards で first keyframe (behind 位置) に張り付いて待ち、スライド開始で R へ動き出す。
+ *  待機中の不可視化は z 順に委ねる (盤 z-auto < 不透明な左時計 z-10): behindLeftClockTransform で左時計の
+ *  円盤内へ寄せてあるうえ、タイマー盤を縮小した (TIMER_BOARD_SCALE) ので左時計の裏に隠れる。keyframe を
+ *  transform 単独に保つのは visibility 等の非合成プロパティを混ぜるとアニメ全体が合成スレッドから外れ、
+ *  弱 GPU で重い盤 SVG を毎フレーム再ラスタしてカクつくため (合成可能なのは transform / opacity / filter のみ)。
+ *  入りの timer盤・出りの PM盤の両方で使う (同一モーション)。 */
 export const playEmergeFromBehindLeft = (
   el: Element,
   isLandscape: boolean,
@@ -148,11 +152,7 @@ export const playEmergeFromBehindLeft = (
   const behind = behindLeftClockTransform(isLandscape);
   return animateMotion(
     el,
-    [
-      { transform: behind, visibility: "hidden", offset: 0 },
-      { transform: behind, visibility: "visible", offset: 0.001 },
-      { transform: "translate(0, 0)", offset: 1 },
-    ],
+    [{ transform: behind }, { transform: "translate(0, 0)" }],
     { duration: BOING_MS, delay: delayMs, easing: "cubic-bezier(.34, 1.4, .64, 1)", fill: "backwards" },
   );
 };
@@ -183,38 +183,49 @@ export const playMergedSlideFromCenter = (el: Element, isLandscape: boolean): An
 /** 「リンッ」: 鈴をチリンと鳴らすような揺れ 1 回。上部頂点を支点 (transform-origin: 50% 0%) に弧を描く
  *  横振りで、damped に振り戻して止まる。merged が timer 盤を産み出す前の「魅せ」。
  *  あとで別演出 (ジャンプ等) にすげ替える可能性があるので、産み出し前演出の実装点はこの 1 関数に閉じる
- *  (呼び出し側は playMergeAnticipation という意図名だけを使う。transform-origin もここで keyframe 指定)。 */
+ *  (呼び出し側は playMergeAnticipation という意図名だけを使う)。支点は要素へ直接セットし keyframe は
+ *  transform 単独に保つ: transform-origin は合成可能プロパティ (transform / opacity / filter) でなく、
+ *  keyframe に混ぜるとアニメ全体が合成スレッドから外れ、弱 GPU で重い盤 SVG を毎フレーム再ラスタして
+ *  カクつく。 */
 const RIN_RIN_KEYFRAMES: Keyframe[] = [
-  { transform: "rotate(0deg)", transformOrigin: "50% 0%", offset: 0 },
-  { transform: "rotate(6deg)", transformOrigin: "50% 0%", offset: 0.32 },
-  { transform: "rotate(-3deg)", transformOrigin: "50% 0%", offset: 0.62 },
-  { transform: "rotate(1deg)", transformOrigin: "50% 0%", offset: 0.84 },
-  { transform: "rotate(0deg)", transformOrigin: "50% 0%", offset: 1 },
+  { transform: "rotate(0deg)", offset: 0 },
+  { transform: "rotate(6deg)", offset: 0.32 },
+  { transform: "rotate(-3deg)", offset: 0.62 },
+  { transform: "rotate(1deg)", offset: 0.84 },
+  { transform: "rotate(0deg)", offset: 1 },
 ];
-export const playMergeAnticipation = (el: Element): Animation | null =>
-  animateMotion(el, RIN_RIN_KEYFRAMES, { duration: MERGE_ANTICIPATION_MS, easing: "ease-out", fill: "none" });
+export const playMergeAnticipation = (el: Element): Animation | null => {
+  (el as HTMLElement).style.transformOrigin = "50% 0%";
+  return animateMotion(el, RIN_RIN_KEYFRAMES, { duration: MERGE_ANTICIPATION_MS, easing: "ease-out", fill: "none" });
+};
 
 /** 退室 (たいむ→とけい) の「魅せ」: timer 盤がバイバイで去っていく裏で、merged が「勝手に」自己分裂する
  *  前にググッとクエイクする。バイバイから少しズラして始める (WAVE_GOODBYE_MS の末尾でクエイクが終わり、
  *  そのまま分離 = PM 盤の生み出しへ繋がる) ため delay を入れる。すげ替えられるよう実装点はこの 1 関数に閉じる。
  *  はつかいき splash の「ググググーッ」(playQuake) を共通利用 (時計サイズ向けに振幅を上げる)。 */
 const SPLIT_QUAKE_AMPLITUDE_SCALE = 2.6;
-export const playSplitAnticipation = (el: Element): Animation | null =>
-  playQuake(el, EXIT_ANTICIPATION_MS, WAVE_GOODBYE_MS - EXIT_ANTICIPATION_MS, SPLIT_QUAKE_AMPLITUDE_SCALE);
+export const playSplitAnticipation = (el: Element): Animation | null => {
+  // playQuake は中心支点前提。同じ merged 左顔に入りのリンリン (支点 50% 0%) を当てているので中心へ戻す。
+  (el as HTMLElement).style.transformOrigin = "center";
+  return playQuake(el, EXIT_ANTICIPATION_MS, WAVE_GOODBYE_MS - EXIT_ANTICIPATION_MS, SPLIT_QUAKE_AMPLITUDE_SCALE);
+};
 
 /** 退室で timer 盤が去るときの「バイバイッ」(両 kind 共通)。右下を支点 (transform-origin: 100% 100%) に
  *  弧を描いて素早く 2 回振り、最後にフェード+縮小で消える。回転モードには連れて行かれず、とけいでも合体時計
- *  には吸収されない盤のお別れ演出。fill:forwards で消えたまま保持 (直後に unmount)。実装点はこの 1 関数に閉じる。 */
+ *  には吸収されない盤のお別れ演出。fill:forwards で消えたまま保持 (直後に unmount)。実装点はこの 1 関数に閉じる。
+ *  支点は要素へ直接セットし keyframe は transform / opacity (合成可能) だけに保つ (リンリンと同理由)。 */
 const WAVE_GOODBYE_KEYFRAMES: Keyframe[] = [
-  { transform: "rotate(0deg) scale(1)", opacity: 1, transformOrigin: "100% 100%", offset: 0 },
-  { transform: "rotate(-2deg) scale(1)", transformOrigin: "100% 100%", offset: 0.16 },
-  { transform: "rotate(1deg) scale(1)", transformOrigin: "100% 100%", offset: 0.36 },
-  { transform: "rotate(-0.5deg) scale(1)", transformOrigin: "100% 100%", offset: 0.54 },
-  { transform: "rotate(0deg) scale(1)", opacity: 1, transformOrigin: "100% 100%", offset: 0.64 },
-  { transform: "rotate(0deg) scale(0.35)", opacity: 0, transformOrigin: "100% 100%", offset: 1 },
+  { transform: "rotate(0deg) scale(1)", opacity: 1, offset: 0 },
+  { transform: "rotate(-2deg) scale(1)", offset: 0.16 },
+  { transform: "rotate(1deg) scale(1)", offset: 0.36 },
+  { transform: "rotate(-0.5deg) scale(1)", offset: 0.54 },
+  { transform: "rotate(0deg) scale(1)", opacity: 1, offset: 0.64 },
+  { transform: "rotate(0deg) scale(0.35)", opacity: 0, offset: 1 },
 ];
-export const playWaveGoodbye = (el: Element): Animation | null =>
-  animateMotion(el, WAVE_GOODBYE_KEYFRAMES, { duration: WAVE_GOODBYE_MS, easing: "ease-in-out", fill: "forwards" });
+export const playWaveGoodbye = (el: Element): Animation | null => {
+  (el as HTMLElement).style.transformOrigin = "100% 100%";
+  return animateMotion(el, WAVE_GOODBYE_KEYFRAMES, { duration: WAVE_GOODBYE_MS, easing: "ease-in-out", fill: "forwards" });
+};
 
 /**
  * 遷移フェーズを送る effect 配線。ClockLayout から 1 回だけ呼ぶ。phase / kind / mergedRevealed の
