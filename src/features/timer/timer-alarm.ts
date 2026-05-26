@@ -6,15 +6,18 @@ import timerEndM4a from "./sounds/timer-end.m4a";
  *
  * 狙いは「別アプリに切り替えるところまでは行かなくても、画面消灯 (ロック) では鳴る」こと。iOS は画面ロックで
  * AudioContext を interrupt (suspend) し JavaScript の timer も凍結するため、Web Audio の予約発火 (when 到達で
- * 鳴らす) も setInterval/setTimeout も止まってしまう。一方、HTMLAudioElement が「メディア再生中」の状態だと、
- * iOS はロック後もそのページを生かし続ける (web の音楽プレイヤーがロック画面で再生位置を更新できるのと同じ)。
- * これを利用する:
+ * 鳴らす) も setInterval/setTimeout も止まってしまう。Android も、確立済みのメディアセッションが無いページが
+ * バックグラウンドで新規再生を始めると即停止する (「一瞬鳴ってすぐ消える」)。一方、HTMLAudioElement が
+ * 「メディア再生中」の状態だと、iOS はロック後もそのページを生かし続け、Android はバックグラウンドでの再生
+ * 継続を許す (web の音楽プレイヤーがロック画面で鳴り続けるのと同じ)。これを利用する:
  *
- *   1. keepalive: 極小音量の無音ループを、必ずユーザージェスチャ内 (arm = リング選択 / さいかい) で再生開始し、
- *      iOS のオーディオセッションを掴み続ける。これでロック中も下の watch インターバルが動き続ける。
- *      muted や volume 0 ではセッションを保持できない (iOS は無音再生をセッションとして扱わない) ので、
- *      聞こえないが「実在する」低振幅・低周波の音を鳴らす。volume は iOS では無視されるため、非 iOS では
- *      volume 0 にして完全無音化する。keepalive はメディア通知の副作用があるので iOS 系端末でだけ起動する。
+ *   1. keepalive: 極小音量・低周波の無音ループを、必ずユーザージェスチャ内 (arm = リング選択 / さいかい) で
+ *      再生開始してオーディオセッションを掴み続ける。これでロック/バックグラウンド中も下の watch が動き続け、
+ *      かつ「再生中のメディアセッション」が確立しているのでアラームに切り替えても止められない (Android の
+ *      「一瞬鳴って即停止」はこのセッションが無いのが原因)。muted や volume 0 ではセッションを保持できない
+ *      (iOS は無音再生をセッション扱いせず、Android はバックグラウンド開始の再生を即止める) ので、聞こえないが
+ *      「実在する」低振幅・低周波の音を鳴らす (volume は iOS では無視され、Android では低振幅アセットが実質
+ *      無音化を担う)。再生中メディア通知が全プラットフォームで出る副作用は許容する。
  *   2. watch: requestAnimationFrame ではなく setInterval で締切を監視する (rAF は画面消灯で完全停止するため)。
  *      keepalive がページを生かしているので、ロック中もこのインターバルが回り、締切到達でアラームを鳴らす。
  *   3. 復帰時照合 (reconcile): visibilitychange / focus で、JavaScript が凍結していた区間 (keepalive が効かず
@@ -26,8 +29,9 @@ import timerEndM4a from "./sounds/timer-end.m4a";
  * 後から play() できるようにする。
  *
  * 限界: 物理ミュートスイッチが ON のときは web からは鳴らせない (ringer チャンネルへのアクセスは native 専用)。
- * 完全なバックグラウンド (別アプリへ切替・スワイプ kill) での発火は対象外。iOS のバージョン・端末で keepalive が
- * セッションを保持し続けるかは割れるため、対象実機での検証が必須 (低振幅・低周波の値は下の定数で調整できる)。
+ * 完全なバックグラウンド (別アプリへ切替・スワイプ kill) での発火は対象外。iOS / Android のバージョン・端末で
+ * keepalive がセッションを保持し続けるかは割れるため、対象実機での検証が必須 (低振幅・低周波の値は下の定数で
+ * 調整できる)。
  *
  * 削除容易性: アラームの関心事はこのファイル 1 つに隔離してある。state には依存せず、発火検知と FSM 遷移
  * (completeTimer) は TimerLayout の表示 rAF が担う。このファイルを消し、TimerLayout / TimerActions から
@@ -71,16 +75,6 @@ export interface TimerAlarm {
   dispose(): void;
 }
 
-/** iOS 系 (iPhone / iPad、iPadOS の Mac 偽装含む) を推定する。keepalive はロック越えに必要な iOS でだけ起動し、
- *  Android / desktop では再生中メディア通知の副作用を避けるため起動しない (それらは watch インターバルだけで
- *  足りる)。ヒューリスティックなので過不足は実機で調整する。 */
-const isIosLike = (): boolean => {
-  const ua = navigator.userAgent;
-  if (/iP(hone|ad|od)/.test(ua)) return true;
-  // iPadOS 13+ は desktop Safari を偽装するので touch 数で判別する。
-  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
-};
-
 /** 極小音量・低周波の無音ループ WAV を data URI で組み立てる。アセットを足さずに self-contained にする。 */
 const buildKeepaliveWavDataUri = (): string => {
   const numSamples = Math.round(KEEPALIVE_SAMPLE_RATE * KEEPALIVE_DURATION_SECONDS);
@@ -117,8 +111,6 @@ const buildKeepaliveWavDataUri = (): string => {
 /** アラーム要素と keepalive 要素を備えたハンドルを生成する。重い decode は無く、HTMLAudioElement が自前で
  *  ロード/デコードするので即時に解決する (preload で締切までに読み込みを済ませる)。 */
 export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
-  const keepEnabled = isIosLike();
-
   const alarmAudio = new Audio(alarmUrl);
   alarmAudio.loop = true;
   alarmAudio.preload = "auto";
@@ -127,7 +119,9 @@ export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
 
   const keepaliveAudio = new Audio(buildKeepaliveWavDataUri());
   keepaliveAudio.loop = true;
-  keepaliveAudio.volume = 0; // 非 iOS は完全無音化。iOS は volume 無視なのでアセットの低振幅が効く。
+  // volume 0 / muted ではメディアセッションを保持できない。iOS は volume を無視し、Android は低振幅アセット
+  // (KEEPALIVE_AMPLITUDE) が実質無音化を担うので、volume は 1 のまま「鳴っている」状態を保つ。
+  keepaliveAudio.volume = 1;
   keepaliveAudio.setAttribute("playsinline", "");
 
   let armedEndMs: number | null = null;
@@ -150,7 +144,7 @@ export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
   };
 
   const startKeepalive = (): void => {
-    if (!keepEnabled || disposed) return;
+    if (disposed) return;
     playSilently(keepaliveAudio);
   };
 
