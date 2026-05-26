@@ -130,8 +130,9 @@ const TimerLayout: Component = () => {
   // 時計は実時刻のまま進み、扇=残りだけ凍結)。setInterval ではなく rAF なのは、背景タブでは自動的に止まり
   // 計時を無駄に進めないため。計時の真実は endMs - Date.now() のままで、rAF は表示専用 (値の積算はしない)。
   // running 中に終了時刻へ達したら現在時刻を完了時刻に clamp し、done へ遷移してアラームを鳴らす
-  // (フォアグラウンド発火経路)。背景での発火と復帰時の取りこぼし回収は timer-alarm 側の予約発火 /
-  // visibilitychange 照合が担当する。done は完了時刻で盤面を凍結するので tick しない。
+  // (フォアグラウンド発火経路)。画面消灯下の発火と復帰時の取りこぼし回収は timer-alarm 側の setInterval
+  // 監視 (keepalive がページを生かす) と visibilitychange 照合が担当する。done は完了時刻で盤面を凍結する
+  // ので tick しない。
   createEffect(() => {
     const phase = timerPhase();
     if (phase === "done") {

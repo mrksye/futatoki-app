@@ -2,80 +2,136 @@ import { createSignal } from "solid-js";
 import timerEndM4a from "./sounds/timer-end.m4a";
 
 /**
- * タイマー完了時のアラームを鳴らす Web Audio エンジン。旧 Howler 実装を置き換える。
+ * タイマー完了時のアラームを鳴らすエンジン。HTMLAudioElement ベース (旧 Web Audio / Howler 実装を置き換える)。
  *
- * iOS の PWA はバックグラウンドに回ると JavaScript の実行が凍結されるため、終了の瞬間に JS が走る前提
- * では音を鳴らせない。そこで計時の真実は壁時計 (Date.now と目標時刻 endMs) 一点とし、音はオーディオ
- * レンダリングスレッドへ alarmSource.start(when) で予約する。予約発火は JS が凍結していても when に達した
- * 時点でスレッド側が鳴らすため、バックグラウンドでも鳴り得る。バックグラウンドで AudioContext が suspend
- * されると予約が止まるので、短い無音バッファを gain 0 でループ再生 (keepalive) して suspend を抑止し、
- * さらに復帰時 (visibilitychange / focus) に照合して取りこぼしを回収する二経路でカバーする。
+ * 狙いは「別アプリに切り替えるところまでは行かなくても、画面消灯 (ロック) では鳴る」こと。iOS は画面ロックで
+ * AudioContext を interrupt (suspend) し JavaScript の timer も凍結するため、Web Audio の予約発火 (when 到達で
+ * 鳴らす) も setInterval/setTimeout も止まってしまう。一方、HTMLAudioElement が「メディア再生中」の状態だと、
+ * iOS はロック後もそのページを生かし続ける (web の音楽プレイヤーがロック画面で再生位置を更新できるのと同じ)。
+ * これを利用する:
  *
- * 「アプリ切替・画面消灯後に AudioContext が生き続けるか」は iOS のバージョン・端末・低電力モードで挙動
- * が割れるため、コードでは保証できない。対象 iOS 実機での検証が必須。鳴らなかった場合でも復帰時照合
- * (reconcile) で即座に鳴らし直す。
+ *   1. keepalive: 極小音量の無音ループを、必ずユーザージェスチャ内 (arm = リング選択 / さいかい) で再生開始し、
+ *      iOS のオーディオセッションを掴み続ける。これでロック中も下の watch インターバルが動き続ける。
+ *      muted や volume 0 ではセッションを保持できない (iOS は無音再生をセッションとして扱わない) ので、
+ *      聞こえないが「実在する」低振幅・低周波の音を鳴らす。volume は iOS では無視されるため、非 iOS では
+ *      volume 0 にして完全無音化する。keepalive はメディア通知の副作用があるので iOS 系端末でだけ起動する。
+ *   2. watch: requestAnimationFrame ではなく setInterval で締切を監視する (rAF は画面消灯で完全停止するため)。
+ *      keepalive がページを生かしているので、ロック中もこのインターバルが回り、締切到達でアラームを鳴らす。
+ *   3. 復帰時照合 (reconcile): visibilitychange / focus で、JavaScript が凍結していた区間 (keepalive が効かず
+ *      ロックでページが止まった場合など) の取りこぼしを回収する。締切超過なら即鳴らし、未経過なら watch を
+ *      張り直す。
  *
- * バックエンドを持たない構成なので Web Push は使わず、アプリを完全終了 (スワイプ kill) した状態での発火は
- * 対象外 (iOS では物理的に不可能)。
+ * アラーム本体も HTMLAudioElement で鳴らす (Web Audio はロックで suspend されるため使わない)。締切到達は
+ * 非ジェスチャ文脈なので、arm 時のジェスチャ内でアラーム要素を一度だけ無音で play→pause して unlock しておき、
+ * 後から play() できるようにする。
  *
- * 削除容易性: 背景発火の関心事はこのファイル 1 つに隔離してある。state には依存せず、発火検知と FSM 遷移
+ * 限界: 物理ミュートスイッチが ON のときは web からは鳴らせない (ringer チャンネルへのアクセスは native 専用)。
+ * 完全なバックグラウンド (別アプリへ切替・スワイプ kill) での発火は対象外。iOS のバージョン・端末で keepalive が
+ * セッションを保持し続けるかは割れるため、対象実機での検証が必須 (低振幅・低周波の値は下の定数で調整できる)。
+ *
+ * 削除容易性: アラームの関心事はこのファイル 1 つに隔離してある。state には依存せず、発火検知と FSM 遷移
  * (completeTimer) は TimerLayout の表示 rAF が担う。このファイルを消し、TimerLayout / TimerActions から
- * timerAlarm 参照と arm/disarm/ensureAlarmPlaying/init/dispose の呼び出しを除けば、タイマーは音なしで
- * そのまま完了する。
+ * timerAlarm 参照と arm/disarm/ensureAlarmPlaying/init/dispose の呼び出しを除けば、タイマーは音なしで完了する。
  */
 
-/** 古い Safari 向けに prefix 付きコンストラクタへフォールバックする (modern iOS は無印で可)。 */
-const ResolvedAudioContext: typeof AudioContext =
-  window.AudioContext ??
-  (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-
-/** アラーム音量 (耳に痛くない控えめなレベル)。 */
+/** アラーム音量 (耳に痛くない控えめなレベル)。iOS では HTMLMediaElement.volume は無視され system volume で
+ *  鳴る (ハードウェアボタン制御) ため、この値が効くのは Android / desktop。 */
 const ALARM_VOLUME = 0.7;
 
-/** keepalive 無音バッファの長さ (秒)。背景での AudioContext suspend を抑止するだけが目的なので最小限に
- *  とどめ、長尺バッファでメモリを食わないようにする (短いバッファを loop で回す)。 */
-const KEEPALIVE_BUFFER_SECONDS = 0.05;
+/** 締切監視ポーリング間隔 (ms)。画面消灯下では timer が throttle され得るが、毎回 Date.now() で締切を見るので
+ *  間引かれても次の発火で取りこぼさない。フォアグラウンドの精密発火は TimerLayout の rAF が別途担う。 */
+const WATCH_INTERVAL_MS = 1000;
+
+/** keepalive 無音ループの生成パラメータ。低周波 (スマホ/タブレットのスピーカーがほぼ再生できない帯域) を
+ *  低振幅で鳴らし、聞こえないが iOS には「実在する音」として認識させる。セッションを掴めない端末があれば
+ *  まず amplitude を上げて試す (上げるほど可聴に近づくトレードオフ)。freq * duration を整数にしてループ
+ *  境界を継ぎ目なくする (45 * 1.0 = 45 周期)。 */
+const KEEPALIVE_SAMPLE_RATE = 8000;
+const KEEPALIVE_DURATION_SECONDS = 1.0;
+const KEEPALIVE_FREQUENCY_HZ = 45;
+const KEEPALIVE_AMPLITUDE = 0.02;
 
 /** タイマーアラームの制御ハンドル。タイマー 1 本につき 1 インスタンス。 */
 export interface TimerAlarm {
   /**
-   * 必ずユーザージェスチャのハンドラ内から呼ぶこと (iOS の AudioContext unlock 要件)。AudioContext を
-   * resume し、keepalive を起動し、endMs 時点の予約発火をセットする。arm 済みでも endMs で張り直す
-   * (pause→resume・suspend 復帰時のドリフト補正に使用)。
+   * 必ずユーザージェスチャのハンドラ内から呼ぶこと (iOS の再生 unlock 要件)。keepalive を起動して
+   * オーディオセッションを掴み、アラーム要素を unlock し、endMs までの締切監視を始める。arm 済みでも
+   * endMs で張り直す (pause→resume・復帰時のドリフト補正に使用)。
    */
   arm(endMs: number): void;
-  /** 予約発火を取り消す。keepalive と AudioContext は維持する (pause 用)。 */
+  /** 締切監視を止めてアラームを止める。keepalive も止める (pause / とりけし / モード離脱用)。 */
   disarm(): void;
   /**
-   * 「今鳴っているべきなら鳴っている」状態を保証する (冪等)。既存の予約／再生ソースを止めてから loop
-   * 再生を開始する。フォアグラウンド発火・復帰時の取りこぼし回収から呼ぶ。loop 音なので再呼びしても
-   * 継ぎ目が一瞬出るだけで二重発火にはならない。
+   * 「今鳴っているべきなら鳴っている」状態を保証する (冪等)。締切監視を止め、アラームを頭から loop 再生
+   * する。フォアグラウンド発火・watch 締切到達・復帰時照合から呼ぶ。loop 音なので再呼びしても継ぎ目が
+   * 一瞬出るだけで二重発火にはならない。
    */
   ensureAlarmPlaying(): void;
-  /** 全リソース解放: 全ソース停止・リスナ解除・AudioContext close。残留を一切残さない。 */
+  /** 全リソース解放: 再生停止・リスナ解除・監視停止。残留を一切残さない。 */
   dispose(): void;
 }
 
-/** アラーム音源を decode 済みで保持したハンドルを生成する。AudioContext は suspended のまま作り、resume は
- *  arm / ensureAlarmPlaying のジェスチャ経路で行う。音源は一度だけ decode してキャッシュする。 */
+/** iOS 系 (iPhone / iPad、iPadOS の Mac 偽装含む) を推定する。keepalive はロック越えに必要な iOS でだけ起動し、
+ *  Android / desktop では再生中メディア通知の副作用を避けるため起動しない (それらは watch インターバルだけで
+ *  足りる)。ヒューリスティックなので過不足は実機で調整する。 */
+const isIosLike = (): boolean => {
+  const ua = navigator.userAgent;
+  if (/iP(hone|ad|od)/.test(ua)) return true;
+  // iPadOS 13+ は desktop Safari を偽装するので touch 数で判別する。
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+};
+
+/** 極小音量・低周波の無音ループ WAV を data URI で組み立てる。アセットを足さずに self-contained にする。 */
+const buildKeepaliveWavDataUri = (): string => {
+  const numSamples = Math.round(KEEPALIVE_SAMPLE_RATE * KEEPALIVE_DURATION_SECONDS);
+  const bytesPerSample = 2;
+  const dataSize = numSamples * bytesPerSample;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+  const writeString = (offset: number, text: string): void => {
+    for (let i = 0; i < text.length; i++) view.setUint8(offset + i, text.charCodeAt(i));
+  };
+  writeString(0, "RIFF");
+  view.setUint32(4, 36 + dataSize, true);
+  writeString(8, "WAVE");
+  writeString(12, "fmt ");
+  view.setUint32(16, 16, true); // fmt チャンク長
+  view.setUint16(20, 1, true); // PCM
+  view.setUint16(22, 1, true); // モノラル
+  view.setUint32(24, KEEPALIVE_SAMPLE_RATE, true);
+  view.setUint32(28, KEEPALIVE_SAMPLE_RATE * bytesPerSample, true); // byte rate
+  view.setUint16(32, bytesPerSample, true); // block align
+  view.setUint16(34, 16, true); // bits per sample
+  writeString(36, "data");
+  view.setUint32(40, dataSize, true);
+  for (let i = 0; i < numSamples; i++) {
+    const sample = Math.sin((2 * Math.PI * KEEPALIVE_FREQUENCY_HZ * i) / KEEPALIVE_SAMPLE_RATE) * KEEPALIVE_AMPLITUDE;
+    view.setInt16(44 + i * bytesPerSample, Math.round(Math.max(-1, Math.min(1, sample)) * 32767), true);
+  }
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]!);
+  return "data:audio/wav;base64," + btoa(binary);
+};
+
+/** アラーム要素と keepalive 要素を備えたハンドルを生成する。重い decode は無く、HTMLAudioElement が自前で
+ *  ロード/デコードするので即時に解決する (preload で締切までに読み込みを済ませる)。 */
 export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
-  const audioContext = new ResolvedAudioContext();
+  const keepEnabled = isIosLike();
 
-  const alarmGain = audioContext.createGain();
-  alarmGain.gain.value = ALARM_VOLUME;
-  alarmGain.connect(audioContext.destination);
+  const alarmAudio = new Audio(alarmUrl);
+  alarmAudio.loop = true;
+  alarmAudio.preload = "auto";
+  alarmAudio.volume = ALARM_VOLUME; // iOS では無視 (system volume)
+  alarmAudio.setAttribute("playsinline", "");
 
-  const silentGain = audioContext.createGain();
-  silentGain.gain.value = 0;
-  silentGain.connect(audioContext.destination);
+  const keepaliveAudio = new Audio(buildKeepaliveWavDataUri());
+  keepaliveAudio.loop = true;
+  keepaliveAudio.volume = 0; // 非 iOS は完全無音化。iOS は volume 無視なのでアセットの低振幅が効く。
+  keepaliveAudio.setAttribute("playsinline", "");
 
-  const response = await fetch(alarmUrl);
-  const encoded = await response.arrayBuffer();
-  const decodedBuffer = await audioContext.decodeAudioData(encoded);
-
-  let keepaliveSource: AudioBufferSourceNode | null = null;
-  let alarmSource: AudioBufferSourceNode | null = null;
   let armedEndMs: number | null = null;
+  let watchIntervalId: ReturnType<typeof setInterval> | null = null;
   let disposed = false;
 
   const warn = (message: string, error: unknown): void => {
@@ -86,88 +142,95 @@ export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
     }
   };
 
-  const resume = (): void => {
-    audioContext.resume().catch((error) => warn("[timer-alarm] resume failed:", error));
+  const playSilently = (audio: HTMLAudioElement): void => {
+    const promise = audio.play();
+    if (promise && typeof promise.catch === "function") {
+      promise.catch((error) => warn("[timer-alarm] play failed:", error));
+    }
   };
 
-  // keepalive は一度起動したら dispose まで回し続ける (再起動しない)。AudioContext が走っている必要が
-  // あるので resume 後に呼ぶ。
   const startKeepalive = (): void => {
-    if (keepaliveSource || disposed) return;
-    const length = Math.max(1, Math.round(audioContext.sampleRate * KEEPALIVE_BUFFER_SECONDS));
-    const buffer = audioContext.createBuffer(1, length, audioContext.sampleRate);
-    const source = audioContext.createBufferSource();
-    source.buffer = buffer;
-    source.loop = true;
-    source.connect(silentGain);
-    source.start(0);
-    keepaliveSource = source;
+    if (!keepEnabled || disposed) return;
+    playSilently(keepaliveAudio);
   };
 
   const stopKeepalive = (): void => {
-    if (!keepaliveSource) return;
-    try {
-      keepaliveSource.stop();
-    } catch (error) {
-      warn("[timer-alarm] keepalive stop failed:", error);
-    }
-    keepaliveSource.disconnect();
-    keepaliveSource = null;
+    keepaliveAudio.pause();
+    keepaliveAudio.currentTime = 0;
   };
 
-  const stopAlarmSource = (): void => {
-    if (!alarmSource) return;
-    try {
-      alarmSource.stop();
-    } catch (error) {
-      warn("[timer-alarm] alarm stop failed:", error);
+  // iOS は締切到達時 (非ジェスチャ) に play() を弾くので、arm のジェスチャ内で一度だけ無音 play→pause して
+  // 要素を unlock しておく。muted で priming 再生を無音にし、終わったら戻す。
+  const unlockAlarm = (): void => {
+    alarmAudio.muted = true;
+    const promise = alarmAudio.play();
+    if (promise && typeof promise.then === "function") {
+      promise
+        .then(() => {
+          alarmAudio.pause();
+          alarmAudio.currentTime = 0;
+          alarmAudio.muted = false;
+        })
+        .catch((error) => {
+          alarmAudio.muted = false;
+          warn("[timer-alarm] alarm unlock failed:", error);
+        });
+    } else {
+      alarmAudio.muted = false;
     }
-    alarmSource.disconnect();
-    alarmSource = null;
   };
 
-  const newAlarmSource = (): AudioBufferSourceNode => {
-    const source = audioContext.createBufferSource();
-    source.buffer = decodedBuffer;
-    source.loop = true;
-    source.connect(alarmGain);
-    return source;
+  const clearWatch = (): void => {
+    if (watchIntervalId !== null) {
+      clearInterval(watchIntervalId);
+      watchIntervalId = null;
+    }
+  };
+
+  const startWatch = (): void => {
+    clearWatch();
+    watchIntervalId = setInterval(() => {
+      if (armedEndMs !== null && Date.now() >= armedEndMs) ensureAlarmPlaying();
+    }, WATCH_INTERVAL_MS);
   };
 
   const arm = (endMs: number): void => {
     if (disposed) return;
     armedEndMs = endMs;
-    resume();
     startKeepalive();
-    stopAlarmSource();
-    const source = newAlarmSource();
-    const whenSeconds = audioContext.currentTime + Math.max(0, (endMs - Date.now()) / 1000);
-    source.start(whenSeconds);
-    alarmSource = source;
+    unlockAlarm();
+    startWatch();
   };
 
   const disarm = (): void => {
     armedEndMs = null;
-    stopAlarmSource();
+    clearWatch();
+    alarmAudio.pause();
+    alarmAudio.currentTime = 0;
+    stopKeepalive();
   };
 
   const ensureAlarmPlaying = (): void => {
     if (disposed) return;
-    resume();
-    startKeepalive();
-    stopAlarmSource();
-    const source = newAlarmSource();
-    source.start(0);
-    alarmSource = source;
+    clearWatch();
+    alarmAudio.muted = false;
+    alarmAudio.currentTime = 0;
+    const promise = alarmAudio.play();
+    if (promise && typeof promise.catch === "function") {
+      promise.catch((error) => warn("[timer-alarm] alarm play failed:", error));
+    }
   };
 
-  // 復帰時照合: suspend 中は AudioContext の currentTime が止まり予約発火がズレるので、壁時計から再導出して
-  // 経過済みなら即鳴らし、未経過なら同じ endMs で予約を張り直す。
+  // 復帰時照合: keepalive が効かず JavaScript が凍結していた区間の取りこぼしを回収する。締切超過なら即鳴らし、
+  // 未経過なら keepalive と watch を張り直す (復帰直後はユーザー操作直後なので play が通りやすい)。
   const reconcile = (): void => {
     if (disposed || armedEndMs === null) return; // 未 arm (タイマー非稼働) なら何もしない
-    resume();
-    if (Date.now() >= armedEndMs) ensureAlarmPlaying();
-    else arm(armedEndMs);
+    if (Date.now() >= armedEndMs) {
+      ensureAlarmPlaying();
+    } else {
+      startKeepalive();
+      startWatch();
+    }
   };
 
   const onVisibilityChange = (): void => {
@@ -183,10 +246,10 @@ export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
     disposed = true;
     document.removeEventListener("visibilitychange", onVisibilityChange);
     window.removeEventListener("focus", onFocus);
-    stopAlarmSource();
+    clearWatch();
+    alarmAudio.pause();
     stopKeepalive();
     armedEndMs = null;
-    audioContext.close().catch((error) => warn("[timer-alarm] close failed:", error));
   };
 
   return { arm, disarm, ensureAlarmPlaying, dispose };
@@ -195,7 +258,7 @@ export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
 /**
  * タイマーモードのセッション singleton。TimerActions のジェスチャ (arm / disarm) と TimerLayout の表示
  * rAF (ensureAlarmPlaying) が同じインスタンスを触るため module スコープで共有する。createTimerAlarm が
- * 非同期 (fetch + decode) なので、解決前に取り回せるよう signal で持つ。
+ * 非同期なので、解決前に取り回せるよう signal で持つ。
  */
 const [timerAlarm, setTimerAlarm] = createSignal<TimerAlarm | null>(null);
 export { timerAlarm };
@@ -204,7 +267,7 @@ export { timerAlarm };
 let initGeneration = 0;
 let initializing = false;
 
-/** タイマーモード入室時に呼ぶ。音源を decode し、解決したらハンドルを signal へ載せる (冪等)。 */
+/** タイマーモード入室時に呼ぶ。ハンドルを生成し signal へ載せる (冪等)。 */
 export const initTimerAlarm = (): void => {
   if (timerAlarm() || initializing) return;
   initializing = true;
