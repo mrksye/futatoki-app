@@ -46,14 +46,16 @@ const ALARM_VOLUME = 0.7;
  *  間引かれても次の発火で取りこぼさない。フォアグラウンドの精密発火は TimerLayout の rAF が別途担う。 */
 const WATCH_INTERVAL_MS = 1000;
 
-/** keepalive 無音ループの生成パラメータ。低周波 (スマホ/タブレットのスピーカーがほぼ再生できない帯域) を
- *  低振幅で鳴らし、聞こえないが iOS には「実在する音」として認識させる。セッションを掴めない端末があれば
- *  まず amplitude を上げて試す (上げるほど可聴に近づくトレードオフ)。freq * duration を整数にしてループ
- *  境界を継ぎ目なくする (45 * 1.0 = 45 周期)。 */
+/** keepalive 無音ループの生成パラメータ。低周波 (スマホ/タブレットのスピーカーがほぼ再生できない帯域) で
+ *  鳴らし、聞こえないが iOS / Android に「実在する音」として認識させセッションを保持させる。セッションを
+ *  掴めない端末があれば amplitude を上げて試す (上げるほど可聴に近づくトレードオフだが、45Hz はスピーカーの
+ *  サブバス再生限界以下なので phone/tablet では振幅を上げてもほぼ聞こえない)。amplitude 0.02 では Android が
+ *  背景再生を維持できず「一瞬鳴って消える」ため 0.3 まで上げた (2026-05-26)。freq * duration を整数にして
+ *  ループ境界を継ぎ目なくする (45 * 1.0 = 45 周期)。 */
 const KEEPALIVE_SAMPLE_RATE = 8000;
 const KEEPALIVE_DURATION_SECONDS = 1.0;
 const KEEPALIVE_FREQUENCY_HZ = 45;
-const KEEPALIVE_AMPLITUDE = 0.02;
+const KEEPALIVE_AMPLITUDE = 0.3;
 
 /** タイマーアラームの制御ハンドル。タイマー 1 本につき 1 インスタンス。 */
 export interface TimerAlarm {
