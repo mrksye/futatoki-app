@@ -2,36 +2,32 @@ import { createSignal } from "solid-js";
 import timerEndM4a from "./sounds/timer-end.m4a";
 
 /**
- * タイマー完了時のアラームを鳴らすエンジン。HTMLAudioElement ベース (旧 Web Audio / Howler 実装を置き換える)。
+ * タイマー完了時のアラームを鳴らすエンジン (旧 Howler 実装を置き換える)。
  *
- * 狙いは「別アプリに切り替えるところまでは行かなくても、画面消灯 (ロック) では鳴る」こと。iOS は画面ロックで
- * AudioContext を interrupt (suspend) し JavaScript の timer も凍結するため、Web Audio の予約発火 (when 到達で
- * 鳴らす) も setInterval/setTimeout も止まってしまう。Android も、確立済みのメディアセッションが無いページが
- * バックグラウンドで新規再生を始めると即停止する (「一瞬鳴ってすぐ消える」)。一方、HTMLAudioElement が
- * 「メディア再生中」の状態だと、iOS はロック後もそのページを生かし続け、Android はバックグラウンドでの再生
- * 継続を許す (web の音楽プレイヤーがロック画面で鳴り続けるのと同じ)。これを利用する:
+ * 狙いは「別アプリに切り替えるところまでは行かなくても、画面消灯 (ロック) では鳴る」こと。計時の真実は壁時計
+ * (endMs = runStartMs + 分*60000) 一点で、発火は背景でも走る setInterval が締切到達で鳴らす (表示更新の
+ * requestAnimationFrame は画面消灯で完全停止するため発火に使わない)。フォアグラウンドの精密発火は TimerLayout
+ * の rAF が別途 ensureAlarmPlaying を呼ぶ。
  *
- *   1. keepalive: 極小音量・低周波の無音ループを、必ずユーザージェスチャ内 (arm = リング選択 / さいかい) で
- *      再生開始してオーディオセッションを掴み続ける。これでロック/バックグラウンド中も下の watch が動き続け、
- *      かつ「再生中のメディアセッション」が確立しているのでアラームに切り替えても止められない (Android の
- *      「一瞬鳴って即停止」はこのセッションが無いのが原因)。muted や volume 0 ではセッションを保持できない
- *      (iOS は無音再生をセッション扱いせず、Android はバックグラウンド開始の再生を即止める) ので、聞こえないが
- *      「実在する」低振幅・低周波の音を鳴らす (volume は iOS では無視され、Android では低振幅アセットが実質
- *      無音化を担う)。再生中メディア通知が全プラットフォームで出る副作用は許容する。
- *   2. watch: requestAnimationFrame ではなく setInterval で締切を監視する (rAF は画面消灯で完全停止するため)。
- *      keepalive がページを生かしているので、ロック中もこのインターバルが回り、締切到達でアラームを鳴らす。
- *   3. 復帰時照合 (reconcile): visibilitychange / focus で、JavaScript が凍結していた区間 (keepalive が効かず
- *      ロックでページが止まった場合など) の取りこぼしを回収する。締切超過なら即鳴らし、未経過なら watch を
- *      張り直す。
+ * 「締切で音をどう鳴らすか」がプラットフォームで割れるので、エンジンを 2 つ用意して `isIosLike()` で振り分ける:
  *
- * アラーム本体も HTMLAudioElement で鳴らす (Web Audio はロックで suspend されるため使わない)。締切到達は
- * 非ジェスチャ文脈なので、arm 時のジェスチャ内でアラーム要素を一度だけ無音で play→pause して unlock しておき、
- * 後から play() できるようにする。
+ *   - iOS (createHtmlAudioAlarm): iOS は画面ロックで AudioContext を suspend するので Web Audio は使えない。
+ *     代わりに HTMLAudioElement で極小音量・低周波の無音ループ (keepalive) をジェスチャ内で再生してオーディオ
+ *     セッションを掴み、ロック後もページ (と setInterval) を生かす。アラーム本体も HTMLAudioElement。締切到達は
+ *     非ジェスチャなので arm のジェスチャ内でアラーム要素を一度 muted で play→pause して unlock しておく。
+ *
+ *   - Android / desktop (createWebAudioAlarm): HTMLAudioElement はバックグラウンドでの新規再生開始がブロック
+ *     される (「一瞬鳴って消える」) が、Web Audio は一度ジェスチャで resume(unlock) すればバックグラウンドからでも
+ *     鳴らせる。旧 Howler + setInterval 実装が Android で動いていたのと同じ原理。setInterval は Android なら
+ *     (throttle されつつ) 裏でも走り続けるので締切で鳴らせる。AudioContext は iOS と違いロックで suspend されない
+ *     ため keepalive 無音ループは不要 = 再生中メディア通知も出ない。
+ *
+ * どちらも復帰時照合 (reconcile): visibilitychange / focus で凍結区間の取りこぼしを回収する (締切超過なら即鳴らし、
+ * 未経過なら watch を張り直す)。
  *
  * 限界: 物理ミュートスイッチが ON のときは web からは鳴らせない (ringer チャンネルへのアクセスは native 専用)。
- * 完全なバックグラウンド (別アプリへ切替・スワイプ kill) での発火は対象外。iOS / Android のバージョン・端末で
- * keepalive がセッションを保持し続けるかは割れるため、対象実機での検証が必須 (低振幅・低周波の値は下の定数で
- * 調整できる)。
+ * 完全なバックグラウンド (別アプリへ切替・スワイプ kill) での発火は対象外。OS バージョン・端末で挙動が割れるため
+ * 対象実機での検証が必須。
  *
  * 削除容易性: アラームの関心事はこのファイル 1 つに隔離してある。state には依存せず、発火検知と FSM 遷移
  * (completeTimer) は TimerLayout の表示 rAF が担う。このファイルを消し、TimerLayout / TimerActions から
@@ -46,36 +42,50 @@ const ALARM_VOLUME = 0.7;
  *  間引かれても次の発火で取りこぼさない。フォアグラウンドの精密発火は TimerLayout の rAF が別途担う。 */
 const WATCH_INTERVAL_MS = 1000;
 
-/** keepalive 無音ループの生成パラメータ。低周波 (スマホ/タブレットのスピーカーがほぼ再生できない帯域) で
- *  鳴らし、聞こえないが iOS / Android に「実在する音」として認識させセッションを保持させる。セッションを
- *  掴めない端末があれば amplitude を上げて試す (上げるほど可聴に近づくトレードオフだが、45Hz はスピーカーの
- *  サブバス再生限界以下なので phone/tablet では振幅を上げてもほぼ聞こえない)。amplitude 0.02 では Android が
- *  背景再生を維持できず「一瞬鳴って消える」ため 0.3 まで上げた (2026-05-26)。freq * duration を整数にして
- *  ループ境界を継ぎ目なくする (45 * 1.0 = 45 周期)。 */
+/** iOS keepalive 無音ループの生成パラメータ。低周波 (スマホ/タブレットのスピーカーがほぼ再生できない帯域) で
+ *  鳴らし、聞こえないが iOS に「実在する音」として認識させセッションを保持させる。セッションを掴めない端末が
+ *  あれば amplitude を上げて試す (45Hz はスピーカーのサブバス再生限界以下なので上げてもほぼ聞こえない)。
+ *  freq * duration を整数にしてループ境界を継ぎ目なくする (45 * 1.0 = 45 周期)。 */
 const KEEPALIVE_SAMPLE_RATE = 8000;
 const KEEPALIVE_DURATION_SECONDS = 1.0;
 const KEEPALIVE_FREQUENCY_HZ = 45;
-const KEEPALIVE_AMPLITUDE = 0.3;
+const KEEPALIVE_AMPLITUDE = 0.02;
 
-/** タイマーアラームの制御ハンドル。タイマー 1 本につき 1 インスタンス。 */
+/** タイマーアラームの制御ハンドル。タイマー 1 本につき 1 インスタンス。エンジン (iOS / 非 iOS) によらず同じ。 */
 export interface TimerAlarm {
   /**
-   * 必ずユーザージェスチャのハンドラ内から呼ぶこと (iOS の再生 unlock 要件)。keepalive を起動して
-   * オーディオセッションを掴み、アラーム要素を unlock し、endMs までの締切監視を始める。arm 済みでも
-   * endMs で張り直す (pause→resume・復帰時のドリフト補正に使用)。
+   * 必ずユーザージェスチャのハンドラ内から呼ぶこと (オーディオ unlock 要件)。オーディオセッションを掴み
+   * (iOS は keepalive、非 iOS は AudioContext resume)、endMs までの締切監視を始める。arm 済みでも endMs で
+   * 張り直す (pause→resume・復帰時のドリフト補正に使用)。
    */
   arm(endMs: number): void;
-  /** 締切監視を止めてアラームを止める。keepalive も止める (pause / とりけし / モード離脱用)。 */
+  /** 締切監視を止めてアラームを止める (pause / とりけし / モード離脱用)。 */
   disarm(): void;
   /**
-   * 「今鳴っているべきなら鳴っている」状態を保証する (冪等)。締切監視を止め、アラームを頭から loop 再生
-   * する。フォアグラウンド発火・watch 締切到達・復帰時照合から呼ぶ。loop 音なので再呼びしても継ぎ目が
-   * 一瞬出るだけで二重発火にはならない。
+   * 「今鳴っているべきなら鳴っている」状態を保証する (冪等)。締切監視を止め、アラームを頭から loop 再生する。
+   * フォアグラウンド発火・watch 締切到達・復帰時照合から呼ぶ。loop 音なので再呼びしても継ぎ目が一瞬出るだけ。
    */
   ensureAlarmPlaying(): void;
   /** 全リソース解放: 再生停止・リスナ解除・監視停止。残留を一切残さない。 */
   dispose(): void;
 }
+
+/** iOS 系 (iPhone / iPad、iPadOS の Mac 偽装含む) を推定する。iOS だけ HTMLAudioElement + keepalive 方式が必要で、
+ *  Android / desktop は Web Audio 方式 (旧 setInterval 実装と同原理) で鳴らす。ヒューリスティックなので実機で調整。 */
+const isIosLike = (): boolean => {
+  const ua = navigator.userAgent;
+  if (/iP(hone|ad|od)/.test(ua)) return true;
+  // iPadOS 13+ は desktop Safari を偽装するので touch 数で判別する。
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+};
+
+const warn = (message: string, error: unknown): void => {
+  try {
+    console.warn(message, error);
+  } catch (_) {
+    /* console 不在の環境向けの保険。ログ自体が失敗しても無視する。 */
+  }
+};
 
 /** 極小音量・低周波の無音ループ WAV を data URI で組み立てる。アセットを足さずに self-contained にする。 */
 const buildKeepaliveWavDataUri = (): string => {
@@ -110,33 +120,25 @@ const buildKeepaliveWavDataUri = (): string => {
   return "data:audio/wav;base64," + btoa(binary);
 };
 
-/** アラーム要素と keepalive 要素を備えたハンドルを生成する。重い decode は無く、HTMLAudioElement が自前で
- *  ロード/デコードするので即時に解決する (preload で締切までに読み込みを済ませる)。 */
-export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
+/** iOS 向けエンジン: HTMLAudioElement + keepalive。重い decode は無く HTMLAudioElement が自前でロードする。 */
+async function createHtmlAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
   const alarmAudio = new Audio(alarmUrl);
   alarmAudio.loop = true;
   alarmAudio.preload = "auto";
   alarmAudio.volume = ALARM_VOLUME; // iOS では無視 (system volume)
   alarmAudio.setAttribute("playsinline", "");
 
+  // keepalive: ジェスチャ内で再生開始してオーディオセッションを掴み、ロック後も setInterval を生かす。
+  // muted / volume 0 ではセッションを保持できないため、聞こえないが実在する低振幅・低周波の音を鳴らす
+  // (iOS は volume を無視するのでアセットの低振幅が効く)。
   const keepaliveAudio = new Audio(buildKeepaliveWavDataUri());
   keepaliveAudio.loop = true;
-  // volume 0 / muted ではメディアセッションを保持できない。iOS は volume を無視し、Android は低振幅アセット
-  // (KEEPALIVE_AMPLITUDE) が実質無音化を担うので、volume は 1 のまま「鳴っている」状態を保つ。
   keepaliveAudio.volume = 1;
   keepaliveAudio.setAttribute("playsinline", "");
 
   let armedEndMs: number | null = null;
   let watchIntervalId: ReturnType<typeof setInterval> | null = null;
   let disposed = false;
-
-  const warn = (message: string, error: unknown): void => {
-    try {
-      console.warn(message, error);
-    } catch (_) {
-      /* console 不在の環境向けの保険。ログ自体が失敗しても無視する。 */
-    }
-  };
 
   const playSilently = (audio: HTMLAudioElement): void => {
     const promise = audio.play();
@@ -217,8 +219,6 @@ export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
     }
   };
 
-  // 復帰時照合: keepalive が効かず JavaScript が凍結していた区間の取りこぼしを回収する。締切超過なら即鳴らし、
-  // 未経過なら keepalive と watch を張り直す (復帰直後はユーザー操作直後なので play が通りやすい)。
   const reconcile = (): void => {
     if (disposed || armedEndMs === null) return; // 未 arm (タイマー非稼働) なら何もしない
     if (Date.now() >= armedEndMs) {
@@ -249,6 +249,123 @@ export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
   };
 
   return { arm, disarm, ensureAlarmPlaying, dispose };
+}
+
+/** Android / desktop 向けエンジン: Web Audio。ジェスチャで resume すればバックグラウンドからでも鳴らせるので、
+ *  keepalive は不要 (メディア通知も出ない)。締切は setInterval が監視する (旧 Howler + setInterval と同原理)。 */
+async function createWebAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
+  const ResolvedAudioContext: typeof AudioContext =
+    window.AudioContext ??
+    (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  const audioContext = new ResolvedAudioContext();
+
+  const alarmGain = audioContext.createGain();
+  alarmGain.gain.value = ALARM_VOLUME;
+  alarmGain.connect(audioContext.destination);
+
+  const response = await fetch(alarmUrl);
+  const decodedBuffer = await audioContext.decodeAudioData(await response.arrayBuffer());
+
+  let alarmSource: AudioBufferSourceNode | null = null;
+  let armedEndMs: number | null = null;
+  let watchIntervalId: ReturnType<typeof setInterval> | null = null;
+  let disposed = false;
+
+  const stopAlarmSource = (): void => {
+    if (!alarmSource) return;
+    try {
+      alarmSource.stop();
+    } catch (error) {
+      warn("[timer-alarm] alarm stop failed:", error);
+    }
+    alarmSource.disconnect();
+    alarmSource = null;
+  };
+
+  const playNow = (): void => {
+    if (disposed) return;
+    stopAlarmSource();
+    const source = audioContext.createBufferSource();
+    source.buffer = decodedBuffer;
+    source.loop = true;
+    source.connect(alarmGain);
+    source.start(0);
+    alarmSource = source;
+  };
+
+  const clearWatch = (): void => {
+    if (watchIntervalId !== null) {
+      clearInterval(watchIntervalId);
+      watchIntervalId = null;
+    }
+  };
+
+  const startWatch = (): void => {
+    clearWatch();
+    watchIntervalId = setInterval(() => {
+      if (armedEndMs !== null && Date.now() >= armedEndMs) ensureAlarmPlaying();
+    }, WATCH_INTERVAL_MS);
+  };
+
+  const arm = (endMs: number): void => {
+    if (disposed) return;
+    armedEndMs = endMs;
+    // ジェスチャ内で resume して unlock しておく (以降はバックグラウンドからでも play できる)。
+    audioContext.resume().catch((error) => warn("[timer-alarm] resume failed:", error));
+    startWatch();
+  };
+
+  const disarm = (): void => {
+    armedEndMs = null;
+    clearWatch();
+    stopAlarmSource();
+  };
+
+  const ensureAlarmPlaying = (): void => {
+    if (disposed) return;
+    clearWatch();
+    // 背景で suspend されていれば resume してから鳴らす (resume 完了後に確実に start するため then で繋ぐ)。
+    if (audioContext.state === "suspended") {
+      audioContext.resume().then(playNow).catch((error) => {
+        warn("[timer-alarm] resume failed:", error);
+        playNow();
+      });
+    } else {
+      playNow();
+    }
+  };
+
+  const reconcile = (): void => {
+    if (disposed || armedEndMs === null) return; // 未 arm (タイマー非稼働) なら何もしない
+    if (Date.now() >= armedEndMs) ensureAlarmPlaying();
+    else startWatch();
+  };
+
+  const onVisibilityChange = (): void => {
+    if (document.visibilityState === "visible") reconcile();
+  };
+  const onFocus = (): void => reconcile();
+
+  document.addEventListener("visibilitychange", onVisibilityChange);
+  window.addEventListener("focus", onFocus);
+
+  const dispose = (): void => {
+    if (disposed) return;
+    disposed = true;
+    document.removeEventListener("visibilitychange", onVisibilityChange);
+    window.removeEventListener("focus", onFocus);
+    clearWatch();
+    stopAlarmSource();
+    armedEndMs = null;
+    audioContext.close().catch((error) => warn("[timer-alarm] close failed:", error));
+  };
+
+  return { arm, disarm, ensureAlarmPlaying, dispose };
+}
+
+/** プラットフォームに応じてエンジンを生成する。iOS は HTMLAudio + keepalive、それ以外は Web Audio。 */
+export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
+  return isIosLike() ? createHtmlAudioAlarm(alarmUrl) : createWebAudioAlarm(alarmUrl);
 }
 
 /**
