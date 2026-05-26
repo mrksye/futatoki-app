@@ -377,10 +377,12 @@ const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
       onClick={onClick}
       onWheel={onWheel}
     >
-      {/* リング container: origin 中心の 0×0 要素。pointerdown 等は overlay 側で受けるので
-          pointer-events は素通し。JS が触る inline は --ring-rot 1 個だけ (transform 文字列は静的)。 */}
+      {/* リング container: origin 中心の 0×0 要素。数字ボタンを直タップで拾えるよう pointer-events は
+          素通しのまま (none にすると子の button まで無効化され、全タップが overlay onClick 任せになる)。
+          ドラッグ用の pointer event はボタンから overlay へ bubble するので両立する。JS が触る inline は
+          --ring-rot 1 個だけ (transform 文字列は静的)。 */}
       <div
-        class="fixed pointer-events-none"
+        class="fixed"
         style={{
           left: `${origin().x}px`,
           top: `${origin().y}px`,
@@ -420,7 +422,7 @@ const TimerRingButton: Component<{
   font: number;
 }> = (props) => {
   const { t, formatNumeral } = useI18n();
-  let ref: HTMLDivElement | undefined;
+  let ref: HTMLButtonElement | undefined;
 
   // 円周位置 (12 時 = -90° から CW)。container 中心基準の top-left オフセット。
   const angleRad = (props.index / props.count) * 2 * Math.PI - Math.PI / 2;
@@ -452,10 +454,21 @@ const TimerRingButton: Component<{
     );
   });
 
+  // 数字本体の直タップで確定。stopPropagation で overlay の onClick (隙間救済 / 慣性停止ゲート) を
+  // 飛び越えるので、慣性で空回り中でも一発で選択できる (overlay 任せだと第一タップが回転停止に食われる)。
+  // この click ハンドラ自体がジェスチャの起点なので、ここで終了時刻の予約発火を張る = AudioContext を
+  // ユーザジェスチャ内で resume できる (overlay 隙間救済路と同じ arm 手順)。
+  const onClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    selectMinutes(props.minutes);
+    const start = runStartMs();
+    if (start !== null) timerAlarm()?.arm(start + props.minutes * 60000);
+  };
+
   return (
-    <div
+    <button
       ref={ref}
-      class="absolute top-0 left-0 rounded-full bg-white shadow-lg text-gray-800 font-black flex items-center justify-center"
+      class="absolute top-0 left-0 rounded-full bg-white shadow-lg text-gray-800 font-black flex items-center justify-center before:hidden"
       style={{
         width: `${props.size}px`,
         height: `${props.size}px`,
@@ -464,10 +477,11 @@ const TimerRingButton: Component<{
         // 各数字を GPU layer に固定 → 親 rotate と自分の counter-rotate が composite-only で完結。
         "will-change": "transform",
       }}
+      onClick={onClick}
       aria-label={t("timer.minuteOption", { n: formatNumeral(props.minutes) })}
     >
       {formatNumeral(props.minutes)}
-    </div>
+    </button>
   );
 };
 
