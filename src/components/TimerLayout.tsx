@@ -53,6 +53,11 @@ const ALARM_VIBRATE_PATTERN = [200, 100, 200];
 /** 表示更新 (針 SVG 再描画) の最小間隔。針はゆっくり動くので 4fps で十分、弱 GPU の負荷を抑える。 */
 const DISPLAY_TICK_MS = 250;
 
+/** タイマー盤だけ AM 位置の合体時計より一回り小さく見せる縮小率。両盤面とも clockSize() を基準寸法に
+ *  取るが、タイマー盤にはこの率を掛けて少し小ぶりにする (懐中時計のような佇まい)。盤は半盤の中央寄せ
+ *  なので、生み出しスライド (translate(-50vw...) で中心同士を合わせる) は縮小しても AM 盤の内側に収まる。 */
+const TIMER_BOARD_SCALE = 0.88;
+
 const TimerLayout: Component = () => {
   const isLandscape = useOrientation();
   const viewport = useViewport();
@@ -172,6 +177,9 @@ const TimerLayout: Component = () => {
     return Math.min(halfW, halfH);
   });
 
+  /** タイマー盤の実寸。AM 位置の合体時計 (clockSize) より一回り小さくする。 */
+  const timerBoardSize = createMemo(() => clockSize() * TIMER_BOARD_SCALE);
+
   // たいむ遷移の WAAPI 群。入室 (enterBoing): merged 左顔 (AM 位置) を L で「リンリン」と魅せ、
   // MERGE_ANTICIPATION_MS 後に merged をクエイクさせつつ timer 盤 (PM 位置) を裏からスライドで生み出す。
   // 退室 (exitBoing): timer 盤を裏へ退ける。fill 付き WAAPI が timeline に溜まると弱 GPU でアニメが drop
@@ -246,7 +254,7 @@ const TimerLayout: Component = () => {
             <div
               ref={timerBoardRef}
               class="relative"
-              style={{ width: `${clockSize()}px`, height: `${clockSize()}px`, "transform-origin": "center" }}
+              style={{ width: `${timerBoardSize()}px`, height: `${timerBoardSize()}px`, "transform-origin": "center" }}
             >
               <ClockFace period="merged" hours={refHours()} bezel="gold">
                 <TimerWedge fromMinute={refMinuteFloat()} spanMinutes={(remainingSeconds() ?? 0) / 60} />
