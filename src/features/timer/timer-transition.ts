@@ -50,9 +50,12 @@ export type TimerTransitionKind = "splitSide" | "centerSlide";
 const CONVERGE_MS = 560;
 /** たいむ盤の boing (びよっ) 時間。 */
 const BOING_MS = 440;
-/** 退室で合体時計が分離する前の「魅せ」演出 (クエイク) の長さ。盤を裏へ退けてから merged がこの間ググッと
- *  震え、終わると分離 (PM 盤の生み出し / 中央スライド) に入る。入りのリンリンに対する退室版。 */
+/** 退室で合体時計が分離する前の「魅せ」演出 (クエイク) の長さ。timer 盤がバイバイで去っていく裏で
+ *  merged がこの間ググッと震え、終わると分離 (PM 盤の生み出し) に入る。splitSide (→とけい) でのみ使う。 */
 const EXIT_ANTICIPATION_MS = 360;
+/** 退室で timer 盤がバイバイッと振ってフェードで去る全長 (両 kind 共通)。盤がいなくなってから
+ *  exitDiverge (とけい=分離 / 回転=中央スライド) に入る。 */
+const WAVE_GOODBYE_MS = 650;
 /** 入りで合体時計が timer 盤を産み出す前の「魅せ」演出 (リンリン 1 回) の長さ。この間 merged が L に単独で
  *  居て鈴のように 1 回揺れ、終わると産み出し (盤の生み出しスライド) に入る。 */
 export const MERGE_ANTICIPATION_MS = 280;
@@ -154,22 +157,6 @@ export const playEmergeFromBehindLeft = (
   );
 };
 
-/** 自位置 (R) から L 盤の裏 (L) へ ease-in でスッと退き、退ききった瞬間に visibility:hidden で消す。
- *  fill:forwards で裏に隠れたまま保持 (直後の退室クエイク中に裏の盤が覗かない / その後 unmount される)。
- *  出りの timer盤で使う。 */
-export const playRetreatBehindLeft = (el: Element, isLandscape: boolean): Animation | null => {
-  const behind = behindLeftClockTransform(isLandscape);
-  return animateMotion(
-    el,
-    [
-      { transform: "translate(0, 0)", visibility: "visible", offset: 0 },
-      { transform: behind, visibility: "visible", offset: 0.999 },
-      { transform: behind, visibility: "hidden", offset: 1 },
-    ],
-    { duration: BOING_MS, easing: "cubic-bezier(.4, 0, .7, 1)", fill: "forwards" },
-  );
-};
-
 /** merged 盤を L 着地位置から中央 C へスライド (出りの centerSlide = たいむ→回転)。L は container 全幅の
  *  1/4 ぶん寄せた位置 (timerMergedTransform と同じ)、C は無変位。fill:backwards で開始前から L に置く。 */
 export const playMergedSlideToCenter = (el: Element, isLandscape: boolean): Animation | null => {
@@ -207,17 +194,17 @@ const RIN_RIN_KEYFRAMES: Keyframe[] = [
 export const playMergeAnticipation = (el: Element): Animation | null =>
   animateMotion(el, RIN_RIN_KEYFRAMES, { duration: MERGE_ANTICIPATION_MS, easing: "ease-out", fill: "none" });
 
-/** 退室 (たいむ→並列時計) の「魅せ」: 盤を裏へ退けてから (BOING_MS 待ち) merged が分離する前にググッと
- *  クエイクする。入りのリンリン (playMergeAnticipation) に対する退室版で、すげ替えられるよう実装点はこの
- *  1 関数に閉じる。はつかいき splash の「ググググーッ」(playQuake) を共通利用 (時計サイズ向けに振幅を上げる)。 */
+/** 退室 (たいむ→とけい) の「魅せ」: timer 盤がバイバイで去っていく裏で、merged が「勝手に」自己分裂する
+ *  前にググッとクエイクする。バイバイから少しズラして始める (WAVE_GOODBYE_MS の末尾でクエイクが終わり、
+ *  そのまま分離 = PM 盤の生み出しへ繋がる) ため delay を入れる。すげ替えられるよう実装点はこの 1 関数に閉じる。
+ *  はつかいき splash の「ググググーッ」(playQuake) を共通利用 (時計サイズ向けに振幅を上げる)。 */
 const SPLIT_QUAKE_AMPLITUDE_SCALE = 2.6;
 export const playSplitAnticipation = (el: Element): Animation | null =>
-  playQuake(el, EXIT_ANTICIPATION_MS, BOING_MS, SPLIT_QUAKE_AMPLITUDE_SCALE);
+  playQuake(el, EXIT_ANTICIPATION_MS, WAVE_GOODBYE_MS - EXIT_ANTICIPATION_MS, SPLIT_QUAKE_AMPLITUDE_SCALE);
 
-/** 退室 (たいむ→回転) で timer 盤が去るときの「バイバイッ」。右下を支点 (transform-origin: 100% 100%) に
- *  弧を描いて素早く 2 回振り、最後にフェード+縮小で消える。回転モードには連れて行かれない盤のお別れ演出。
- *  fill:forwards で消えたまま保持 (直後に unmount)。すげ替えられるよう実装点はこの 1 関数に閉じる。 */
-const WAVE_GOODBYE_MS = 650;
+/** 退室で timer 盤が去るときの「バイバイッ」(両 kind 共通)。右下を支点 (transform-origin: 100% 100%) に
+ *  弧を描いて素早く 2 回振り、最後にフェード+縮小で消える。回転モードには連れて行かれず、とけいでも合体時計
+ *  には吸収されない盤のお別れ演出。fill:forwards で消えたまま保持 (直後に unmount)。実装点はこの 1 関数に閉じる。 */
 const WAVE_GOODBYE_KEYFRAMES: Keyframe[] = [
   { transform: "rotate(0deg) scale(1)", opacity: 1, transformOrigin: "100% 100%", offset: 0 },
   { transform: "rotate(-2deg) scale(1)", transformOrigin: "100% 100%", offset: 0.16 },
@@ -297,9 +284,9 @@ export const useTimerTransition = () => {
         setKind(exitKind);
         setMergedRevealed(true);
         setPhase("exitBoing");
-        // exitBoing: splitSide は 盤を裏へ退ける (BOING) + merged クエイク (EXIT_ANTICIPATION)。
-        //            centerSlide は timer 盤がバイバイッと振って去る (WAVE_GOODBYE)。
-        const exitBoingMs = exitKind === "centerSlide" ? WAVE_GOODBYE_MS : BOING_MS + EXIT_ANTICIPATION_MS;
+        // exitBoing: 両 kind とも timer 盤がバイバイッと振ってフェードで去る (WAVE_GOODBYE)。splitSide では
+        //            その裏で merged がちょっとズレて自己分裂のクエイクをする (TimerLayout 側)。
+        const exitBoingMs = WAVE_GOODBYE_MS;
         // exitDiverge: splitSide は PM 盤の生み出し (BOING)、centerSlide は merged の中央スライド (CONVERGE)。
         const divergeMs = exitKind === "centerSlide" ? CONVERGE_MS : BOING_MS;
         after(exitBoingMs, () => setPhase("exitDiverge"));
