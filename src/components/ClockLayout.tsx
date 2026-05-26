@@ -593,6 +593,14 @@ export const ClockLayout: Component = () => {
       : (!mergedVisible() || transitioning()) && (!isAm() || !dragging()),
   );
 
+  /** AM/PM バッジを出すのは「とけい」静止時だけ。回転中・たいむ中はもちろん、たいむ遷移中も隠す。
+   *  入室 (回転/とけい→たいむ) では切替ボタン押下と同時に isTimerMode が立つので即座に消える (enterConverge
+   *  での一瞬の見え隠れ防止)。退室 (たいむ→とけい) では timerTransitioning が落ちる = 分離アニメ完了で
+   *  idle 復帰した瞬間にだけ出す (分離途中で先走って現れるのを防ぐ。slot-crossfade の 100ms フェードで滑り込む)。 */
+  const amPmBadgeVisible = createMemo(
+    () => !isRotating() && !isTimerMode() && !timerTransitioning(),
+  );
+
   /** SkyBackground の mount/unmount は (gradient div 1 枚でも) DOM 挿入の強制 reflow が、同フレームに走る
    *  AM/PM wrapper の合体/分離 transform transition の baseline を奪い、wrapper が中央へ寄らず最終位置へ
    *  スナップさせる。そこで mount/unmount を transition のフレームからずらす:
@@ -840,8 +848,8 @@ export const ClockLayout: Component = () => {
             "background-color": isAm() ? "#0080D8" : "#E02068",
             color: "#ffffff",
             "touch-action": "none",
-            opacity: !isRotating() ? 1 : 0,
-            "pointer-events": !isRotating() ? "auto" : "none",
+            opacity: amPmBadgeVisible() ? 1 : 0,
+            "pointer-events": amPmBadgeVisible() ? "auto" : "none",
           }}
           onPointerDown={startHold}
           onPointerUp={clearHold}
