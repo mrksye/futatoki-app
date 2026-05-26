@@ -1,6 +1,6 @@
 import { createComputed, createEffect, createSignal, on, onCleanup } from "solid-js";
 import { isTimerMode, isRotating, mergedVisible } from "../free-rotation/state";
-import { animateMotion } from "../../lib/motion";
+import { animateMotion, playQuake } from "../../lib/motion";
 
 /**
  * たいむモードへの出入りトランジションの振り付け。回転モードの合体/分離 (merge-animation.ts) とは別軸で、
@@ -50,6 +50,11 @@ export type TimerTransitionKind = "splitSide" | "centerSlide";
 const CONVERGE_MS = 560;
 /** たいむ盤の boing (びよっ) 時間。 */
 const BOING_MS = 440;
+/** 合体時計が L に単独で居る状態を見せる「ためし」の間 (出りで使用、まだ無演出の静止ホールド)。 */
+export const TIMER_MERGE_HOLD_MS = 200;
+/** 入りで合体時計が timer 盤を産み出す前の「魅せ」演出 (リンリン 1 回) の長さ。この間 merged が L に単独で
+ *  居て鈴のように 1 回揺れ、終わると産み出し (クエイク + 盤の生み出しスライド) に入る。 */
+export const MERGE_ANTICIPATION_MS = 280;
 
 const [phase, setPhase] = createSignal<TimerTransitionPhase>("idle");
 const [kind, setKind] = createSignal<TimerTransitionKind>("splitSide");
@@ -121,21 +126,32 @@ export const timerPmWrapperTransform = (isLandscape: boolean): string =>
 
 // ── 盤を L 盤の裏から R へ出し入れするスライド (入りの timer盤 / 出りの PM盤 で共通) ──
 
-/** R 位置の盤を L 盤の裏まで寄せる平行移動量。R 中心(75%)→L 中心(25%) = 画面 1/2 ぶん。盤自身の幅は
- *  clockSize で可変なので、確実に L へ重ねるため viewport 基準 (vw/vh) で寄せる。z 順は R 盤 (z-auto) <
- *  L 盤 (z-10) なので、ここに居る間は L 盤の裏に隠れる。 */
+/** R 位置の盤を L 盤の裏まで寄せる平行移動量。半盤ぶん (-50vw/-50vh) 寄せると R 盤が L 盤に重なるが、
+ *  AM/PM の負マージン (-mr-3/-ml-3) のぶん R 盤が左へずれて L 盤の左からはみ出す。1.5rem 戻して R 盤を
+ *  L 盤の内側 (= z 順で覆われる側) に収め、左へのはみ出しを防ぐ。z 順は R 盤 (z-auto) < L 盤 (z-10)。 */
 const behindLeftClockTransform = (isLandscape: boolean): string =>
-  isLandscape ? "translateX(-50vw)" : "translateY(-50vh)";
+  isLandscape ? "translate(calc(-50vw + 1.5rem), 0)" : "translate(0, calc(-50vh + 1.5rem))";
 
 /** L 盤の裏 (L) から自位置 (R) へ back-out で弾性スライド (「びよッ」と裏から生み出される)。overshoot は
- *  左収束より控えめ (1.4)。fill:backwards で開始前から裏位置に置きチラ見え防止。入りの timer盤・出りの
- *  PM盤の両方で使う (同一モーション)。 */
-export const playEmergeFromBehindLeft = (el: Element, isLandscape: boolean): Animation | null =>
-  animateMotion(
+ *  左収束より控えめ (1.4)。delayMs で出現を遅らせられる (入りはリンリンのぶん遅らせる)。delay 中は
+ *  fill:backwards で first keyframe (visibility: hidden) に張り付いて不可視のまま待ち、スライド開始の瞬間に
+ *  visible にする (delay 中に裏の盤が覗くのを防ぐ)。入りの timer盤・出りの PM盤の両方で使う (同一モーション)。 */
+export const playEmergeFromBehindLeft = (
+  el: Element,
+  isLandscape: boolean,
+  delayMs = 0,
+): Animation | null => {
+  const behind = behindLeftClockTransform(isLandscape);
+  return animateMotion(
     el,
-    [{ transform: behindLeftClockTransform(isLandscape) }, { transform: "translate(0, 0)" }],
-    { duration: BOING_MS, easing: "cubic-bezier(.34, 1.4, .64, 1)", fill: "backwards" },
+    [
+      { transform: behind, visibility: "hidden", offset: 0 },
+      { transform: behind, visibility: "visible", offset: 0.001 },
+      { transform: "translate(0, 0)", offset: 1 },
+    ],
+    { duration: BOING_MS, delay: delayMs, easing: "cubic-bezier(.34, 1.4, .64, 1)", fill: "backwards" },
   );
+};
 
 /** 自位置 (R) から L 盤の裏 (L) へ ease-in でスッと退く。fill:forwards で裏に隠れたまま保持 (直後に
  *  unmount される)。出りの timer盤で使う。 */
@@ -156,6 +172,27 @@ export const playMergedSlideToCenter = (el: Element, isLandscape: boolean): Anim
     { duration: CONVERGE_MS, easing: "cubic-bezier(.4, 0, .2, 1)", fill: "backwards" },
   );
 };
+
+/** 「リンッ」: 鈴をチリンと鳴らすような揺れ 1 回。上部頂点を支点 (transform-origin: 50% 0%) に弧を描く
+ *  横振りで、damped に振り戻して止まる。merged が timer 盤を産み出す前の「魅せ」。
+ *  あとで別演出 (ジャンプ等) にすげ替える可能性があるので、産み出し前演出の実装点はこの 1 関数に閉じる
+ *  (呼び出し側は playMergeAnticipation という意図名だけを使う。transform-origin もここで keyframe 指定)。 */
+const RIN_RIN_KEYFRAMES: Keyframe[] = [
+  { transform: "rotate(0deg)", transformOrigin: "50% 0%", offset: 0 },
+  { transform: "rotate(6deg)", transformOrigin: "50% 0%", offset: 0.32 },
+  { transform: "rotate(-3deg)", transformOrigin: "50% 0%", offset: 0.62 },
+  { transform: "rotate(1deg)", transformOrigin: "50% 0%", offset: 0.84 },
+  { transform: "rotate(0deg)", transformOrigin: "50% 0%", offset: 1 },
+];
+export const playMergeAnticipation = (el: Element): Animation | null =>
+  animateMotion(el, RIN_RIN_KEYFRAMES, { duration: MERGE_ANTICIPATION_MS, easing: "ease-out", fill: "none" });
+
+/** 産み出しの瞬間に merged を震わせるクエイク (はつかいき splash の「ググググーッ」を共通利用)。リンリンの
+ *  後に走るよう MERGE_ANTICIPATION_MS だけ遅延し、盤の生み出しスライド (BOING_MS) と同尺・同時で走る。
+ *  時計サイズの要素に当てるので splash の素の振幅では埋もれる → amplitudeScale を上げて見えるようにする。 */
+const PRODUCE_QUAKE_AMPLITUDE_SCALE = 2.6;
+export const playProduceQuake = (el: Element): Animation | null =>
+  playQuake(el, BOING_MS, MERGE_ANTICIPATION_MS, PRODUCE_QUAKE_AMPLITUDE_SCALE);
 
 /**
  * 遷移フェーズを送る effect 配線。ClockLayout から 1 回だけ呼ぶ。phase / kind / mergedRevealed の
@@ -216,14 +253,19 @@ export const useTimerTransition = () => {
         // clock ツリーの合体スライドを先に 1 paint 走らせてから TimerLayout を mount。
         scheduleTimerMount();
         after(CONVERGE_MS, () => setPhase("enterBoing"));
-        after(CONVERGE_MS + BOING_MS, () => setPhase("idle"));
+        // enterBoing = リンリン (merged を L で揺らして魅せる) + 産み出し (クエイク + 盤の生み出しスライド)。
+        // 産み出し系は MERGE_ANTICIPATION_MS だけ遅延して走る (下流 TimerLayout)。
+        after(CONVERGE_MS + MERGE_ANTICIPATION_MS + BOING_MS, () => setPhase("idle"));
       } else {
         // 退室先が回転モードなら中央 merged 着地 (centerSlide)、clock なら split 着地 (splitSide)。
-        setKind(isRotating() ? "centerSlide" : "splitSide");
+        const exitKind: TimerTransitionKind = isRotating() ? "centerSlide" : "splitSide";
+        setKind(exitKind);
         setMergedRevealed(true);
         setPhase("exitBoing");
-        after(BOING_MS, () => setPhase("exitDiverge"));
-        after(BOING_MS + CONVERGE_MS, () => {
+        const divergeMs = exitKind === "centerSlide" ? CONVERGE_MS : BOING_MS;
+        // exitBoing = BOING (盤を裏へ退ける) + HOLD (merged を L で見せる)。その後 exitDiverge で分離/スライド。
+        after(BOING_MS + TIMER_MERGE_HOLD_MS, () => setPhase("exitDiverge"));
+        after(BOING_MS + TIMER_MERGE_HOLD_MS + divergeMs, () => {
           setPhase("idle");
           setTimerLayoutMounted(false); // 退室完了で TimerLayout を unmount
         });

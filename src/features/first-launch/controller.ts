@@ -1,5 +1,5 @@
 import { requestChronostasis } from "../../lib/chronostasis";
-import { animateMotion } from "../../lib/motion";
+import { animateMotion, playQuake, QUAKE_DURATION_MS } from "../../lib/motion";
 import { deactivateFirstLaunch } from "./state";
 
 /**
@@ -35,41 +35,12 @@ import { deactivateFirstLaunch } from "./state";
 
 /** 起動 → 単体時計を見せる dwell。短すぎると「画面開いた瞬間ガクガクする」見え方になる。 */
 const DWELL_BEFORE_GUGUGU_MS = 700;
-/** グッ・グッ・グッの discrete pulse duration。6 pulse × ~80ms。連続トレモロより脈動感があり
- *  「ググググ」という呻きの discrete 感に合う。 */
-const GUGUGU_DURATION_MS = 500;
 /** パーンッ scale burst の duration。peak は ~35% 地点で scale 1.20。BURST 開始直後に AM/PM が
  *  飛び始める瞬間にこの scale burst が乗ることで、両端への押し出しが「弾けて分かれる」感に転化する。 */
 const PANG_SCALE_DURATION_MS = 360;
 /** AM/PM bouncy 着地までの全長。CSS transition (cubic-bezier(.34, 1.56, .64, 1)) で overshoot が
  *  落ち着く時間。container opacity fade も同じ duration で重ねて、bouncy 着地と消失を揃える。 */
 const BOUNCY_BURST_DURATION_MS = 620;
-
-/** 「グッ・グッ・グッ」の discrete pulse 列。center → peak → center の 1 pulse をユニットに、
- *  左右交互 + 線形成長振幅で 6 発撃つ。pulse ごとに中央へ戻る瞬間があり「グッ (戻る) グッ
- *  (戻る) グッ」とリズムが数えられる脈動感になる。translate は左右に shift、rotate は逆方向に
- *  ひねって「ぐねっ」とした物理感を重ねる。 */
-const buildGuguguKeyframes = (): Keyframe[] => {
-  const PULSES = 6;
-  const MAX_TRANSLATE_PX = 4.5;
-  const MAX_ROTATE_DEG = 1.1;
-  const REST = "translate(0px, 0px) rotate(0deg)";
-  const frames: Keyframe[] = [{ transform: REST, offset: 0 }];
-  for (let i = 0; i < PULSES; i++) {
-    const ampFraction = (i + 1) / PULSES;
-    const sign = i % 2 === 0 ? 1 : -1;
-    const x = MAX_TRANSLATE_PX * ampFraction * sign;
-    const r = MAX_ROTATE_DEG * ampFraction * -sign;
-    const peakOffset = (i + 0.5) / PULSES;
-    const restOffset = (i + 1) / PULSES;
-    frames.push({
-      transform: `translate(${x.toFixed(2)}px, 0px) rotate(${r.toFixed(2)}deg)`,
-      offset: peakOffset,
-    });
-    frames.push({ transform: REST, offset: restOffset });
-  }
-  return frames;
-};
 
 /** パーンッ scale burst のキーフレーム。peak は scale(1.20) で一気に跳ね、その後 0.94 まで戻って
  *  小さくバウンドしてから 1.0 に着地。 */
@@ -111,12 +82,8 @@ export const runSplashSequence = async (params: SplashSequenceParams): Promise<v
   try {
     await wait(DWELL_BEFORE_GUGUGU_MS);
 
-    animateMotion(params.shakeTarget, buildGuguguKeyframes(), {
-      duration: GUGUGU_DURATION_MS,
-      easing: "linear",
-      fill: "none",
-    });
-    await wait(GUGUGU_DURATION_MS);
+    playQuake(params.shakeTarget);
+    await wait(QUAKE_DURATION_MS);
 
     // BURST: phase 切替で AM/PM CSS transition が bouncy で発火、同時に shake target へ scale
     // burst、container へ opacity フェード。

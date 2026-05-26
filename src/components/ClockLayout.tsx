@@ -170,9 +170,11 @@ export const ClockLayout: Component = () => {
   const { t } = useI18n();
 
   /** 各 AM/PM 半盤の clock SVG が取れる最大寸法 (diameter)。floating palette ボタンと交差しない
-   *  最大円を幾何的に求める。isRotating 中は palette ボタンが消えるので natural 最大に戻る
-   *  (computeMaxClockSize は palette wid/hei が 0 で natural を返す挙動も持つが、isRotating でも
-   *  palette signal は前回値を保持しているので明示的に分岐が必要)。 */
+   *  最大円を幾何的に求める。isRotating 中 / たいむ (遷移含む) 中は palette ボタンが消える (たいむは
+   *  popover 内) ので natural 最大に戻す。特にたいむ遷移中は clock ツリーと TimerLayout の盤を同一サイズで
+   *  受け渡す必要があり、palette clearance で縮めると合体盤が大きく見えて位置がズレる。
+   *  (computeMaxClockSize は palette wid/hei が 0 で natural を返す挙動も持つが、palette signal は前回値を
+   *  保持しているので明示的に分岐が必要)。 */
   const maxClockSize = createMemo(() => {
     const w = viewport.width();
     const h = viewport.height();
@@ -180,7 +182,7 @@ export const ClockLayout: Component = () => {
     const halfW = land ? w / 2 : w;
     const halfH = land ? h : h / 2;
     const naturalSize = Math.min(halfW, halfH);
-    if (isRotating()) return naturalSize;
+    if (isRotating() || isTimerMode() || timerTransitioning()) return naturalSize;
     // landscape の palette は bottom-center, portrait は right-center に floating する。
     // ボタンと viewport 端の実距離は CSS の var(--safe-edge-*) と一致 = max(BASE, safeArea)。
     const sa = safeArea();
@@ -502,6 +504,7 @@ export const ClockLayout: Component = () => {
       if (timerTransitionKind() === "centerSlide") {
         if (mergedContainerRef) exitSlideAnimation = playMergedSlideToCenter(mergedContainerRef, isLandscape());
       } else if (pmWrapperRef) {
+        // merged を L で見せる「ためし」は exitBoing 末尾で済むので、ここ (exitDiverge) では即 emerge。
         exitSlideAnimation = playEmergeFromBehindLeft(pmWrapperRef, isLandscape());
       }
     }),

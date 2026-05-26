@@ -19,6 +19,8 @@ import {
   timerBoardHidden,
   playEmergeFromBehindLeft,
   playRetreatBehindLeft,
+  playMergeAnticipation,
+  MERGE_ANTICIPATION_MS,
 } from "../features/timer/timer-transition";
 
 /**
@@ -168,30 +170,36 @@ const TimerLayout: Component = () => {
     return Math.min(halfW, halfH);
   });
 
-  // たいむ盤 (PM 位置) の boing。入室 (enterBoing) で「びよっ」と出し、退室 (exitBoing) で縮めて消す。
-  // 盤の mount/unmount は timerBoardHidden が制御し、ここは現れた盤に WAAPI を載せるだけ。
-  // boing-out は fill: forwards (終了後も縮んだ状態を保持) なので、放置するとブラウザが timeline に
-  // filling animation を残し続け、サイクルごとに合成レイヤーが溜まって弱 GPU でアニメが drop する。
-  // そこで前回の boing を必ず cancel してから張り、unmount でも cancel して残骸を一切残さない。
+  // たいむ遷移の WAAPI 群。入室 (enterBoing): merged 左顔 (AM 位置) を L で「リンリン」と魅せ、
+  // MERGE_ANTICIPATION_MS 後に merged をクエイクさせつつ timer 盤 (PM 位置) を裏からスライドで生み出す。
+  // 退室 (exitBoing): timer 盤を裏へ退ける。fill 付き WAAPI が timeline に溜まると弱 GPU でアニメが drop
+  // するので、前回分を必ず cancel + onCleanup で解放する (残骸ゼロ)。
   let timerBoardRef: HTMLDivElement | undefined;
-  let boingAnimation: Animation | null = null;
-  const cancelBoing = () => {
-    boingAnimation?.cancel();
-    boingAnimation = null;
+  let leftFaceRef: HTMLDivElement | undefined;
+  let boardAnimation: Animation | null = null;
+  let mergeAnticipationAnimation: Animation | null = null;
+  const cancelTransitionAnimations = () => {
+    boardAnimation?.cancel();
+    boardAnimation = null;
+    mergeAnticipationAnimation?.cancel();
+    mergeAnticipationAnimation = null;
   };
   createEffect(
     on(timerTransitionPhase, (phase, prev) => {
-      if (prev === undefined || phase === prev || !timerBoardRef) return;
+      if (prev === undefined || phase === prev) return;
+      cancelTransitionAnimations();
       if (phase === "enterBoing") {
-        cancelBoing();
-        boingAnimation = playEmergeFromBehindLeft(timerBoardRef, isLandscape());
-      } else if (phase === "exitBoing") {
-        cancelBoing();
-        boingAnimation = playRetreatBehindLeft(timerBoardRef, isLandscape());
+        // merged を L で 1 回チリンと魅せてから (MERGE_ANTICIPATION_MS 後) timer 盤を裏から生み出す。
+        if (leftFaceRef) mergeAnticipationAnimation = playMergeAnticipation(leftFaceRef);
+        if (timerBoardRef) {
+          boardAnimation = playEmergeFromBehindLeft(timerBoardRef, isLandscape(), MERGE_ANTICIPATION_MS);
+        }
+      } else if (phase === "exitBoing" && timerBoardRef) {
+        boardAnimation = playRetreatBehindLeft(timerBoardRef, isLandscape());
       }
     }),
   );
-  onCleanup(cancelBoing);
+  onCleanup(cancelTransitionAnimations);
 
   return (
     <>
@@ -206,7 +214,11 @@ const TimerLayout: Component = () => {
           classList={{ "-mr-3": isLandscape(), "-mb-3": !isLandscape() }}
         >
           <Show when={timerShowsLeftFace()}>
-            <div class="relative" style={{ width: `${clockSize()}px`, height: `${clockSize()}px` }}>
+            <div
+              ref={leftFaceRef}
+              class="relative"
+              style={{ width: `${clockSize()}px`, height: `${clockSize()}px`, "transform-origin": "center" }}
+            >
               <ClockFace period="merged" hours={refHours()} />
               <HandsLayer hours={refHours()} minutes={refMinuteFloat()} />
             </div>
@@ -215,7 +227,8 @@ const TimerLayout: Component = () => {
 
         {/* PM 位置: タイマー盤。グレーの現在針 (ghost) + 黒い終了マーカー針 + その間を塗るタイマー扇。
             扇は ClockFace の children = ベースと数字の間に入り、現在針から残り時間ぶん塗る。
-            入室の boing-in / 退室の boing-out は WAAPI (下の createEffect)。収束/発散中は隠す。 */}
+            入室/退室で盤が L 盤の裏へスライドする (下の createEffect)。左へのはみ出しは寄せ量 (1.5rem 戻し)
+            で L 盤の内側に収めて防ぐ (overflow クリップだと中央に切り口の線が出るため使わない)。 */}
         <div
           class="relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
           classList={{ "-ml-3": isLandscape(), "-mt-3": !isLandscape() }}

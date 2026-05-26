@@ -112,3 +112,43 @@ export const playShakeNo = (el: Element, amplitudePx = 8): Animation | null =>
     duration: SHAKE_NO_DURATION_MS,
     easing: "ease-in-out",
   });
+
+/** クエイク (ググググーッ): center → peak → center の discrete pulse を左右交互 + 線形成長振幅で 6 発。
+ *  translate を左右に shift しつつ rotate を逆方向にひねって「ぐねっ」とした物理感を重ねる。pulse ごとに
+ *  中央へ戻る瞬間があり「グッ (戻る) グッ (戻る) グッ」と数えられる脈動感。はつかいき splash の起動演出と、
+ *  たいむ盤の産み出し時の震えで共通使用。transform-origin: center を呼び出し側で確保すること。 */
+export const QUAKE_DURATION_MS = 500;
+/** amplitudeScale: 振れ幅倍率。splash は全画面 container に当てるので 1 (4.5px/1.1deg) で十分だが、
+ *  時計サイズの要素に当てる時は埋もれるので大きめに指定する。 */
+const buildQuakeKeyframes = (amplitudeScale = 1): Keyframe[] => {
+  const PULSES = 6;
+  const MAX_TRANSLATE_PX = 4.5 * amplitudeScale;
+  const MAX_ROTATE_DEG = 1.1 * amplitudeScale;
+  const REST = "translate(0px, 0px) rotate(0deg)";
+  const frames: Keyframe[] = [{ transform: REST, offset: 0 }];
+  for (let i = 0; i < PULSES; i++) {
+    const ampFraction = (i + 1) / PULSES;
+    const sign = i % 2 === 0 ? 1 : -1;
+    const x = MAX_TRANSLATE_PX * ampFraction * sign;
+    const r = MAX_ROTATE_DEG * ampFraction * -sign;
+    frames.push({
+      transform: `translate(${x.toFixed(2)}px, 0px) rotate(${r.toFixed(2)}deg)`,
+      offset: (i + 0.5) / PULSES,
+    });
+    frames.push({ transform: REST, offset: (i + 1) / PULSES });
+  }
+  return frames;
+};
+
+export const playQuake = (
+  el: Element,
+  durationMs = QUAKE_DURATION_MS,
+  delayMs = 0,
+  amplitudeScale = 1,
+): Animation | null =>
+  animateMotion(el, buildQuakeKeyframes(amplitudeScale), {
+    duration: durationMs,
+    delay: delayMs,
+    easing: "linear",
+    fill: "none",
+  });
