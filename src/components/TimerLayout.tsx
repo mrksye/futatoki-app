@@ -15,6 +15,7 @@ import {
 import { timerAlarm } from "../features/timer/timer-alarm";
 import {
   timerTransitionPhase,
+  timerTransitionKind,
   timerShowsLeftFace,
   timerBoardHidden,
   playEmergeFromBehindLeft,
@@ -196,9 +197,12 @@ const TimerLayout: Component = () => {
           boardAnimation = playEmergeFromBehindLeft(timerBoardRef, isLandscape(), MERGE_ANTICIPATION_MS);
         }
       } else if (phase === "exitBoing") {
-        // 分離: timer 盤を裏へ退け、merged が自分自身を分裂させる前にググッとクエイクする (リンリンとは混ぜない)。
         if (timerBoardRef) boardAnimation = playRetreatBehindLeft(timerBoardRef, isLandscape());
-        if (leftFaceRef) leftFaceAnimation = playSplitAnticipation(leftFaceRef);
+        // クエイクは splitSide (→並列時計) の「自己分裂」だけ。centerSlide (→回転) は合体時計のまま中央へ
+        // スライドする = 分離しないので震わさない。
+        if (leftFaceRef && timerTransitionKind() === "splitSide") {
+          leftFaceAnimation = playSplitAnticipation(leftFaceRef);
+        }
       }
     }),
   );
