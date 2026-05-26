@@ -20,6 +20,8 @@ interface ClockFaceProps {
   period: "am" | "pm" | "merged";
   /** vivid パレット時の AM/PM 配色判別用 (merged 時のみ参照)。 */
   hours: number;
+  /** "gold" でベゼルを金色にする (タイマー盤だけ渡す。ClockFace 自体は timer を知らないまま)。 */
+  bezel?: "gold";
 }
 
 const ClockFace: ParentComponent<ClockFaceProps> = (props) => {
@@ -38,7 +40,7 @@ const ClockFace: ParentComponent<ClockFaceProps> = (props) => {
           : t("a11y.clockFace")
         }
       >
-        <BaseFace period={props.period} />
+        <BaseFace period={props.period} bezel={props.bezel} />
         {props.children}
         <FaceDetail period={props.period} hours={props.hours} />
       </svg>

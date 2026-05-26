@@ -248,7 +248,7 @@ const TimerLayout: Component = () => {
               class="relative"
               style={{ width: `${clockSize()}px`, height: `${clockSize()}px`, "transform-origin": "center" }}
             >
-              <ClockFace period="merged" hours={refHours()}>
+              <ClockFace period="merged" hours={refHours()} bezel="gold">
                 <TimerWedge fromMinute={refMinuteFloat()} spanMinutes={(remainingSeconds() ?? 0) / 60} />
               </ClockFace>
               <HandsLayer
