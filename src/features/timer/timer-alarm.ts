@@ -164,9 +164,8 @@ export async function createTimerAlarm(alarmUrl: string): Promise<TimerAlarm> {
   // 復帰時照合: suspend 中は AudioContext の currentTime が止まり予約発火がズレるので、壁時計から再導出して
   // 経過済みなら即鳴らし、未経過なら同じ endMs で予約を張り直す。
   const reconcile = (): void => {
-    if (disposed) return;
+    if (disposed || armedEndMs === null) return; // 未 arm (タイマー非稼働) なら何もしない
     resume();
-    if (armedEndMs === null) return;
     if (Date.now() >= armedEndMs) ensureAlarmPlaying();
     else arm(armedEndMs);
   };

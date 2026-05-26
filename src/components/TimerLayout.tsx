@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createSignal, onCleanup, Show, type Component } from "solid-js";
+import { createEffect, createMemo, createSignal, on, onCleanup, Show, type Component } from "solid-js";
 import ClockFace from "./clockface-layers/ClockFace";
 import HandsLayer from "./clockface-layers/HandsLayer";
 import TimerWedge from "../features/timer/TimerWedge";
@@ -13,6 +13,13 @@ import {
   completeTimer,
 } from "../features/timer/state";
 import { timerAlarm } from "../features/timer/timer-alarm";
+import {
+  timerTransitionPhase,
+  timerShowsLeftFace,
+  timerBoardHidden,
+  playTimerBoardBoingIn,
+  playTimerBoardBoingOut,
+} from "../features/timer/timer-transition";
 
 /**
  * 分タイマーモードの表示レイヤー。clock / 回転モードの表示ツリー (ClockLayout) とは排他で、回転
@@ -38,6 +45,9 @@ const NOW_HAND_OPACITY = 0.2;
 
 /** 完了時のバイブパターン (対応端末のみ。iOS Safari は Vibration API 非対応なので実質 Android 向け)。 */
 const ALARM_VIBRATE_PATTERN = [200, 100, 200];
+
+/** 表示更新 (針 SVG 再描画) の最小間隔。針はゆっくり動くので 4fps で十分、弱 GPU の負荷を抑える。 */
+const DISPLAY_TICK_MS = 250;
 
 const TimerLayout: Component = () => {
   const isLandscape = useOrientation();
@@ -121,6 +131,10 @@ const TimerLayout: Component = () => {
       return;
     }
     let animationFrameId = 0;
+    // 表示の commit (setNowMs → 両盤の針 SVG 再描画) は 4fps に間引く。針はゆっくり動くので 60fps は不要で、
+    // 毎フレーム再描画すると弱 GPU を圧迫する。rAF ループ自体は前景のみで回り (背景タブで自動停止)、
+    // running の完了判定は毎フレーム精度のまま (now >= endMs を間引かず見る)。
+    let lastCommitMs = 0;
     const tick = () => {
       const now = Date.now();
       if (phase === "running") {
@@ -133,7 +147,10 @@ const TimerLayout: Component = () => {
           return;
         }
       }
-      setNowMs(now);
+      if (now - lastCommitMs >= DISPLAY_TICK_MS) {
+        lastCommitMs = now;
+        setNowMs(now);
+      }
       animationFrameId = requestAnimationFrame(tick);
     };
     animationFrameId = requestAnimationFrame(tick);
@@ -151,39 +168,75 @@ const TimerLayout: Component = () => {
     return Math.min(halfW, halfH);
   });
 
+  // たいむ盤 (PM 位置) の boing。入室 (enterBoing) で「びよっ」と出し、退室 (exitBoing) で縮めて消す。
+  // 盤の mount/unmount は timerBoardHidden が制御し、ここは現れた盤に WAAPI を載せるだけ。
+  // boing-out は fill: forwards (終了後も縮んだ状態を保持) なので、放置するとブラウザが timeline に
+  // filling animation を残し続け、サイクルごとに合成レイヤーが溜まって弱 GPU でアニメが drop する。
+  // そこで前回の boing を必ず cancel してから張り、unmount でも cancel して残骸を一切残さない。
+  let timerBoardRef: HTMLDivElement | undefined;
+  let boingAnimation: Animation | null = null;
+  const cancelBoing = () => {
+    boingAnimation?.cancel();
+    boingAnimation = null;
+  };
+  createEffect(
+    on(timerTransitionPhase, (phase, prev) => {
+      if (prev === undefined || phase === prev || !timerBoardRef) return;
+      if (phase === "enterBoing") {
+        cancelBoing();
+        boingAnimation = playTimerBoardBoingIn(timerBoardRef, isLandscape());
+      } else if (phase === "exitBoing") {
+        cancelBoing();
+        boingAnimation = playTimerBoardBoingOut(timerBoardRef, isLandscape());
+      }
+    }),
+  );
+  onCleanup(cancelBoing);
+
   return (
     <>
       {/* 集中向けの静的背景 (中央に光だまり)。盤面の後ろに敷く decorative レイヤー。 */}
       <div class="timer-background absolute inset-0 pointer-events-none" />
       <div class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}>
-        {/* AM 位置: 現在時刻の合体時計 (通常の黒針)。z-10 は ClockLayout の split と揃える。 */}
+        {/* AM 位置: 現在時刻の合体時計 (通常の黒針)。z-10 は ClockLayout の split と揃える。
+            たいむ遷移の収束/発散フェーズ中は ClockLayout の clock ツリーが同じ位置に同じ merged 盤を描く
+            (継ぎ目を消す受け渡し) ので、ここでは隠す (timerShowsLeftFace)。 */}
         <div
           class="relative z-10 flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
           classList={{ "-mr-3": isLandscape(), "-mb-3": !isLandscape() }}
         >
-          <div class="relative" style={{ width: `${clockSize()}px`, height: `${clockSize()}px` }}>
-            <ClockFace period="merged" hours={refHours()} />
-            <HandsLayer hours={refHours()} minutes={refMinuteFloat()} />
-          </div>
+          <Show when={timerShowsLeftFace()}>
+            <div class="relative" style={{ width: `${clockSize()}px`, height: `${clockSize()}px` }}>
+              <ClockFace period="merged" hours={refHours()} />
+              <HandsLayer hours={refHours()} minutes={refMinuteFloat()} />
+            </div>
+          </Show>
         </div>
 
         {/* PM 位置: タイマー盤。グレーの現在針 (ghost) + 黒い終了マーカー針 + その間を塗るタイマー扇。
-            扇は ClockFace の children = ベースと数字の間に入り、現在針から残り時間ぶん塗る。 */}
+            扇は ClockFace の children = ベースと数字の間に入り、現在針から残り時間ぶん塗る。
+            入室の boing-in / 退室の boing-out は WAAPI (下の createEffect)。収束/発散中は隠す。 */}
         <div
           class="relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
           classList={{ "-ml-3": isLandscape(), "-mt-3": !isLandscape() }}
         >
-          <div class="relative" style={{ width: `${clockSize()}px`, height: `${clockSize()}px` }}>
-            <ClockFace period="merged" hours={refHours()}>
-              <TimerWedge fromMinute={refMinuteFloat()} spanMinutes={(remainingSeconds() ?? 0) / 60} />
-            </ClockFace>
-            <HandsLayer
-              hours={refHours()}
-              minutes={refMinuteFloat()}
-              minuteHandOpacity={NOW_HAND_OPACITY}
-              markerMinutes={markerMinutes()}
-            />
-          </div>
+          <Show when={!timerBoardHidden()}>
+            <div
+              ref={timerBoardRef}
+              class="relative"
+              style={{ width: `${clockSize()}px`, height: `${clockSize()}px`, "transform-origin": "center" }}
+            >
+              <ClockFace period="merged" hours={refHours()}>
+                <TimerWedge fromMinute={refMinuteFloat()} spanMinutes={(remainingSeconds() ?? 0) / 60} />
+              </ClockFace>
+              <HandsLayer
+                hours={refHours()}
+                minutes={refMinuteFloat()}
+                minuteHandOpacity={NOW_HAND_OPACITY}
+                markerMinutes={markerMinutes()}
+              />
+            </div>
+          </Show>
         </div>
       </div>
 

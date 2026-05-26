@@ -15,7 +15,7 @@ import {
   TIMER_MINUTE_OPTIONS,
   type RingOrigin,
 } from "../features/timer/state";
-import { timerAlarm, initTimerAlarm, disposeTimerAlarm } from "../features/timer/timer-alarm";
+import { timerAlarm, initTimerAlarm } from "../features/timer/timer-alarm";
 import { closeActivePopover } from "../lib/exclusive-popover";
 import { animateMotion, motionAllowed } from "../lib/motion";
 import StopwatchIcon from "./icons/StopwatchIcon";
@@ -46,15 +46,17 @@ const FAB_CLASS =
 const TimerActions: Component = () => {
   const { t } = useI18n();
 
-  // timer モード入室で音源 decode を先に済ませ、退室で全リソースを解放する。AudioContext の resume / arm は
-  // 必ず下の onClick ハンドラ (ジェスチャの呼び出しスタック内) で行う。reactive な effect で resume すると
-  // iOS がジェスチャ外と判定して unlock に失敗するため、ここでは生成 (suspended) だけに留める。
+  // アラーム (AudioContext + 82秒音源の decode) は初回入室で 1 度だけ生成し、以降は使い回す
+  // (initTimerAlarm は生成済みなら no-op)。入退室のたびに作り直すと AudioContext の生成/破棄コストと
+  // 14MB デコードの GC 圧が毎回かかり、繰り返すほど重くなるため。AudioContext の resume / arm は必ず下の
+  // onClick (ジェスチャ内) で行う。reactive effect で resume すると iOS がジェスチャ外と判定して unlock に
+  // 失敗するので、ここでは生成 (suspended) だけに留める。
   onMount(initTimerAlarm);
-  // timer モードを抜ける (= この component が unmount される) とき選択状態を破棄して unset へ戻し、
-  // アラームのリソース (ソース・リスナ・AudioContext) も解放する。
+  // timer モードを抜ける (= この component が unmount される) とき選択状態を破棄して unset へ戻し、予約発火を
+  // 取り消す (アラーム本体は使い回すので dispose せず disarm のみ。keepalive / AudioContext は維持)。
   onCleanup(() => {
     cancelTimer();
-    disposeTimerAlarm();
+    timerAlarm()?.disarm();
   });
 
   /** 現在の running 設定 (開始時刻 + 選んだ分) から終了時刻を出して予約発火を張る/張り直す。 */

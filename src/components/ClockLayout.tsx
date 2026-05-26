@@ -33,6 +33,20 @@ import {
   pmTransform,
   mergedTransform,
 } from "../features/free-rotation/merge-animation";
+import {
+  useTimerTransition,
+  timerTransitioning,
+  clockTreeMounted,
+  timerTreeMounted,
+  clockTreeShowsClocks,
+  clockShowsMergedAtLeft,
+  timerWrappersActive,
+  timerPmConvergingLeft,
+  timerMergedAtLeft,
+  timerMergedRevealed,
+  timerMergedTransform,
+  timerPmWrapperTransform,
+} from "../features/timer/timer-transition";
 import { useAmPmPreviewHold } from "../features/debug/am-pm-preview-lock";
 import { computeVisibleMinutes, useReleaseSnap } from "../features/free-rotation/release-snap";
 import { useI18n } from "../i18n";
@@ -464,6 +478,10 @@ export const ClockLayout: Component = () => {
   let mergedLongPressed = false;
   useMergeImpactWobble(() => mergedContainerRef, mergedRevealed);
 
+  // たいむモードへの出入りトランジションのフェーズ送りを仕込む (回転の合体機構とは別軸)。phase は
+  // timer-transition の module-level signal なので TimerLayout 側も同じものを読む。
+  useTimerTransition();
+
   /** わける/かさねる 切替中 (transitioning) は body に slot-transitioning を付与し、index.css の
    *  `body.slot-transitioning .slot-crossfade` rule で slot-crossfade ボタン (できごと追加 / 1ふん
    *  戻す / AM/PM バッジ) を slot-dim animation で 560ms 中央谷型に薄くする (移動するボタンに
@@ -523,9 +541,18 @@ export const ClockLayout: Component = () => {
   );
 
   /** AM/PM 各 wrapper の表示条件: merged 中 (transitioning 以外) は隠す。drag 中は反対側を unmount
-   *  して合成負荷を軽減する。 */
-  const amSplitVisible = createMemo(() => (!mergedVisible() || transitioning()) && (isAm() || !dragging()));
-  const pmSplitVisible = createMemo(() => (!mergedVisible() || transitioning()) && (!isAm() || !dragging()));
+   *  して合成負荷を軽減する。たいむ遷移中は split wrapper が動くフェーズ (splitSide の収束/発散) だけ出す
+   *  (centerSlide や boing 中は merged 盤だけ / TimerLayout 側が描く)。 */
+  const amSplitVisible = createMemo(() =>
+    timerTransitioning()
+      ? timerWrappersActive()
+      : (!mergedVisible() || transitioning()) && (isAm() || !dragging()),
+  );
+  const pmSplitVisible = createMemo(() =>
+    timerTransitioning()
+      ? timerWrappersActive()
+      : (!mergedVisible() || transitioning()) && (!isAm() || !dragging()),
+  );
 
   /** SkyBackground の mount/unmount は (gradient div 1 枚でも) DOM 挿入の強制 reflow が、同フレームに走る
    *  AM/PM wrapper の合体/分離 transform transition の baseline を奪い、wrapper が中央へ寄らず最終位置へ
@@ -562,17 +589,22 @@ export const ClockLayout: Component = () => {
       {/* timer モードは別レイアウト (両盤面を濃く表示する合体時計 2 個)。clock / 回転モードの
           表示ツリー (下の Show) とは排他で、TimerLayout は ClockLayout の回転 machinery を一切知らない。
           ModePicker 等の floating controls は外に出して両モードで共有する。 */}
-      <Show when={isTimerMode()}>
+      <Show when={timerTreeMounted()}>
         <Suspense>
           <TimerLayout />
         </Suspense>
       </Show>
 
-      <Show when={!isTimerMode()}>
+      <Show when={clockTreeMounted()}>
         <Show when={skyVisible()}>
           <SkyBackground totalMinutes={rotateMinutes()} />
         </Show>
 
+        {/* 時計そのもの (split wrapper / merged 盤 / 秒バー / バッジ)。たいむ中は unmount せず display:none で
+            隠す (重い盤 SVG を毎サイクル作り直さず使い回す = 生成/破棄とラスタ再生成の churn を断つ)。遷移の
+            boing フェーズ中は TimerLayout が L 盤を引き継ぐのでここも display:none。背景はこの外側。
+            display:contents は wrapper 自身の box を消し、子の absolute 配置を root 基準のまま保つ。 */}
+        <div style={{ display: clockTreeShowsClocks() ? "contents" : "none" }}>
         <div
           ref={containerRef}
           class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}
@@ -602,7 +634,7 @@ export const ClockLayout: Component = () => {
             }}
             style={{
               transform: amTransform(mergedVisible(), isLandscape()),
-              "will-change": transitioning() ? "transform" : "auto",
+              "will-change": transitioning() || timerTransitioning() ? "transform" : "auto",
             }}
           >
             <Show when={amSplitVisible()}>
@@ -612,7 +644,7 @@ export const ClockLayout: Component = () => {
                 </DimOverlay>
                 {/* ActivityLayer は dim 階層の外。merge transition 中 / autoRotate 中は外す
                     (620ms 合成負荷 / autoRotate の高速回転による合成負荷を回避)。 */}
-                <Show when={!transitioning() && clockMode() !== "autoRotate"}>
+                <Show when={!transitioning() && !timerTransitioning() && clockMode() !== "autoRotate"}>
                   <ActivityLayer
                     period="am"
                     dimmed={!isAm()}
@@ -634,11 +666,15 @@ export const ClockLayout: Component = () => {
               "-ml-3": isLandscape(),
               "-mt-3": !isLandscape(),
               "selection-dim-instant": selectionDimInstant(),
-              "merge-hidden": mergedVisible(),
+              // 収束 (L へ寄る) では merge-hidden を付けて合体方向 easing (ease-in-out, overshoot なし) にする。
+              // retain で wrapper は常駐なので born-hidden は起きない。バウンス easing だと左へ行き過ぎる。
+              "merge-hidden": mergedVisible() || timerPmConvergingLeft(),
             }}
             style={{
-              transform: pmTransform(mergedVisible(), isLandscape()),
-              "will-change": transitioning() ? "transform" : "auto",
+              transform: timerPmConvergingLeft()
+                ? timerPmWrapperTransform(isLandscape())
+                : pmTransform(mergedVisible(), isLandscape()),
+              "will-change": transitioning() || timerTransitioning() ? "transform" : "auto",
             }}
           >
             <Show when={pmSplitVisible()}>
@@ -646,7 +682,7 @@ export const ClockLayout: Component = () => {
                 <DimOverlay opacity={pmSelectionOpacity()}>
                   <ClockFace period="pm" hours={pmTime().hours} />
                 </DimOverlay>
-                <Show when={!transitioning() && clockMode() !== "autoRotate"}>
+                <Show when={!transitioning() && !timerTransitioning() && clockMode() !== "autoRotate"}>
                   <ActivityLayer
                     period="pm"
                     dimmed={isAm()}
@@ -665,7 +701,7 @@ export const ClockLayout: Component = () => {
             (mergedVisible || transitioning) は DOM に保持する。
             opacity / transform は mergedRevealed 経由 (false→true 時に 1 frame 遅延 → fresh mount でも
             CSS transition が発火する。詳細は merge-animation.ts)。 */}
-        <Show when={mergedVisible() || transitioning()}>
+        <Show when={mergedVisible() || transitioning() || clockShowsMergedAtLeft()}>
           {/* pointer-events-none のままでも子 (icon 等) からの bubble は handler に届くので、merged β
               内の icon ドラッグも autoRotate→freeRotate / drag に拾える。touch-action は icon 等の祖先を辿る
               ので、ここに none を置かないと browser が touch を panning に取られる (containerRef は
@@ -676,12 +712,14 @@ export const ClockLayout: Component = () => {
             classList={{
               "flex-row": isLandscape(),
               "flex-col": !isLandscape(),
-              "merge-revealed": mergedRevealed(),
+              "merge-revealed": clockShowsMergedAtLeft() ? timerMergedRevealed() : mergedRevealed(),
             }}
             style={{
-              transform: mergedTransform(mergedRevealed()),
+              transform: clockShowsMergedAtLeft()
+                ? timerMergedTransform(timerMergedAtLeft(), timerMergedRevealed(), isLandscape())
+                : mergedTransform(mergedRevealed()),
               "transform-origin": "center",
-              "will-change": transitioning() ? "transform, opacity" : "auto",
+              "will-change": transitioning() || timerTransitioning() ? "transform, opacity" : "auto",
               "touch-action": clockMode() === "freeRotate" ? "none" : "auto",
             }}
             onPointerDown={onDragStart}
@@ -698,15 +736,15 @@ export const ClockLayout: Component = () => {
               style={{
                 "pointer-events": "auto",
               }}
-              onPointerDown={onMergedClockPointerDown}
-              onPointerUp={onMergedClockPointerUp}
+              onPointerDown={() => { if (!timerTransitioning()) onMergedClockPointerDown(); }}
+              onPointerUp={() => { if (!timerTransitioning()) onMergedClockPointerUp(); }}
               onPointerCancel={cancelMergedPress}
             >
               <ClockFace period="merged" hours={displayed().hours} />
               {/* 重ね表示: 現在 period を前 + 不透明、反対側を dimOpacity=0.15 で後ろに重ねる。
                   z-index は使わない (正の z は z-auto の HandsLayer を覆う)。
                   merge transition 中 / autoRotate 中は二重描画コスト回避で外す。 */}
-              <Show when={!transitioning() && clockMode() !== "autoRotate"}>
+              <Show when={!transitioning() && !timerTransitioning() && clockMode() !== "autoRotate"}>
                 <Show
                   when={displayed().hours < 12}
                   fallback={<>
@@ -762,6 +800,7 @@ export const ClockLayout: Component = () => {
           onPointerCancel={clearHold}
         >
           {isAm() ? t("badge.am") : t("badge.pm")}
+        </div>
         </div>
       </Show>
 
