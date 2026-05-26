@@ -4,6 +4,8 @@ import { useIsTablet } from "../hooks/useIsTablet";
 import {
   timerPhase,
   pickerOrigin,
+  selectedMinutes,
+  runStartMs,
   openPicker,
   closePicker,
   selectMinutes,
@@ -13,6 +15,7 @@ import {
   TIMER_MINUTE_OPTIONS,
   type RingOrigin,
 } from "../features/timer/state";
+import { timerAlarm, initTimerAlarm, disposeTimerAlarm } from "../features/timer/timer-alarm";
 import { closeActivePopover } from "../lib/exclusive-popover";
 import { animateMotion, motionAllowed } from "../lib/motion";
 import StopwatchIcon from "./icons/StopwatchIcon";
@@ -43,8 +46,38 @@ const FAB_CLASS =
 const TimerActions: Component = () => {
   const { t } = useI18n();
 
-  // timer モードを抜ける (= この component が unmount される) とき選択状態を破棄して unset へ。
-  onCleanup(cancelTimer);
+  // timer モード入室で音源 decode を先に済ませ、退室で全リソースを解放する。AudioContext の resume / arm は
+  // 必ず下の onClick ハンドラ (ジェスチャの呼び出しスタック内) で行う。reactive な effect で resume すると
+  // iOS がジェスチャ外と判定して unlock に失敗するため、ここでは生成 (suspended) だけに留める。
+  onMount(initTimerAlarm);
+  // timer モードを抜ける (= この component が unmount される) とき選択状態を破棄して unset へ戻し、
+  // アラームのリソース (ソース・リスナ・AudioContext) も解放する。
+  onCleanup(() => {
+    cancelTimer();
+    disposeTimerAlarm();
+  });
+
+  /** 現在の running 設定 (開始時刻 + 選んだ分) から終了時刻を出して予約発火を張る/張り直す。 */
+  const armCurrentRun = () => {
+    const start = runStartMs();
+    const minutes = selectedMinutes();
+    if (start !== null && minutes !== null) timerAlarm()?.arm(start + minutes * 60000);
+  };
+  /** いちじていし: FSM を paused にして予約発火を取り消す (keepalive は維持)。 */
+  const onPause = () => {
+    pauseTimer();
+    timerAlarm()?.disarm();
+  };
+  /** さいかい: FSM を running に戻し、再計算した終了時刻で予約を張り直す。 */
+  const onResume = () => {
+    resumeTimer();
+    armCurrentRun();
+  };
+  /** とりけし / 完了: FSM を unset に戻し、鳴っている/予約済みのアラームを止める。 */
+  const onCancel = () => {
+    cancelTimer();
+    timerAlarm()?.disarm();
+  };
 
   /** せっとを押したら他の popover (もーど / 設定) を閉じ、ボタン中心をリングの中心にして開く。 */
   const onSet = (e: MouseEvent) => {
@@ -71,27 +104,27 @@ const TimerActions: Component = () => {
 
         {/* running: いちじていし (⏸ primary, 最下段) + とりけし (上)。リングで分を選んだ瞬間にここへ来る。 */}
         <Show when={timerPhase() === "running"}>
-          <button class={FAB_CLASS} aria-label={t("timer.pause")} onClick={pauseTimer}>
+          <button class={FAB_CLASS} aria-label={t("timer.pause")} onClick={onPause}>
             <PauseIcon class={iconClass} />
           </button>
-          <button class={FAB_CLASS} aria-label={t("timer.cancel")} onClick={cancelTimer}>
+          <button class={FAB_CLASS} aria-label={t("timer.cancel")} onClick={onCancel}>
             <CancelIcon class={iconClass} />
           </button>
         </Show>
 
         {/* paused: さいかい (▶ primary, 最下段) + とりけし (上)。 */}
         <Show when={timerPhase() === "paused"}>
-          <button class={FAB_CLASS} aria-label={t("timer.resume")} onClick={resumeTimer}>
+          <button class={FAB_CLASS} aria-label={t("timer.resume")} onClick={onResume}>
             <PlayIcon class={iconClass} />
           </button>
-          <button class={FAB_CLASS} aria-label={t("timer.cancel")} onClick={cancelTimer}>
+          <button class={FAB_CLASS} aria-label={t("timer.cancel")} onClick={onCancel}>
             <CancelIcon class={iconClass} />
           </button>
         </Show>
 
         {/* done: 完了 (✓) 1 個。音を止めて unset に戻す。 */}
         <Show when={timerPhase() === "done"}>
-          <button class={FAB_CLASS} aria-label={t("timer.done")} onClick={cancelTimer}>
+          <button class={FAB_CLASS} aria-label={t("timer.done")} onClick={onCancel}>
             <CheckIcon class={iconClass} />
           </button>
         </Show>
@@ -307,7 +340,12 @@ const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
         // ボタンは angleRad = (i/N)*2π - π/2 で配置 + 親リングの rotation。逆算で最寄り index。
         const rawIdx = ((Math.atan2(dy, dx) - ringRotRad + Math.PI / 2) / (2 * Math.PI)) * N;
         const nearest = ((Math.round(rawIdx) % N) + N) % N;
-        selectMinutes(RING_ITEMS[nearest]!);
+        const minutes = RING_ITEMS[nearest]!;
+        selectMinutes(minutes);
+        // この onClick がジェスチャの起点。ここで AudioContext を resume し終了時刻の予約発火を張る
+        // (旧 Howler が肩代わりしていたグローバル unlock が無くなったため)。
+        const start = runStartMs();
+        if (start !== null) timerAlarm()?.arm(start + minutes * 60000);
         return;
       }
     }

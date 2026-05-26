@@ -12,7 +12,7 @@ import {
   pausedRemainingMs,
   completeTimer,
 } from "../features/timer/state";
-import { useTimerEndSound } from "../features/timer/timer-sound";
+import { timerAlarm } from "../features/timer/timer-alarm";
 
 /**
  * 分タイマーモードの表示レイヤー。clock / 回転モードの表示ツリー (ClockLayout) とは排他で、回転
@@ -35,6 +35,9 @@ import { useTimerEndSound } from "../features/timer/timer-sound";
 
 /** PM 位置のグレー現在針 (長針 ghost) の黒本体の不透明度。黒い終了マーカー (不透明) との対比で薄く見せる。 */
 const NOW_HAND_OPACITY = 0.2;
+
+/** 完了時のバイブパターン (対応端末のみ。iOS Safari は Vibration API 非対応なので実質 Android 向け)。 */
+const ALARM_VIBRATE_PATTERN = [200, 100, 200];
 
 const TimerLayout: Component = () => {
   const isLandscape = useOrientation();
@@ -96,9 +99,6 @@ const TimerLayout: Component = () => {
     return null;
   };
 
-  // 完了 (done) でループ音を鳴らす / running 中 preload / 離脱・完了・とりけし で停止。
-  useTimerEndSound();
-
   /** ロケール数字で 2 桁ゼロ埋め (formatNumeral は桁数を保たないので 1 桁は zero glyph を前置)。 */
   const pad2 = (v: number) => (v < 10 ? formatNumeral(0) + formatNumeral(v) : formatNumeral(v));
   const digital = (): string | null => {
@@ -107,28 +107,37 @@ const TimerLayout: Component = () => {
     return `${pad2(Math.floor(r / 60))}:${pad2(r % 60)}`;
   };
 
-  // timer モード中は 250ms ごとに現在時刻を取り直し、両盤面の針を live で進める (paused でも時計は実時刻
-  // のまま進み、扇=残りだけ凍結)。phase を読んで遷移ごとに interval を張り直す。running 中は終了時刻に
-  // 達したら現在時刻を完了時刻に clamp して done へ遷移する (現在針が終了マーカーちょうどに重なって止まる)。
-  // done は完了時刻で盤面を凍結するので tick しない。
+  // timer モード中は requestAnimationFrame で現在時刻を取り直し、両盤面の針を live で進める (paused でも
+  // 時計は実時刻のまま進み、扇=残りだけ凍結)。setInterval ではなく rAF なのは、背景タブでは自動的に止まり
+  // 計時を無駄に進めないため。計時の真実は endMs - Date.now() のままで、rAF は表示専用 (値の積算はしない)。
+  // running 中に終了時刻へ達したら現在時刻を完了時刻に clamp し、done へ遷移してアラームを鳴らす
+  // (フォアグラウンド発火経路)。背景での発火と復帰時の取りこぼし回収は timer-alarm 側の予約発火 /
+  // visibilitychange 照合が担当する。done は完了時刻で盤面を凍結するので tick しない。
   createEffect(() => {
     const phase = timerPhase();
-    if (phase === "done") return;
-    setNowMs(Date.now());
-    const id = setInterval(() => {
+    if (phase === "done") {
+      const e = endMs();
+      if (e !== null) setNowMs(e);
+      return;
+    }
+    let animationFrameId = 0;
+    const tick = () => {
       const now = Date.now();
       if (phase === "running") {
         const e = endMs();
         if (e !== null && now >= e) {
           setNowMs(e);
           completeTimer();
-          clearInterval(id);
+          timerAlarm()?.ensureAlarmPlaying();
+          if (typeof navigator.vibrate === "function") navigator.vibrate(ALARM_VIBRATE_PATTERN);
           return;
         }
       }
       setNowMs(now);
-    }, 250);
-    onCleanup(() => clearInterval(id));
+      animationFrameId = requestAnimationFrame(tick);
+    };
+    animationFrameId = requestAnimationFrame(tick);
+    onCleanup(() => cancelAnimationFrame(animationFrameId));
   });
 
   /** 各半盤に置ける合体時計の natural 寸法 (min(halfW, halfH))。ClockLayout の isRotating 時と同じ

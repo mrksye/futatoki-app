@@ -10,7 +10,7 @@ import RotationActions from "./RotationActions";
 import SecondsBar from "./SecondsBar";
 import SettingsPopover from "./SettingsPopover";
 import SkyBackground from "./SkyBackground";
-// timer 機能 (howler + 音源参照を含む) は pilot 限定 + 重いので lazy 分割し main バンドルから外す。
+// timer 機能 (Web Audio + 音源参照を含む) は重いので lazy 分割し main バンドルから外す。
 // 分割された chunk/音源は vite-plugin-pwa の precache 対象なのでオフラインでも動く。
 const TimerLayout = lazy(() => import("./TimerLayout"));
 const TimerActions = lazy(() => import("./TimerActions"));
