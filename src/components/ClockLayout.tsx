@@ -72,8 +72,9 @@ const CLOCK_FACE_SHAKE_AMPLITUDE_PX = 5;
 /** freeRotate 中の長押し warning 検出パラメータ。clock モードの EventIcon が持つ LONG_PRESS_MS と
  *  揃える。 */
 const ROTATION_LONG_PRESS_MS = 500;
-/** 起点から MOVE_THRESHOLD_PX を超えたら drag とみなして warning は出さない。 */
-const ROTATION_LONG_PRESS_MOVE_THRESHOLD_PX = 8;
+/** pointerdown 起点からこの距離を超えて動いたら「静止長押し」でなく実ドラッグと確定する閾値。確定後は
+ *  反対側 split 盤を unmount してよくなり、静止前提の長押し warning は取り消す。 */
+const ROTATION_DRAG_CONFIRM_THRESHOLD_PX = 8;
 
 type DragState = DragDragState;
 
@@ -206,6 +207,9 @@ export const ClockLayout: Component = () => {
    *  display の float-vs-ceil 切替に使う。 */
   const [dragging, setDragging] = createSignal(false);
   const moving = createMemo(() => dragging() || clockMode() === "autoRotate");
+  /** 実ドラッグが確定したか (pointerdown から閾値を超えて動いた)。静止長押し中は false のまま。
+   *  反対側 split 盤の unmount (合成負荷軽減) はこの確定後だけに限定し、長押し中は薄い側の盤も残す。 */
+  const [dragConfirmed, setDragConfirmed] = createSignal(false);
 
   const displayed = createMemo(() => {
     if (isRotating()) {
@@ -266,6 +270,9 @@ export const ClockLayout: Component = () => {
   let pmWrapperRef: HTMLDivElement | undefined;
   /** 高頻度 pointermove で書き換わるため signal にせず直接 mutate して allocation を抑える。 */
   let dragRef: DragState | null = null;
+  /** pointerdown 起点の座標。実ドラッグ確定判定 (confirmDragOnMove) に使う。 */
+  let pressOriginX = 0;
+  let pressOriginY = 0;
   let pendingMinutes: number | null = null;
   let rafId: number | null = null;
 
@@ -283,11 +290,10 @@ export const ClockLayout: Component = () => {
   };
 
   /** freeRotate 中、pointerdown ができごとアイコン上で起きた時の長押し warning 検出 state。container が
-   *  pointer をキャプチャすると icon は pointerup を受け取れないので、icon でなく container 側で
-   *  タイマーと movement 判定を持つ。clock モードの長押し (EventIcon 内) とは独立した経路。 */
+   *  pointer をキャプチャすると icon は pointerup を受け取れないので、icon でなく container 側でタイマーを
+   *  持つ。movement による取り消しは実ドラッグ確定 (confirmDragOnMove) に相乗りする。clock モードの長押し
+   *  (EventIcon 内) とは独立した経路。 */
   let longPressTimer: ReturnType<typeof setTimeout> | undefined;
-  let longPressStartX = 0;
-  let longPressStartY = 0;
   let longPressIconMinutes: number | null = null;
 
   const findIconMinutesFromTarget = (target: EventTarget | null): number | null => {
@@ -303,8 +309,6 @@ export const ClockLayout: Component = () => {
     if (interaction().type !== "none") return;
     const minutes = findIconMinutesFromTarget(e.target);
     if (minutes === null) return;
-    longPressStartX = e.clientX;
-    longPressStartY = e.clientY;
     longPressIconMinutes = minutes;
     longPressTimer = setTimeout(() => {
       longPressTimer = undefined;
@@ -316,13 +320,16 @@ export const ClockLayout: Component = () => {
     }, ROTATION_LONG_PRESS_MS);
   };
 
-  const checkLongPressWarningMove = (e: PointerEvent) => {
-    if (!longPressTimer) return;
-    const dx = e.clientX - longPressStartX;
-    const dy = e.clientY - longPressStartY;
-    if (Math.hypot(dx, dy) > ROTATION_LONG_PRESS_MOVE_THRESHOLD_PX) {
-      cancelLongPressWarning();
-    }
+  /** pointer が pressOrigin から閾値を超えて動いたら実ドラッグと確定する。確定で反対側 split 盤の unmount を
+   *  許可し (dragConfirmed)、静止前提の長押し warning も取り消す。閾値内に留まる長押し中は dragConfirmed が
+   *  false のまま = 薄い側の盤も見えたまま残る。 */
+  const confirmDragOnMove = (e: PointerEvent) => {
+    if (dragConfirmed()) return;
+    const dx = e.clientX - pressOriginX;
+    const dy = e.clientY - pressOriginY;
+    if (Math.hypot(dx, dy) <= ROTATION_DRAG_CONFIRM_THRESHOLD_PX) return;
+    setDragConfirmed(true);
+    cancelLongPressWarning();
   };
 
   const cancelLongPressWarning = () => {
@@ -351,8 +358,11 @@ export const ClockLayout: Component = () => {
     // やらないと dragStart が float の startMinutes を capture してしまい、commit が後から
     // 書き戻されて drag 中に逆回転が混じる。
     flushPendingCommit();
+    pressOriginX = e.clientX;
+    pressOriginY = e.clientY;
+    setDragConfirmed(false);
     // pointer ができごとアイコン上で押された場合の長押し warning 検出を仕込む
-    // (drag と並行: 8px 動いたら drag 確定で warning は出さない、500ms 静止なら warning に入る)。
+    // (drag と並行: 閾値を超えて動いたら drag 確定で warning は出さない、500ms 静止なら warning に入る)。
     startLongPressWarning(e);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     dragRef = dragStart(e, rotateMinutes());
@@ -360,7 +370,7 @@ export const ClockLayout: Component = () => {
   };
 
   const onDragMove = (e: PointerEvent) => {
-    checkLongPressWarningMove(e);
+    confirmDragOnMove(e);
     const s = dragRef;
     if (!s || e.pointerId !== s.pointerId) return;
     queueSeek(dragAdvance(e, s));
@@ -374,6 +384,7 @@ export const ClockLayout: Component = () => {
     if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId);
     dragRef = null;
     setDragging(false);
+    setDragConfirmed(false);
     if (rafId !== null) {
       cancelAnimationFrame(rafId);
       rafId = null;
@@ -579,18 +590,19 @@ export const ClockLayout: Component = () => {
     () => previewFlipped() || (isRotating() && !transitioning()),
   );
 
-  /** AM/PM 各 wrapper の表示条件: merged 中 (transitioning 以外) は隠す。drag 中は反対側を unmount
-   *  して合成負荷を軽減する。たいむ遷移中は split wrapper が動くフェーズ (splitSide の収束/発散) だけ出す
+  /** AM/PM 各 wrapper の表示条件: merged 中 (transitioning 以外) は隠す。実ドラッグ確定中は反対側を
+   *  unmount して合成負荷を軽減する (静止長押し中は dragConfirmed=false なので薄い側の盤も残る)。
+   *  たいむ遷移中は split wrapper が動くフェーズ (splitSide の収束/発散) だけ出す
    *  (centerSlide や boing 中は merged 盤だけ / TimerLayout 側が描く)。 */
   const amSplitVisible = createMemo(() =>
     timerTransitioning()
       ? timerWrappersActive()
-      : (!mergedVisible() || transitioning()) && (isAm() || !dragging()),
+      : (!mergedVisible() || transitioning()) && (isAm() || !dragConfirmed()),
   );
   const pmSplitVisible = createMemo(() =>
     timerTransitioning()
       ? timerWrappersActive()
-      : (!mergedVisible() || transitioning()) && (!isAm() || !dragging()),
+      : (!mergedVisible() || transitioning()) && (!isAm() || !dragConfirmed()),
   );
 
   /** AM/PM バッジを出すのは「とけい」静止時だけ。回転中・たいむ中はもちろん、たいむ遷移中も隠す。
