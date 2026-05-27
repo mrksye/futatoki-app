@@ -24,7 +24,9 @@ import { isIosLike } from "./timer-alarm";
  * が外れて、ロック中に肝心の完了アラームが鳴らなくなる (timer-alarm の失敗策②と同根)。チャイムは「あれば嬉しい
  * 予告」、完了アラームは「絶対鳴らす本命」なので、衝突する iOS では本命を最優先してチャイムを諦める。よって
  * チャイムは Android / desktop 専用機能。Android / desktop の AudioContext はロックで suspend されないため、
- * 前景でも背景でも鳴る (背景凍結中にまたいだ予告は復帰時に黙って捨てる)。
+ * 前景でも背景でも鳴る (背景で凍結していた場合は復帰後の最初の判定で、またいだ中の最も差し迫った 1 つを鳴らす)。
+ * 復帰時照合 (reconcile) は持たない — それがあると focus / 可視化のたびに起点がリセットされて境界付近のチャイムを
+ * 取りこぼすため (詳細は下の disarm 付近のコメント)。
  *
  * 削除容易性: チャイムの関心事はこのファイル 1 つに隔離してある。このファイルを消し、TimerActions /
  * TimerLayout から timerChime 参照と init/arm/disarm の呼び出しを除けば、タイマーは予告音なしで動く。
@@ -193,26 +195,16 @@ async function createTimerChimeEngine(): Promise<TimerChime> {
     clearWatch();
   };
 
-  // 復帰時照合 (reconcile): 隠れている間に watch が止まっていたら起点を現在の残りに揃え直すだけで、またいだ
-  // 予告は鳴らさない (前景の事前予告なので取りこぼしは黙って捨てる。締切の発火は timer-alarm が担当)。
-  const reconcile = (): void => {
-    if (disposed || armedEndMs === null) return;
-    previousRemainingMs = armedEndMs - Date.now();
-  };
-
-  const onVisibilityChange = (): void => {
-    if (document.visibilityState === "visible") reconcile();
-  };
-  const onFocus = (): void => reconcile();
-
-  document.addEventListener("visibilitychange", onVisibilityChange);
-  window.addEventListener("focus", onFocus);
+  // アラームと違い visibilitychange / focus の復帰時照合 (reconcile) は持たない。focus や可視化のたびに起点
+  // (previousRemainingMs) を現在の残りへ揃え直すと、ちょうど閾値をまたぐ前後の約 1 秒にそのリセットが挟まった
+  // とき越境エッジ (prev > 閾値) が消え、その回のチャイムを取りこぼす (タイマー稼働中にウィンドウを切り替えて
+  // 戻ると不安定に鳴ったり鳴らなかったりした原因)。setInterval + エッジ検出だけに任せれば前景は確実に鳴り、
+  // 背景凍結明けも checkMilestones がまたいだ中の最も差し迫った 1 つを (やや遅れて) 鳴らす。締切ちょうどの
+  // 発火は timer-alarm が担当するので、チャイム側に取りこぼし回収の責務はない。
 
   const dispose = (): void => {
     if (disposed) return;
     disposed = true;
-    document.removeEventListener("visibilitychange", onVisibilityChange);
-    window.removeEventListener("focus", onFocus);
     clearWatch();
     armedEndMs = null;
     audioContext.close().catch((error) => warn("[timer-chime] close failed:", error));
