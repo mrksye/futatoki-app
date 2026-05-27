@@ -13,32 +13,36 @@ import chime5Url from "./sounds/chime-5min.m4a";
  *   - 残り  5 分: ポーーーーン   (いちばん長く伸ばした音を 1 つ。もうすぐ終わりの合図)
  *
  * 音は m4a アセット (build-tools/generate-chime-sounds.ts が合成して焼き込む。音色を変えたいときはそのスクリプトの
- * パラメータを変えて再生成し m4a をコミットする)。実行時はこれを decode して BufferSource で鳴らす = 完了アラームと
- * 同じ再生経路。以前はオシレータでその場合成していたが Android で発火が不安定だったため、アラームと同じ
- * 「録音済みバッファ再生」に揃えた (= Android でも確実に鳴る)。
+ * パラメータを変えて再生成し m4a をコミットする)。
  *
  * 計時はアラームと同じ哲学で「回すのは setInterval、測るのは Date.now()」。interval が発火した回数を積算すると、
  * 背景タブで throttle されたときに発火回数が減って実時間より経過が少なく見積もられ予告がズレるので、発火回数は
- * 数えず watch の中で remaining = endMs - Date.now() を物差しとして読むだけにする (コストはほぼ 0)。鳴らすかどうかは
- * 「残りが閾値以下になった未発火のマイルストーンを鳴らす」レベル判定で、発火済みセットで各マイルストーンをちょうど
- * 1 回に絞る。開始時点で残り以上の閾値 (= タイマー長以上) は arm で発火済みに埋めるので鳴らない (例: 15 分タイマーは
- * 開始時に残り 15 分を鳴らさず 10 分・5 分だけ)。エッジ (prev > 閾値 かつ now <= 閾値) ではなくレベルにするのは、
- * prev が 1 tick でもズレると越境を取りこぼすのを避けるため。
+ * 数えず watch の中で remaining = endMs - Date.now() を物差しとして読むだけにする。鳴らすかどうかは「残りが閾値
+ * 以下になった未発火のマイルストーンを鳴らす」レベル判定で、発火済みセットで各マイルストーンをちょうど 1 回に絞る。
+ * 開始時点で残り以上の閾値 (= タイマー長以上) は arm で発火済みに埋めるので鳴らない (例: 15 分タイマーは開始時に
+ * 残り 15 分を鳴らさず 10 分・5 分だけ)。エッジ (prev > 閾値 かつ now <= 閾値) ではなくレベルにするのは、prev が
+ * 1 tick でもズレると越境を取りこぼすのを避けるため。focus/visibilitychange の復帰時照合 (reconcile) は持たない
+ * (起点リセットが境界付近で取りこぼす)。
  *
- * プラットフォーム制約 — iOS ではチャイムを一切動かさない (initTimerChime が iOS で即 return し AudioContext を
- * 作らない)。iOS の完了アラームは HTMLAudio の keepalive 無音ループで単一オーディオセッションを掴んで背景生存
- * しているが、そこへチャイムが Web Audio の AudioContext を resume するとセッションを奪い合い keepalive のグリップ
- * が外れて、ロック中に肝心の完了アラームが鳴らなくなる (timer-alarm の失敗策②と同根)。チャイムは「あれば嬉しい
- * 予告」、完了アラームは「絶対鳴らす本命」なので、衝突する iOS では本命を最優先してチャイムを諦める。よって
- * チャイムは Android / desktop 専用機能。Android / desktop の AudioContext はロックで suspend されないため、
- * 前景でも背景でも鳴る (背景で凍結していた場合は復帰後の最初の判定で、またいだ中の最も差し迫った 1 つを鳴らす)。
+ * 「どう鳴らすか」だけプラットフォームで割れるので ChimePlayer を 2 つ用意して isIosLike() で振り分ける (完了
+ * アラームと同じ二エンジン思想):
+ *
+ *   - iOS (createHtmlAudioChimePlayer): iOS は画面ロックで AudioContext を suspend するうえ、AudioContext を
+ *     resume すると完了アラームの HTMLAudio keepalive が掴んでいるオーディオセッションを奪って keepalive を壊す。
+ *     なので Web Audio は使わず、各予告音を HTMLAudioElement にして arm のジェスチャ内で pre-unlock しておき、
+ *     締切前の setInterval (非ジェスチャ) から再生する。背景でページ・setInterval を生かしているのは完了アラームの
+ *     keepalive で、TimerActions がアラームとチャイムを必ず一緒に arm するため keepalive は常に走っている = チャイム
+ *     はそのセッションに相乗りして背景でも鳴る。チャイム自身は keepalive を持たない (二重に持たない)。
+ *
+ *   - Android / desktop (createWebAudioChimePlayer): AudioContext はロックで suspend されないので、起動時に
+ *     m4a を decode してバッファ化し、発火時に BufferSource で鳴らす (完了アラームの非 iOS エンジンと同じ経路)。
  *
  * 削除容易性: チャイムの関心事はこのファイル 1 つ (と sounds/chime-*.m4a) に隔離してある。このファイルを消し、
  * TimerActions / TimerLayout から timerChime 参照と init/arm/disarm の呼び出しを除けば、タイマーは予告音なしで動く。
  */
 
-/** スケジュールのリード時間 (秒)。currentTime ちょうどに start すると、メインスレッドが詰まっているとき開始が
- *  「過去」に落ちて取りこぼすことがある。わずかに未来へ置いて確実に発音させる。 */
+/** Web Audio で BufferSource を鳴らすときのリード時間 (秒)。currentTime ちょうどに start するとメインスレッド
+ *  逼迫時に開始が過去落ちして取りこぼすので、わずかに未来へ置く。 */
 const SCHEDULE_LEAD_SECONDS = 0.05;
 
 /** 締切監視ポーリング間隔 (ms)。マイルストーンは分単位なので 1 秒精度で十分。背景下では throttle され得るが、
@@ -58,13 +62,25 @@ const MILESTONE_CHIMES: readonly { remainingMs: number; soundUrl: string }[] = [
 export interface TimerChime {
   /**
    * 新規開始 / さいかい のとき、必ずユーザージェスチャのハンドラ内から呼ぶこと (オーディオ unlock 要件)。
-   * AudioContext を resume し、endMs までの締切監視を始める。開始時点で残り以上の閾値は発火済みに埋めるので、
+   * 再生エンジンを unlock し、endMs までの締切監視を始める。開始時点で残り以上の閾値は発火済みに埋めるので、
    * 開始時の発火や、さいかいで既に過ぎたマイルストーンの鳴り直しは起きない。
    */
   arm(endMs: number): void;
-  /** 締切監視を止める (pause / とりけし / 完了 / モード離脱用)。チャイムは loop しないので止める音はない。 */
+  /** 締切監視を止めて鳴っている予告音を止める (pause / とりけし / 完了 / モード離脱用)。 */
   disarm(): void;
-  /** 全リソース解放: 監視停止・AudioContext close。 */
+  /** 全リソース解放: 監視停止・再生エンジン破棄。 */
+  dispose(): void;
+}
+
+/** プラットフォーム別の「予告音をどう鳴らすか」。発火判定・監視はこの上の共通エンジンが担う。 */
+interface ChimePlayer {
+  /** ジェスチャ内で呼ぶ。以降 play() が (背景でも) 鳴らせるよう下ごしらえ (iOS=要素を pre-unlock / 非 iOS=resume)。 */
+  unlock(): void;
+  /** 指定 URL の予告音を頭から 1 回鳴らす (非ジェスチャからも)。 */
+  play(soundUrl: string): void;
+  /** 鳴っている予告音を止める。 */
+  stopAll(): void;
+  /** 解放。 */
   dispose(): void;
 }
 
@@ -76,21 +92,121 @@ const warn = (message: string, error: unknown): void => {
   }
 };
 
-async function createTimerChimeEngine(): Promise<TimerChime> {
+/** iOS 向け: HTMLAudioElement。AudioContext を作らない (作ると完了アラームの keepalive セッションを奪う)。背景
+ *  再生は完了アラームの keepalive がページを生かしている前提で成立する (両者は常に一緒に arm される)。 */
+async function createHtmlAudioChimePlayer(soundUrls: readonly string[]): Promise<ChimePlayer> {
+  const elements = new Map<string, HTMLAudioElement>();
+  for (const soundUrl of soundUrls) {
+    const audio = new Audio(soundUrl);
+    audio.preload = "auto";
+    audio.setAttribute("playsinline", "");
+    elements.set(soundUrl, audio);
+  }
+
+  // iOS は締切前の再生 (非ジェスチャ) を弾くので、arm のジェスチャ内で各要素を一度 muted で play→pause して
+  // unlock しておく (完了アラームの alarm 要素と同じ手順)。
+  const unlock = (): void => {
+    for (const audio of elements.values()) {
+      audio.muted = true;
+      const promise = audio.play();
+      if (promise && typeof promise.then === "function") {
+        promise
+          .then(() => {
+            audio.pause();
+            audio.currentTime = 0;
+            audio.muted = false;
+          })
+          .catch((error) => {
+            audio.muted = false;
+            warn("[timer-chime] unlock failed:", error);
+          });
+      } else {
+        audio.muted = false;
+      }
+    }
+  };
+
+  const play = (soundUrl: string): void => {
+    const audio = elements.get(soundUrl);
+    if (!audio) return;
+    audio.muted = false;
+    audio.currentTime = 0;
+    const promise = audio.play();
+    if (promise && typeof promise.catch === "function") {
+      promise.catch((error) => warn("[timer-chime] play failed:", error));
+    }
+  };
+
+  const stopAll = (): void => {
+    for (const audio of elements.values()) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+  };
+
+  const dispose = (): void => {
+    for (const audio of elements.values()) audio.pause();
+    elements.clear();
+  };
+
+  return { unlock, play, stopAll, dispose };
+}
+
+/** Android / desktop 向け: Web Audio。起動時に m4a を decode してバッファ化し、発火時は BufferSource で鳴らす。 */
+async function createWebAudioChimePlayer(soundUrls: readonly string[]): Promise<ChimePlayer> {
   const ResolvedAudioContext: typeof AudioContext =
     window.AudioContext ??
     (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
   const audioContext = new ResolvedAudioContext();
 
-  // 各アセットを起動時に一度だけ decode してバッファ化しておく (完了アラームと同じ。発火時は BufferSource で
-  // 鳴らすだけ)。soundUrl をキーにする。
-  const chimeBuffers = new Map<string, AudioBuffer>();
+  const buffers = new Map<string, AudioBuffer>();
   await Promise.all(
-    [...new Set(MILESTONE_CHIMES.map((milestone) => milestone.soundUrl))].map(async (soundUrl) => {
+    soundUrls.map(async (soundUrl) => {
       const response = await fetch(soundUrl);
-      chimeBuffers.set(soundUrl, await audioContext.decodeAudioData(await response.arrayBuffer()));
+      buffers.set(soundUrl, await audioContext.decodeAudioData(await response.arrayBuffer()));
     }),
   );
+
+  const startBuffer = (buffer: AudioBuffer): void => {
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start(audioContext.currentTime + SCHEDULE_LEAD_SECONDS);
+  };
+
+  const unlock = (): void => {
+    audioContext.resume().catch((error) => warn("[timer-chime] resume failed:", error));
+  };
+
+  const play = (soundUrl: string): void => {
+    const buffer = buffers.get(soundUrl);
+    if (!buffer) return;
+    if (audioContext.state === "suspended") {
+      audioContext.resume().then(() => startBuffer(buffer)).catch((error) => {
+        warn("[timer-chime] resume failed:", error);
+        startBuffer(buffer);
+      });
+    } else {
+      startBuffer(buffer);
+    }
+  };
+
+  const stopAll = (): void => {
+    /* 一発再生 (BufferSource) は再生後に自動解放されるので明示停止は不要。 */
+  };
+
+  const dispose = (): void => {
+    audioContext.close().catch((error) => warn("[timer-chime] close failed:", error));
+  };
+
+  return { unlock, play, stopAll, dispose };
+}
+
+async function createTimerChimeEngine(): Promise<TimerChime> {
+  const soundUrls = [...new Set(MILESTONE_CHIMES.map((milestone) => milestone.soundUrl))];
+  const player = isIosLike()
+    ? await createHtmlAudioChimePlayer(soundUrls)
+    : await createWebAudioChimePlayer(soundUrls);
 
   let armedEndMs: number | null = null;
   /** この run で既に鳴らした (または開始時に「過ぎた」扱いにした) マイルストーンの閾値 (ms)。各マイルストーンを
@@ -99,31 +215,6 @@ async function createTimerChimeEngine(): Promise<TimerChime> {
   let watchIntervalId: ReturnType<typeof setInterval> | null = null;
   let disposed = false;
 
-  /** 録音済みバッファを BufferSource で鳴らす。背景 suspend からの復帰時は resume してから鳴らす。source は
-   *  再生し終えると自動で解放される。 */
-  const playChime = (soundUrl: string): void => {
-    if (disposed) return;
-    const buffer = chimeBuffers.get(soundUrl);
-    if (!buffer) return;
-    const start = () => {
-      const source = audioContext.createBufferSource();
-      source.buffer = buffer;
-      source.connect(audioContext.destination);
-      source.start(audioContext.currentTime + SCHEDULE_LEAD_SECONDS);
-    };
-    if (audioContext.state === "suspended") {
-      audioContext.resume().then(start).catch((error) => {
-        warn("[timer-chime] resume failed:", error);
-        start();
-      });
-    } else {
-      start();
-    }
-  };
-
-  /** 残りが閾値以下になった未発火のマイルストーンを鳴らす。複数が同時に該当したら (背景凍結明け) 最も差し迫った
-   *  1 つだけ鳴らし、残りも発火済みにして連発を避ける。残りは積算ではなく endMs - Date.now() を読むだけなので、
-   *  interval が間引かれてもズレない。レベル判定なので prev のタイミングに依存せず、閾値を下回れば次の tick で確実に鳴る。 */
   const checkMilestones = (): void => {
     if (armedEndMs === null) return;
     const remaining = armedEndMs - Date.now();
@@ -134,7 +225,7 @@ async function createTimerChimeEngine(): Promise<TimerChime> {
         toFireUrl = milestone.soundUrl; // 降順なので最後に代入されるのが最小閾値 = 最も差し迫ったもの
       }
     }
-    if (toFireUrl) playChime(toFireUrl);
+    if (toFireUrl) player.play(toFireUrl);
   };
 
   const clearWatch = (): void => {
@@ -160,26 +251,22 @@ async function createTimerChimeEngine(): Promise<TimerChime> {
     for (const milestone of MILESTONE_CHIMES) {
       if (milestone.remainingMs >= initialRemaining) firedMilestones.add(milestone.remainingMs);
     }
-    audioContext.resume().catch((error) => warn("[timer-chime] resume failed:", error));
+    player.unlock();
     startWatch();
   };
 
   const disarm = (): void => {
     armedEndMs = null;
     clearWatch();
+    player.stopAll();
   };
-
-  // アラームと違い visibilitychange / focus の復帰時照合 (reconcile) は持たない。focus や可視化のたびに起点を
-  // リセットすると、ちょうど閾値をまたぐ前後でその回のチャイムを取りこぼす (レベル判定では起点を持たないので
-  // そもそも不要)。setInterval + レベル判定だけに任せれば前景は確実に鳴り、背景凍結明けも checkMilestones が
-  // またいだ中の最も差し迫った 1 つを鳴らす。締切ちょうどの発火は timer-alarm が担当する。
 
   const dispose = (): void => {
     if (disposed) return;
     disposed = true;
     clearWatch();
     armedEndMs = null;
-    audioContext.close().catch((error) => warn("[timer-chime] close failed:", error));
+    player.dispose();
   };
 
   return { arm, disarm, dispose };
@@ -196,11 +283,8 @@ export { timerChime };
 let initGeneration = 0;
 let initializing = false;
 
-/** タイマーモード入室時に呼ぶ。ハンドルを生成し signal へ載せる (冪等)。iOS では AudioContext を作らず即 return
- *  する (timerChime() は null のまま = arm/disarm 呼び出しは optional chaining で no-op)。これで iOS の完了
- *  アラームの keepalive オーディオセッションをチャイムが奪わない。 */
+/** タイマーモード入室時に呼ぶ。ハンドルを生成し signal へ載せる (冪等)。 */
 export const initTimerChime = (): void => {
-  if (isIosLike()) return;
   if (timerChime() || initializing) return;
   initializing = true;
   const generation = ++initGeneration;
