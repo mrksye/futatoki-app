@@ -1,6 +1,7 @@
 import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
 import type { Component } from "solid-js";
 import { isFullMoonActive } from "../features/full-moon-easter-egg";
+import { lerpColor } from "../lib/color";
 
 /**
  * 自由回転モード時の空背景。時間帯に応じてグラデーション・太陽/月・星を描く。
@@ -48,22 +49,6 @@ const skyPalette: SkyColor[] = [
   { top: "#080820", bottom: "#141028" }, // 22
   { top: "#040418", bottom: "#0A0A24" }, // 23
 ];
-
-function hexToRgb(hex: string): [number, number, number] {
-  const v = parseInt(hex.slice(1), 16);
-  return [(v >> 16) & 0xff, (v >> 8) & 0xff, v & 0xff];
-}
-
-function rgbToHex(r: number, g: number, b: number): string {
-  const to = (v: number) => Math.round(v).toString(16).padStart(2, "0");
-  return `#${to(r)}${to(g)}${to(b)}`;
-}
-
-function lerpColor(a: string, b: string, t: number): string {
-  const [ar, ag, ab] = hexToRgb(a);
-  const [br, bg, bb] = hexToRgb(b);
-  return rgbToHex(ar + (br - ar) * t, ag + (bg - ag) * t, ab + (bb - ab) * t);
-}
 
 function skyAtMinute(totalMinutes: number): SkyColor {
   const hourFloat = totalMinutes / 60;
