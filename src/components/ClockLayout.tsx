@@ -370,9 +370,12 @@ export const ClockLayout: Component = () => {
   };
 
   const onDragMove = (e: PointerEvent) => {
-    confirmDragOnMove(e);
     const s = dragRef;
     if (!s || e.pointerId !== s.pointerId) return;
+    // ガードの後に置くのが必須: clock モードでは onDragStart が early return して dragRef も
+    // pressOrigin も更新しないため、ここを前に置くと clock モードの pointermove が古い pressOrigin
+    // との距離で dragConfirmed を誤って latch し、反対側の盤が永久に消える。
+    confirmDragOnMove(e);
     queueSeek(dragAdvance(e, s));
   };
 
@@ -590,19 +593,20 @@ export const ClockLayout: Component = () => {
     () => previewFlipped() || (isRotating() && !transitioning()),
   );
 
-  /** AM/PM 各 wrapper の表示条件: merged 中 (transitioning 以外) は隠す。実ドラッグ確定中は反対側を
-   *  unmount して合成負荷を軽減する (静止長押し中は dragConfirmed=false なので薄い側の盤も残る)。
-   *  たいむ遷移中は split wrapper が動くフェーズ (splitSide の収束/発散) だけ出す
+  /** AM/PM 各 wrapper の表示条件: merged 中 (transitioning 以外) は隠す。実ドラッグ進行中 (pointer 押下中
+   *  かつ閾値を超えて移動済み) は反対側を unmount して合成負荷を軽減する。判定に dragging を必ず併せるので、
+   *  pointer を離す / clock モードでは dragConfirmed の値に関係なく両側表示へ戻る (静止長押し中も薄い側は
+   *  残る)。たいむ遷移中は split wrapper が動くフェーズ (splitSide の収束/発散) だけ出す
    *  (centerSlide や boing 中は merged 盤だけ / TimerLayout 側が描く)。 */
   const amSplitVisible = createMemo(() =>
     timerTransitioning()
       ? timerWrappersActive()
-      : (!mergedVisible() || transitioning()) && (isAm() || !dragConfirmed()),
+      : (!mergedVisible() || transitioning()) && (isAm() || !(dragging() && dragConfirmed())),
   );
   const pmSplitVisible = createMemo(() =>
     timerTransitioning()
       ? timerWrappersActive()
-      : (!mergedVisible() || transitioning()) && (!isAm() || !dragConfirmed()),
+      : (!mergedVisible() || transitioning()) && (!isAm() || !(dragging() && dragConfirmed())),
   );
 
   /** AM/PM バッジを出すのは「とけい」静止時だけ。回転中・たいむ中はもちろん、たいむ遷移中も隠す。
