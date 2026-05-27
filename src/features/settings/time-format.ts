@@ -3,7 +3,7 @@ import { persistedSignal } from "../../lib/persisted-signal";
 /** 時刻フォーマット: 24h / 12h。生 setter は未 export。 */
 export type TimeFormat = "24h" | "12h";
 
-const [timeFormat, setTimeFormat] = persistedSignal<TimeFormat>("timeFormat", "12h");
+const [timeFormat, setTimeFormat] = persistedSignal<TimeFormat>("timeFormat", "24h");
 
 export { timeFormat };
 
