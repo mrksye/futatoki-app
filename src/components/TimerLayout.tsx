@@ -13,6 +13,7 @@ import {
   completeTimer,
 } from "../features/timer/state";
 import { timerAlarm } from "../features/timer/timer-alarm";
+import { timerChime } from "../features/timer/timer-chime";
 import {
   timerTransitionPhase,
   timerTransitionKind,
@@ -162,6 +163,8 @@ const TimerLayout: Component = () => {
           setNowMs(now);
           completeTimer();
           timerAlarm()?.ensureAlarmPlaying();
+          // 締切に達したので予告チャイムの watch は用済み。止めて遊休 interval を残さない (鳴っている音は無い)。
+          timerChime()?.disarm();
           if (typeof navigator.vibrate === "function") navigator.vibrate(ALARM_VIBRATE_PATTERN);
           return;
         }

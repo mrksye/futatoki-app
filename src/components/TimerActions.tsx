@@ -16,6 +16,7 @@ import {
   type RingOrigin,
 } from "../features/timer/state";
 import { timerAlarm, initTimerAlarm } from "../features/timer/timer-alarm";
+import { timerChime, initTimerChime } from "../features/timer/timer-chime";
 import { closeActivePopover } from "../lib/exclusive-popover";
 import { animateMotion, motionAllowed } from "../lib/motion";
 import StopwatchIcon from "./icons/StopwatchIcon";
@@ -43,6 +44,18 @@ const FAB_CLASS =
   "w-12 h-12 tablet:w-14 tablet:h-14 rounded-full bg-white/80 shadow-md flex items-center " +
   "justify-center active:scale-90 transition-all text-gray-700 before:hidden";
 
+/** タイマー音声 (完了アラーム + 予告チャイム) はライフサイクルが同じ (running 開始 / さいかいで arm、
+ *  いちじていし / とりけし / 完了 / 退室で disarm) なので、独立した 2 エンジンへの arm/disarm をここで
+ *  まとめてファンアウトする。endMs はジェスチャ内の呼び出し側が計算して渡す (両エンジンとも同じ締切)。 */
+const armTimerAudio = (endMs: number): void => {
+  timerAlarm()?.arm(endMs);
+  timerChime()?.arm(endMs);
+};
+const disarmTimerAudio = (): void => {
+  timerAlarm()?.disarm();
+  timerChime()?.disarm();
+};
+
 const TimerActions: Component = () => {
   const { t } = useI18n();
 
@@ -51,34 +64,39 @@ const TimerActions: Component = () => {
   // 14MB デコードの GC 圧が毎回かかり、繰り返すほど重くなるため。AudioContext の resume / arm は必ず下の
   // onClick (ジェスチャ内) で行う。reactive effect で resume すると iOS がジェスチャ外と判定して unlock に
   // 失敗するので、ここでは生成 (suspended) だけに留める。
-  onMount(initTimerAlarm);
+  // アラーム (AudioContext + 82秒音源 decode) と予告チャイム (オシレータ合成) を初回入室で 1 度だけ生成し、
+  // 以降は使い回す (どちらの init も生成済みなら no-op)。resume / arm は必ず下の onClick (ジェスチャ内) で行う。
+  onMount(() => {
+    initTimerAlarm();
+    initTimerChime();
+  });
   // timer モードを抜ける (= この component が unmount される) とき選択状態を破棄して unset へ戻し、予約発火を
-  // 取り消す (アラーム本体は使い回すので dispose せず disarm のみ。keepalive / AudioContext は維持)。
+  // 取り消す (音源本体は使い回すので dispose せず disarm のみ。keepalive / AudioContext は維持)。
   onCleanup(() => {
     cancelTimer();
-    timerAlarm()?.disarm();
+    disarmTimerAudio();
   });
 
   /** 現在の running 設定 (開始時刻 + 選んだ分) から終了時刻を出して予約発火を張る/張り直す。 */
   const armCurrentRun = () => {
     const start = runStartMs();
     const minutes = selectedMinutes();
-    if (start !== null && minutes !== null) timerAlarm()?.arm(start + minutes * 60000);
+    if (start !== null && minutes !== null) armTimerAudio(start + minutes * 60000);
   };
   /** いちじていし: FSM を paused にして予約発火を取り消す (keepalive は維持)。 */
   const onPause = () => {
     pauseTimer();
-    timerAlarm()?.disarm();
+    disarmTimerAudio();
   };
   /** さいかい: FSM を running に戻し、再計算した終了時刻で予約を張り直す。 */
   const onResume = () => {
     resumeTimer();
     armCurrentRun();
   };
-  /** とりけし / 完了: FSM を unset に戻し、鳴っている/予約済みのアラームを止める。 */
+  /** とりけし / 完了: FSM を unset に戻し、鳴っている/予約済みの音を止める。 */
   const onCancel = () => {
     cancelTimer();
-    timerAlarm()?.disarm();
+    disarmTimerAudio();
   };
 
   /** せっとを押したら他の popover (もーど / 設定) を閉じ、ボタン中心をリングの中心にして開く。 */
@@ -344,10 +362,11 @@ const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
         const nearest = ((Math.round(rawIdx) % N) + N) % N;
         const minutes = RING_ITEMS[nearest]!;
         selectMinutes(minutes);
-        // この onClick がジェスチャの起点。ここで AudioContext を resume し終了時刻の予約発火を張る
-        // (旧 Howler が肩代わりしていたグローバル unlock が無くなったため)。
+        // この onClick がジェスチャの起点。ここでアラームとチャイムを arm し、両 AudioContext を unlock
+        // (resume) しつつ終了時刻基準の予約発火を張る (旧 Howler が肩代わりしていたグローバル unlock が
+        // 無くなったため)。
         const start = runStartMs();
-        if (start !== null) timerAlarm()?.arm(start + minutes * 60000);
+        if (start !== null) armTimerAudio(start + minutes * 60000);
         return;
       }
     }
@@ -456,13 +475,13 @@ const TimerRingButton: Component<{
 
   // 数字本体の直タップで確定。stopPropagation で overlay の onClick (隙間救済 / 慣性停止ゲート) を
   // 飛び越えるので、慣性で空回り中でも一発で選択できる (overlay 任せだと第一タップが回転停止に食われる)。
-  // この click ハンドラ自体がジェスチャの起点なので、ここで終了時刻の予約発火を張る = AudioContext を
+  // この click ハンドラ自体がジェスチャの起点なので、ここでアラームとチャイムを arm する = 両 AudioContext を
   // ユーザジェスチャ内で resume できる (overlay 隙間救済路と同じ arm 手順)。
   const onClick = (e: MouseEvent) => {
     e.stopPropagation();
     selectMinutes(props.minutes);
     const start = runStartMs();
-    if (start !== null) timerAlarm()?.arm(start + props.minutes * 60000);
+    if (start !== null) armTimerAudio(start + props.minutes * 60000);
   };
 
   return (
