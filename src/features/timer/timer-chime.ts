@@ -14,9 +14,10 @@ import { isIosLike } from "./timer-alarm";
  * 計時はアラームと同じ哲学で「回すのは setInterval、測るのは Date.now()」。interval が発火した回数を積算
  * すると、背景タブで throttle されたときに発火回数が減って実時間より経過が少なく見積もられ予告がズレるので、
  * 発火回数は数えず watch の中で remaining = endMs - Date.now() を物差しとして読むだけにする (コストはほぼ 0)。
- * 鳴らすかどうかは「残りが閾値をまたいで初めて閾値以下に落ちた瞬間」というエッジで判定する (level ではなく
- * 越境で数えるので各マイルストーンはちょうど 1 回鳴り、開始時点で残り = 総時間と等しい閾値は鳴らさない =
- * 例えば 15 分タイマーは開始直後に残り 15 分チャイムを鳴らさず、10 分と 5 分だけ鳴らす)。
+ * 鳴らすかどうかは「残りが閾値以下になった未発火のマイルストーンを鳴らす」レベル判定で、発火済みセットで各
+ * マイルストーンをちょうど 1 回に絞る。開始時点で残り以上の閾値 (= タイマー長以上) は arm で発火済みに埋めるので
+ * 鳴らない (例: 15 分タイマーは開始時に残り 15 分を鳴らさず 10 分・5 分だけ)。エッジ (prev > 閾値 かつ now <=
+ * 閾値) ではなくレベルにするのは、prev が 1 tick でもズレると越境を取りこぼすのを避けるため。
  *
  * プラットフォーム制約 — iOS ではチャイムを一切動かさない (initTimerChime が iOS で即 return し AudioContext を
  * 作らない)。iOS の完了アラームは HTMLAudio の keepalive 無音ループで単一オーディオセッションを掴んで背景生存
@@ -41,6 +42,10 @@ const CHIME_PEAK_GAIN = 0.3;
 
 /** アタック時間 (秒)。立ち上がりを速くし、以降の指数減衰で「ポーン」の余韻を作る。 */
 const CHIME_ATTACK_SECONDS = 0.01;
+
+/** スケジュールのリード時間 (秒)。currentTime ちょうどに start すると、メインスレッドが詰まっているとき開始が
+ *  「過去」に落ちてアタックや音そのものを取りこぼすことがある。わずかに未来へ置いて確実に発音させる。 */
+const SCHEDULE_LEAD_SECONDS = 0.05;
 
 /** 余韻の長さ (秒)。「ポン」= 短い (15分)、「ポーーン」= 中くらいに伸ばす (10分)、「ポーーーーン」= 長く伸ばす
  *  (5分)。「ン」を伸ばす長さの差になる。 */
@@ -119,8 +124,9 @@ async function createTimerChimeEngine(): Promise<TimerChime> {
   const audioContext = new ResolvedAudioContext();
 
   let armedEndMs: number | null = null;
-  /** 直前の watch で読んだ残り (ms)。越境エッジ (prev > 閾値 かつ now <= 閾値) の検出に使う。 */
-  let previousRemainingMs = 0;
+  /** この run で既に鳴らした (または開始時に「過ぎた」扱いにした) マイルストーンの閾値 (ms)。各マイルストーンを
+   *  ちょうど 1 回に絞る。arm のたびに作り直す (= さいかいでも現在の残り以上は鳴らさない)。 */
+  const firedMilestones = new Set<number>();
   let watchIntervalId: ReturnType<typeof setInterval> | null = null;
   let disposed = false;
 
@@ -129,7 +135,7 @@ async function createTimerChimeEngine(): Promise<TimerChime> {
   const playChime = (beeps: readonly Beep[]): void => {
     if (disposed) return;
     const schedule = () => {
-      const base = audioContext.currentTime;
+      const base = audioContext.currentTime + SCHEDULE_LEAD_SECONDS;
       for (const beep of beeps) {
         const oscillator = audioContext.createOscillator();
         const gain = audioContext.createGain();
@@ -154,20 +160,21 @@ async function createTimerChimeEngine(): Promise<TimerChime> {
     }
   };
 
-  /** 残りが閾値を初めて下回ったマイルストーンを鳴らす。複数同時に越境していたら (背景凍結明け) 最も差し迫った
-   *  1 つだけ鳴らし、残りは黙って既越扱いにする (古い予告の連発を避ける)。残りは積算ではなく endMs - Date.now()
-   *  を読むだけなので、interval が間引かれてもズレない。 */
+  /** 残りが閾値以下になった未発火のマイルストーンを鳴らす。複数が同時に該当したら (背景凍結明け) 最も差し迫った
+   *  1 つだけ鳴らし、残りも発火済みにして連発を避ける。残りは積算ではなく endMs - Date.now() を読むだけなので、
+   *  interval が間引かれてもズレない。レベル判定なので prev のタイミングに依存せず、閾値を下回れば次の tick で
+   *  確実に鳴る。 */
   const checkMilestones = (): void => {
     if (armedEndMs === null) return;
     const remaining = armedEndMs - Date.now();
-    let crossed: readonly Beep[] | null = null;
+    let toFire: readonly Beep[] | null = null;
     for (const milestone of MILESTONE_CHIMES) {
-      if (previousRemainingMs > milestone.remainingMs && remaining <= milestone.remainingMs) {
-        crossed = milestone.beeps; // 降順なので最後に上書きされるのが最小閾値 = 最も差し迫ったもの
+      if (remaining <= milestone.remainingMs && !firedMilestones.has(milestone.remainingMs)) {
+        firedMilestones.add(milestone.remainingMs);
+        toFire = milestone.beeps; // 降順なので最後に代入されるのが最小閾値 = 最も差し迫ったもの
       }
     }
-    previousRemainingMs = remaining;
-    if (crossed) playChime(crossed);
+    if (toFire) playChime(toFire);
   };
 
   const clearWatch = (): void => {
@@ -185,9 +192,14 @@ async function createTimerChimeEngine(): Promise<TimerChime> {
   const arm = (endMs: number): void => {
     if (disposed) return;
     armedEndMs = endMs;
-    // 現在の残りを物差しの起点にする。これにより越境エッジ (prev > 閾値) は arm 後に初めて残りが減ったときだけ
-    // 成立し、開始 / 再開時点で既に閾値以下の (= もう過ぎた) マイルストーンは鳴り直さない。
-    previousRemainingMs = endMs - Date.now();
+    // 開始時点で残り以上の閾値 (= このタイマー長以上 = もう過ぎた / 届かない) を発火済みに埋める。これで 15 分
+    // タイマーは開始時に残り 15 分を鳴らさず 10/5 分だけ、20 分タイマーは 15/10/5 全部鳴る。さいかいでも現在の
+    // 残り以上を発火済みにするので、既に鳴ったマイルストーンが鳴り直さない (発火セットは現在残りから再構成可能)。
+    const initialRemaining = endMs - Date.now();
+    firedMilestones.clear();
+    for (const milestone of MILESTONE_CHIMES) {
+      if (milestone.remainingMs >= initialRemaining) firedMilestones.add(milestone.remainingMs);
+    }
     audioContext.resume().catch((error) => warn("[timer-chime] resume failed:", error));
     startWatch();
   };
