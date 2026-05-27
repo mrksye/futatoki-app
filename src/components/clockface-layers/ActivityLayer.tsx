@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, on, onCleanup } from "solid-js";
+import { For, Match, Show, Switch, createEffect, createMemo, on, onCleanup } from "solid-js";
 import type { Component } from "solid-js";
 import { activity, type ActivityEvent } from "../../features/activity/state";
 import { getActivityIcon } from "../../features/activity/icons";
@@ -51,13 +51,17 @@ const VIEW = 340;
 const CENTER = VIEW / 2;
 
 const ICON_RADIUS_KUWASHIKU = 84;
-const ICON_RADIUS_SUKKIRI = 94;
+/** すっきりは旧来 絵文字 24px・中心半径 94 (= 外端 110.8) で文字盤外周に添っていた。絵文字を 18px に
+ *  統一して白背景円が 4.2px (= (24-18)×ICON_BG_RADIUS_RATIO) 縮むので、中心を +4.2 外へ出して外端
+ *  110.8 を保つ。縮小を内側でなく外側基準で吸収する逆算値。 */
+const ICON_RADIUS_SUKKIRI = 98.2;
 /** monotone × badge は cardinal 数字 (12/3/6/9 と PM の 12/15/18/21) を内側に大きく配置する特別仕様で、
  *  通常半径ではアイコンと数字が radial に被る。アイコンを cardinal 内端より中心側へ寄せる。 */
 const ICON_RADIUS_KUWASHIKU_MONOTONE_BADGE = 68;
-const ICON_RADIUS_SUKKIRI_MONOTONE_BADGE = 76;
-const ICON_SIZE_KUWASHIKU = 18;
-const ICON_SIZE_SUKKIRI = 24;
+/** ICON_RADIUS_SUKKIRI と同じ逆算 (+4.2)。旧外端 92.8 を保つ。 */
+const ICON_RADIUS_SUKKIRI_MONOTONE_BADGE = 80.2;
+/** スタンプの絵文字サイズ。すっきり/くわしく共通 (白背景円半径も ICON_BG_RADIUS_RATIO 倍で従属する)。 */
+const ICON_SIZE = 18;
 /** font-size に対する白背景円の半径比 (em-box 外接円 √2/2 ≈ 0.707 より少し小さく抑える)。 */
 const ICON_BG_RADIUS_RATIO = 0.70;
 
@@ -70,9 +74,24 @@ const STICKER_SHADOW =
 const STICKER_SHADOW_SECTOR =
   "drop-shadow(0 0.5px 0.5px rgba(0,0,0,0.14)) drop-shadow(0 1.5px 2.5px rgba(0,0,0,0.08))";
 
-/** 矢印三角形 (白)。底辺の両端が白円周上にぴったり乗るよう sqrt(bgR² - baseHalf²) で算出。 */
+/** できごとの indicator は detailMode で形を変える。どちらも短針がその向きに重なる (= isMatched) と
+ *  EventIcon がグループごとポヨポヨして「今この時刻」を視覚的に示す。
+ *   - くわしく: 中心向きの小さな三角形 ▶ (盤面が数字で賑やかなので控えめ)。
+ *   - すっきり: 中心へ向かう均一幅のポインター線 (盤面がシンプルなので伸ばして強調)。 */
+
+/** くわしく用 三角形 (白)。底辺の両端が白円周上にぴったり乗るよう sqrt(bgR² - baseHalf²) で算出。 */
 const TRI_BASE_HALF = 1.5;
 const TRI_HEIGHT = 2.5;
+
+/** すっきり用 ポインター線 (白)。アイコン中心から中心方向へ引き、白背景円の内側に入る分は円に隠れるので、
+ *  円の縁から内端までが「尻尾」として見える。 */
+const POINTER_LINE_WIDTH = 3;
+/** 白背景円の縁から中心側へ伸ばす尻尾の見える長さ。内端半径 = iconRadius - bgR - これ。くわしくモードの
+ *  三角 apex (中心半径 ≈ 69) とほぼ同じ深さに内端が来るよう合わせている
+ *  (すっきり iconRadius 98.2 - bgR 12.6 - 16.6 = 69)。 */
+const POINTER_TAIL_LENGTH = 16.6;
+/** 尻尾の内端をこの半径より中心へ食い込ませない (中心ネジ・針根元との衝突回避)。 */
+const POINTER_INNER_RADIUS_MIN = 28;
 
 const LONG_PRESS_MS = 500;
 /** タップ判定の追加バッファ (viewBox 単位)。子どもの指でも当てやすくする透明拡張領域。 */
@@ -124,15 +143,18 @@ const wrapMinuteDiff = (diff: number): number => {
   return diff;
 };
 
-/** ポヨポヨアニメ用 window。通常 2 分前から、天頂 (AM 0:00 / PM 12:00) のみ 5 分前から (AM/PM 境目を強調)。 */
-const MATCH_WINDOW_MINUTES_BEFORE = 2;
-const MATCH_WINDOW_MINUTES_BEFORE_NOON = 5;
+/** ポインター線と短針が重なる前後でポヨポヨさせる左右対称の半幅 (分)。短針は 12 時間で 1 周
+ *  (= 0.5°/分) なので N 分 ⇔ 0.5N° ぶん短針が線から離れた状態まで「重なり」として扱う。重なりは
+ *  時刻ちょうどの前後で起きるので window も対称にする。天頂 (AM 0:00 / PM 12:00) のみ AM/PM 境目
+ *  強調のため広めに取る。 */
+const MATCH_WINDOW_HALF_MINUTES = 3;
+const MATCH_WINDOW_HALF_MINUTES_NOON = 6;
 const isWithinMatchWindow = (displayed: number, eventM: number): boolean => {
   const diff = wrapMinuteDiff(displayed - eventM);
-  const before = (eventM === 0 || eventM === 720)
-    ? MATCH_WINDOW_MINUTES_BEFORE_NOON
-    : MATCH_WINDOW_MINUTES_BEFORE;
-  return diff >= -before && diff <= 0;
+  const half = (eventM === 0 || eventM === 720)
+    ? MATCH_WINDOW_HALF_MINUTES_NOON
+    : MATCH_WINDOW_HALF_MINUTES;
+  return diff >= -half && diff <= half;
 };
 
 /** 「dim 側でもハッキリ見せる」用 window。ポヨポヨ window とは目的が違うので別概念で持つ
@@ -155,27 +177,41 @@ const ActivityLayer: Component<ActivityLayerProps> = (props) => {
     }
     return isKuwashiku() ? ICON_RADIUS_KUWASHIKU : ICON_RADIUS_SUKKIRI;
   };
-  const iconFontSize = () => isKuwashiku() ? ICON_SIZE_KUWASHIKU : ICON_SIZE_SUKKIRI;
-  const iconBgRadius = () => iconFontSize() * ICON_BG_RADIUS_RATIO;
+  const iconBgRadius = () => ICON_SIZE * ICON_BG_RADIUS_RATIO;
 
   /** 全できごとの時刻を昇順で持つ配列。EventIcon が自分の chronologicalRank を引くのに使う。 */
   const sortedAllMinutes = createMemo(() => {
     return Object.keys(activity()).map(Number).sort((a, b) => a - b);
   });
 
-  /** この period に属する events を時刻降順で返す。降順にすることで SVG document order の末尾
-   *  (= 最前面) に若い時刻が来て、同位置帯で重なった時に「早い時刻が手前」の stack 表示になる。 */
+  /** minutes → ActivityEvent の安定参照マップ。activity() 変更時のみ作り直す。eventsForPeriod が
+   *  displayedMinutes でソートし直しても要素の参照が変わらないので、For は順序変更を DOM 移動だけで
+   *  処理でき、進行中のポヨポヨ等の WAAPI を壊さない (毎回 new オブジェクトだと毎分 remount でアニメが途切れる)。 */
+  const eventByMinutes = createMemo(() => {
+    const map = new Map<number, ActivityEvent>();
+    for (const [m, id] of Object.entries(activity())) {
+      map.set(Number(m), { minutes: Number(m), iconId: id });
+    }
+    return map;
+  });
+
+  /** この period に属する events を描画順 (document order) で返す。基本は時刻降順 = 早い時刻ほど末尾
+   *  (= 最前面) に来て「早い時刻が手前」の stack。ただしポヨポヨ発火中 (isWithinMatchWindow) の event は
+   *  全 event 中の最末尾へ回して最前面にする: 近接 (例: 10 分差) で手前の予定に隠れて肝心のポヨポヨが
+   *  見えなくなるのを防ぐ。ActivityLayer は HandsLayer より下層なので最前面化しても長針・短針より前には出ない。 */
   const eventsForPeriod = createMemo<ActivityEvent[]>(() => {
     const isPm = props.period === "pm";
-    const result: ActivityEvent[] = [];
-    for (const [m, id] of Object.entries(activity())) {
-      const minutes = Number(m);
-      if ((minutes >= 720) === isPm) {
-        result.push({ minutes, iconId: id });
-      }
-    }
-    result.sort((a, b) => b.minutes - a.minutes);
-    return result;
+    const displayed = props.displayedMinutes;
+    const events = [...eventByMinutes().values()].filter(
+      (e) => (e.minutes >= 720) === isPm,
+    );
+    events.sort((a, b) => {
+      const aMatched = isWithinMatchWindow(displayed, a.minutes);
+      const bMatched = isWithinMatchWindow(displayed, b.minutes);
+      if (aMatched !== bMatched) return aMatched ? 1 : -1;
+      return b.minutes - a.minutes;
+    });
+    return events;
   });
 
   const angleRadOf = (minutes: number) => ((minutes / 2 - 90) * Math.PI) / 180;
@@ -188,6 +224,7 @@ const ActivityLayer: Component<ActivityLayerProps> = (props) => {
     };
   };
 
+  /** くわしく用 三角形の 3 頂点。底辺の両端が白円周上に乗り、apex が中心方向へ TRI_HEIGHT 飛び出す。 */
   const trianglePointsOf = (minutes: number): string => {
     const angleRad = angleRadOf(minutes);
     const cosA = Math.cos(angleRad);
@@ -213,6 +250,30 @@ const ActivityLayer: Component<ActivityLayerProps> = (props) => {
 
     return `${leftX},${leftY} ${rightX},${rightY} ${apexX},${apexY}`;
   };
+
+  /** すっきり用 ポインター線の端点。外端 = アイコン中心 (白背景円に隠れる)、内端 = 中心方向へ
+   *  POINTER_TAIL_LENGTH ぶん内側 (ただし POINTER_INNER_RADIUS_MIN で頭打ち)。 */
+  const pointerLineOf = (minutes: number) => {
+    const angleRad = angleRadOf(minutes);
+    const cosA = Math.cos(angleRad);
+    const sinA = Math.sin(angleRad);
+    const innerRadius = Math.max(
+      POINTER_INNER_RADIUS_MIN,
+      iconRadius() - iconBgRadius() - POINTER_TAIL_LENGTH,
+    );
+    return {
+      x1: CENTER + iconRadius() * cosA,
+      y1: CENTER + iconRadius() * sinA,
+      x2: CENTER + innerRadius * cosA,
+      y2: CENTER + innerRadius * sinA,
+    };
+  };
+
+  /** detailMode で indicator の形を排他的に決める (くわしく=三角 / すっきり=線)。 */
+  const indicatorOf = (minutes: number): EventIndicator =>
+    isKuwashiku()
+      ? { kind: "triangle", points: trianglePointsOf(minutes) }
+      : { kind: "line", ...pointerLineOf(minutes) };
 
   /** warning/deleting 中のイベントがこのレイヤーに属するか (= ✕ボタンを出すか)。resetWarning /
    *  resetDeleting は両 period に属する。 */
@@ -286,9 +347,9 @@ const ActivityLayer: Component<ActivityLayerProps> = (props) => {
             <EventIcon
               event={event}
               pos={positionOf(event.minutes)}
-              triPoints={trianglePointsOf(event.minutes)}
+              indicator={indicatorOf(event.minutes)}
               iconBgRadius={iconBgRadius()}
-              iconFontSize={iconFontSize()}
+              iconFontSize={ICON_SIZE}
               isMatched={isWithinMatchWindow(props.displayedMinutes, event.minutes)}
               chronologicalRank={sortedAllMinutes().indexOf(event.minutes)}
               opacity={eventOpacity(
@@ -393,10 +454,16 @@ const DeleteButton: Component<{
   );
 };
 
+/** できごとの indicator 形状。detailMode で排他的に決まる (くわしく=三角 / すっきり=線)。 */
+type EventIndicator =
+  | { kind: "triangle"; points: string }
+  | { kind: "line"; x1: number; y1: number; x2: number; y2: number };
+
 interface EventIconProps {
   event: ActivityEvent;
   pos: { x: number; y: number };
-  triPoints: string;
+  /** 中心向きの indicator (くわしく=三角 / すっきり=ポインター線)。白背景円より先に描く。 */
+  indicator: EventIndicator;
   iconBgRadius: number;
   iconFontSize: number;
   /** 現在の displayed time がこのイベント時刻と一致しているか (連続ポヨポヨ用)。 */
@@ -654,9 +721,10 @@ const EventIcon: Component<EventIconProps> = (props) => {
         }}
         class="fade-on-dim"
         style={{
-          // bbox 中心を transform 原点に → 回転/拡縮がアイコン中心まわりで起きる。
-          "transform-box": "fill-box",
-          "transform-origin": "center",
+          // ポインター線でアイコンの bbox が中心側へ伸びるため、fill-box の bbox 中心ではなく viewBox 上の
+          // アイコン中心を明示原点にする (回転/拡縮を線の長さに依らずアイコン中心で回す)。
+          "transform-box": "view-box",
+          "transform-origin": `${props.pos.x}px ${props.pos.y}px`,
           "pointer-events": "auto",
           cursor: "pointer",
           opacity: props.opacity,
@@ -675,6 +743,26 @@ const EventIcon: Component<EventIconProps> = (props) => {
           fill="transparent"
           style={{ "pointer-events": "all" }}
         />
+        {/* 中心向きの indicator。白背景円より先に描く (線の場合は内側が円に隠れて尻尾になる)。
+            短針がこの向きに重なると (isMatched) グループごとポヨポヨする。 */}
+        <Switch>
+          <Match when={props.indicator.kind === "triangle" && props.indicator}>
+            {(tri) => <polygon points={tri().points} fill="#ffffff" />}
+          </Match>
+          <Match when={props.indicator.kind === "line" && props.indicator}>
+            {(line) => (
+              <line
+                x1={line().x1}
+                y1={line().y1}
+                x2={line().x2}
+                y2={line().y2}
+                stroke="#ffffff"
+                stroke-width={POINTER_LINE_WIDTH}
+                stroke-linecap="round"
+              />
+            )}
+          </Match>
+        </Switch>
         <circle
           cx={props.pos.x}
           cy={props.pos.y}
@@ -690,7 +778,6 @@ const EventIcon: Component<EventIconProps> = (props) => {
         >
           {def()!.emoji}
         </text>
-        <polygon points={props.triPoints} fill="#ffffff" />
       </g>
     </Show>
   );
