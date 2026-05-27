@@ -71,8 +71,9 @@ export interface TimerAlarm {
 }
 
 /** iOS 系 (iPhone / iPad、iPadOS の Mac 偽装含む) を推定する。iOS だけ HTMLAudioElement + keepalive 方式が必要で、
- *  Android / desktop は Web Audio 方式 (旧 setInterval 実装と同原理) で鳴らす。ヒューリスティックなので実機で調整。 */
-const isIosLike = (): boolean => {
+ *  Android / desktop は Web Audio 方式 (旧 setInterval 実装と同原理) で鳴らす。ヒューリスティックなので実機で調整。
+ *  timer-chime も「iOS では Web Audio コンテキストを作らない」判定にこれを使うので export する。 */
+export const isIosLike = (): boolean => {
   const ua = navigator.userAgent;
   if (/iP(hone|ad|od)/.test(ua)) return true;
   // iPadOS 13+ は desktop Safari を偽装するので touch 数で判別する。

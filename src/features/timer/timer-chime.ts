@@ -1,4 +1,5 @@
 import { createSignal } from "solid-js";
+import { isIosLike } from "./timer-alarm";
 
 /**
  * カウントダウンの残り時間を知らせるマイルストーンチャイム (残り 15 分 / 10 分 / 5 分の「ポーン」音)。
@@ -17,10 +18,13 @@ import { createSignal } from "solid-js";
  * 越境で数えるので各マイルストーンはちょうど 1 回鳴り、開始時点で残り = 総時間と等しい閾値は鳴らさない =
  * 例えば 15 分タイマーは開始直後に残り 15 分チャイムを鳴らさず、10 分と 5 分だけ鳴らす)。
  *
- * プラットフォーム制約: AudioContext は iOS では画面ロックで suspend されるため、iOS のロック中はチャイムは
- * 鳴らない (前景では鳴る)。締切ちょうどの発火はロック中でも鳴らす必要があるのでそちらは timer-alarm.ts の
- * keepalive 方式が担当し、チャイムはあくまで前景 (と Android / desktop の背景) の事前予告に徹する。背景凍結中に
- * またいだ予告は復帰時に黙って捨てる (古い「残り 15 分」を遅れて鳴らすと混乱するため)。
+ * プラットフォーム制約 — iOS ではチャイムを一切動かさない (initTimerChime が iOS で即 return し AudioContext を
+ * 作らない)。iOS の完了アラームは HTMLAudio の keepalive 無音ループで単一オーディオセッションを掴んで背景生存
+ * しているが、そこへチャイムが Web Audio の AudioContext を resume するとセッションを奪い合い keepalive のグリップ
+ * が外れて、ロック中に肝心の完了アラームが鳴らなくなる (timer-alarm の失敗策②と同根)。チャイムは「あれば嬉しい
+ * 予告」、完了アラームは「絶対鳴らす本命」なので、衝突する iOS では本命を最優先してチャイムを諦める。よって
+ * チャイムは Android / desktop 専用機能。Android / desktop の AudioContext はロックで suspend されないため、
+ * 前景でも背景でも鳴る (背景凍結中にまたいだ予告は復帰時に黙って捨てる)。
  *
  * 削除容易性: チャイムの関心事はこのファイル 1 つに隔離してある。このファイルを消し、TimerActions /
  * TimerLayout から timerChime 参照と init/arm/disarm の呼び出しを除けば、タイマーは予告音なしで動く。
@@ -228,8 +232,11 @@ export { timerChime };
 let initGeneration = 0;
 let initializing = false;
 
-/** タイマーモード入室時に呼ぶ。ハンドルを生成し signal へ載せる (冪等)。 */
+/** タイマーモード入室時に呼ぶ。ハンドルを生成し signal へ載せる (冪等)。iOS では AudioContext を作らず即 return
+ *  する (timerChime() は null のまま = arm/disarm 呼び出しは optional chaining で no-op)。これで iOS の完了
+ *  アラームの keepalive オーディオセッションをチャイムが奪わない。 */
 export const initTimerChime = (): void => {
+  if (isIosLike()) return;
   if (timerChime() || initializing) return;
   initializing = true;
   const generation = ++initGeneration;

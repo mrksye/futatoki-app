@@ -59,13 +59,11 @@ const disarmTimerAudio = (): void => {
 const TimerActions: Component = () => {
   const { t } = useI18n();
 
-  // アラーム (AudioContext + 82秒音源の decode) は初回入室で 1 度だけ生成し、以降は使い回す
-  // (initTimerAlarm は生成済みなら no-op)。入退室のたびに作り直すと AudioContext の生成/破棄コストと
-  // 14MB デコードの GC 圧が毎回かかり、繰り返すほど重くなるため。AudioContext の resume / arm は必ず下の
-  // onClick (ジェスチャ内) で行う。reactive effect で resume すると iOS がジェスチャ外と判定して unlock に
-  // 失敗するので、ここでは生成 (suspended) だけに留める。
-  // アラーム (AudioContext + 82秒音源 decode) と予告チャイム (オシレータ合成) を初回入室で 1 度だけ生成し、
-  // 以降は使い回す (どちらの init も生成済みなら no-op)。resume / arm は必ず下の onClick (ジェスチャ内) で行う。
+  // アラーム (AudioContext + 82秒音源の decode) と予告チャイム (オシレータ合成) は初回入室で 1 度だけ生成し、
+  // 以降は使い回す (どちらの init も生成済みなら no-op)。入退室のたびに作り直すと生成/破棄コストと decode の
+  // GC 圧が毎回かかり繰り返すほど重くなるため。resume / arm は必ず下の onClick (ジェスチャ内) で行う
+  // (reactive effect で resume すると iOS がジェスチャ外と判定して unlock に失敗する)。チャイムは iOS では
+  // 生成されない (initTimerChime が iOS で即 return = keepalive のオーディオセッションを奪わないため)。
   onMount(() => {
     initTimerAlarm();
     initTimerChime();
