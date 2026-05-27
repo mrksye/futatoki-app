@@ -16,9 +16,9 @@ import { createSignal } from "solid-js";
  * FSM に畳まず別 signal のまま持つ。生 setter は未 export。書き換えは下の action 関数経由のみ。
  */
 
-/** 選べる分数 (秒タイマーは作らない方針)。リングメニューにこの順で並ぶ。1〜5 は 1 分刻み、以降は
- *  5 分刻みで 60 まで = 16 択。 */
-export const TIMER_MINUTE_OPTIONS = [1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60] as const;
+/** 選べる分数 (秒タイマーは作らない方針)。リングメニューにこの順で並ぶ。小刻みは 1・2・3・5 分 (4 分は外した)、
+ *  以降は 5 分刻みで 60 まで = 15 択。 */
+export const TIMER_MINUTE_OPTIONS = [1, 2, 3, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60] as const;
 
 export type TimerPhase = "unset" | "picking" | "running" | "paused" | "done";
 
