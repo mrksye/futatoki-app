@@ -7,9 +7,9 @@ import { isIosLike } from "./timer-alarm";
  * アラームが loop 再生する m4a 音源なのに対し、チャイムは Web Audio のオシレータでその場合成する短い音
  * (アセット不要、self-contained)。残り分ごとに鳴らし分ける:
  *
- *   - 残り 15 分: ポンポンポン (短い音を 3 つ。まだ余裕があるので軽やかに)
- *   - 残り 10 分: ポーンポーン (伸ばした音を 2 つ)
- *   - 残り  5 分: ポーーン     (いちばん長く伸ばした音を 1 つ。もうすぐ終わりの合図)
+ *   - 残り 15 分: ポンポンポン     (短い音を 3 つ。まだ余裕があるので軽やかに)
+ *   - 残り 10 分: ポーーンポーーン (伸ばした音を 2 つ)
+ *   - 残り  5 分: ポーーーーン     (いちばん長く伸ばした音を 1 つ。もうすぐ終わりの合図)
  *
  * 計時はアラームと同じ哲学で「回すのは setInterval、測るのは Date.now()」。interval が発火した回数を積算
  * すると、背景タブで throttle されたときに発火回数が減って実時間より経過が少なく見積もられ予告がズレるので、
@@ -42,14 +42,16 @@ const CHIME_PEAK_GAIN = 0.3;
 /** アタック時間 (秒)。立ち上がりを速くし、以降の指数減衰で「ポーン」の余韻を作る。 */
 const CHIME_ATTACK_SECONDS = 0.01;
 
-/** 余韻の長さ (秒)。「ポン」= 短い、「ポーン」= 中、「ポーーン」= 長い。「ン」を伸ばす長さの差になる。 */
+/** 余韻の長さ (秒)。「ポン」= 短い (15分)、「ポーーン」= 中くらいに伸ばす (10分)、「ポーーーーン」= 長く伸ばす
+ *  (5分)。「ン」を伸ばす長さの差になる。 */
 const SHORT_BEEP_SECONDS = 0.13;
-const LONG_BEEP_SECONDS = 0.45;
-const LONGER_BEEP_SECONDS = 0.9;
+const LONG_BEEP_SECONDS = 0.7;
+const LONGER_BEEP_SECONDS = 1.5;
 
-/** 連続する音の onset 間隔 (前の音が鳴り始めてから次が鳴り始めるまでの秒)。余韻より長くして粒を分ける。 */
+/** 連続する音の onset 間隔 (前の音が鳴り始めてから次が鳴り始めるまでの秒)。余韻より長くして粒を分ける
+ *  (LONG_GAP は LONG_BEEP より長くないと 2 音が重なって「ポーーンポーーン」が 1 つに繋がって聞こえる)。 */
 const SHORT_GAP_SECONDS = 0.22;
-const LONG_GAP_SECONDS = 0.6;
+const LONG_GAP_SECONDS = 0.95;
 
 /** 締切監視ポーリング間隔 (ms)。マイルストーンは分単位なので 1 秒精度で十分。背景下では throttle され得るが、
  *  毎回 Date.now() で残りを見るので間引かれても次の発火で取りこぼさない。 */
@@ -68,13 +70,13 @@ const THREE_SHORT_BEEPS: readonly Beep[] = [
   { startOffsetSeconds: SHORT_GAP_SECONDS * 2, durationSeconds: SHORT_BEEP_SECONDS },
 ];
 
-/** 残り 10 分: ポーンポーン。 */
+/** 残り 10 分: ポーーンポーーン。 */
 const TWO_LONG_BEEPS: readonly Beep[] = [
   { startOffsetSeconds: 0, durationSeconds: LONG_BEEP_SECONDS },
   { startOffsetSeconds: LONG_GAP_SECONDS, durationSeconds: LONG_BEEP_SECONDS },
 ];
 
-/** 残り 5 分: ポーーン。 */
+/** 残り 5 分: ポーーーーン。 */
 const ONE_LONGER_BEEP: readonly Beep[] = [
   { startOffsetSeconds: 0, durationSeconds: LONGER_BEEP_SECONDS },
 ];
