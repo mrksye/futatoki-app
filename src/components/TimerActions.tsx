@@ -110,16 +110,28 @@ const TimerActions: Component = () => {
     cancelTimer();
     disarmTimerAudio();
   };
+  // しずかにボタンの表示制御。音を止めたら役目が終わるので消す (再生する用途がない)。
+  // done セッションごとに false から始まり、ボタンタップ or 画面どこタップで true になると Show が外れる。
+  const [muted, setMuted] = createSignal(false);
+
   /** しずかに: 音だけ止めて done 画面 (経過時間表示) は残す。FSM は触らない。ボタン直接タップでも
    *  document listener 経由でも結果は同じ (disarm は冪等)。 */
-  const onMute = () => disarmTimerAudio();
+  const onMute = () => {
+    disarmTimerAudio();
+    setMuted(true);
+  };
 
   // done 中は画面のどこをタップしても音を止める。子供がボタン位置を探さなくても止められる UX。
   // disarm 冪等なので完了ボタン onClick との二重発火 (pointerdown → click) は無害。
   // listener は done に入ったタイミングで登録、phase が抜けたら Solid の effect 再実行で onCleanup が走る。
+  // done に入った瞬間 muted を false にリセットして新セッションの消音ボタンを露出させる。
   createEffect(() => {
     if (timerPhase() !== "done") return;
-    const handler = () => disarmTimerAudio();
+    setMuted(false);
+    const handler = () => {
+      disarmTimerAudio();
+      setMuted(true);
+    };
     document.addEventListener("pointerdown", handler, { passive: true });
     onCleanup(() => document.removeEventListener("pointerdown", handler));
   });
@@ -168,14 +180,17 @@ const TimerActions: Component = () => {
         </Show>
 
         {/* done: 完了 (✓ primary, 下) + しずかに (🔇 上)。flex-col-reverse なので JSX 順 = 下→上。
-            画面どこタップでも消音される (上の createEffect)、しずかにボタンは hint 兼キーボード操作経路。 */}
+            画面どこタップでも消音される (上の createEffect)、しずかにボタンは hint 兼キーボード操作経路。
+            消音後はボタン自体を引っ込める (再生用途がないので役目終わり)。 */}
         <Show when={timerPhase() === "done"}>
           <button class={FAB_CLASS} aria-label={t("timer.done")} onClick={onCancel}>
             <CheckIcon class={iconClass} />
           </button>
-          <button class={FAB_CLASS} aria-label={t("timer.mute")} onClick={onMute}>
-            <MuteIcon class={iconClass} />
-          </button>
+          <Show when={!muted()}>
+            <button class={FAB_CLASS} aria-label={t("timer.mute")} onClick={onMute}>
+              <MuteIcon class={iconClass} />
+            </button>
+          </Show>
         </Show>
       </div>
     </>
