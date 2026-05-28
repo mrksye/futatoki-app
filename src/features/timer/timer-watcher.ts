@@ -20,7 +20,7 @@ import {
   initTimerChime,
   timerChime,
 } from "./timer-chime";
-import { ONE_HOUR_MS, readStoredTimer } from "./timer-persistence";
+import { AUTO_CLEAR_DELAY_MS, readStoredTimer } from "./timer-persistence";
 
 /**
  * 分タイマーの App レベル singleton ハブ。App.tsx で 1 回だけ useTimerWatcher() を呼ぶ。
@@ -90,7 +90,7 @@ export const useTimerWatcher = (): void => {
       restoreAttempted = true;
 
       const snapshot = readStoredTimer();
-      if (snapshot === null) return; // データなし、または 1h 超で捨てられた
+      if (snapshot === null) return; // データなし、または 30min 超で捨てられた
 
       restoreFromStorage(snapshot);
       transition("timer");
@@ -117,11 +117,11 @@ export const useTimerWatcher = (): void => {
     }),
   );
 
-  // ── end + 1h 自動クリア ──────────────────────────────────────────────────────
+  // ── end + 30min 自動クリア ──────────────────────────────────────────────────────
   // phase / runStartMs / selectedMinutes が動くたびに setTimeout を仕込み直す。対象は running / done のみ
-  // (paused は明示停止中で end+1h 概念が成立しないので除外、ユーザの明示再開かとりけしまで残す)。
+  // (paused は明示停止中で end+30min 概念が成立しないので除外、ユーザの明示再開かとりけしまで残す)。
   // setTimeout は背景 throttling で大幅に遅れるが、(a) visibility 復帰時の reconcile / (b) 次回起動時の
-  // readStoredTimer 内 1h check が冗長救済になる。実害は「1h 超 localStorage に一時残留」のみ。
+  // readStoredTimer 内 30min check が冗長救済になる。実害は「30min 超 localStorage に一時残留」のみ。
   let autoCleanupTimerId: ReturnType<typeof setTimeout> | null = null;
   const clearAutoCleanup = () => {
     if (autoCleanupTimerId !== null) {
@@ -136,7 +136,7 @@ export const useTimerWatcher = (): void => {
     clearAutoCleanup();
     if (phase !== "running" && phase !== "done") return;
     if (sel === null || start === null) return;
-    const deadline = start + sel * 60000 + ONE_HOUR_MS;
+    const deadline = start + sel * 60000 + AUTO_CLEAR_DELAY_MS;
     const delay = Math.max(0, deadline - Date.now());
     autoCleanupTimerId = setTimeout(() => {
       autoCleanupTimerId = null;

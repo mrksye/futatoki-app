@@ -14,13 +14,13 @@ import { TIMER_MINUTE_OPTIONS, type TimerPhase } from "./state";
  * endMs を保存する。復元時に runStartMs は endMs - selectedMinutes*60000 で逆算する (state.ts の
  * restoreFromStorage)。
  *
- * クリア経路は 3 つ: (a) ✓完了 / ✕とりけし (state.ts cancelTimer から)、(b) end+1h 自動掃除
- * (timer-watcher の setTimeout)、(c) 起動時 read で 1h 超データを検出 → ここで silent に消す。
+ * クリア経路は 3 つ: (a) ✓完了 / ✕とりけし (state.ts cancelTimer から)、(b) end+30min 自動掃除
+ * (timer-watcher の setTimeout)、(c) 起動時 read で 30min 超データを検出 → ここで silent に消す。
  * どのトリガが先に来ても同じ結果 (= 空) に収束する。
  */
 
 const STORAGE_KEY = `${BRAND_CONFIG.storagePrefix}.timer`;
-const ONE_HOUR_MS = 60 * 60 * 1000;
+const AUTO_CLEAR_DELAY_MS = 30 * 60 * 1000;
 
 /** localStorage に書き出す形。phase が unset / picking のときは「保存する意味のある状態」ではないので
  *  そもそも書かない (state.ts 側の action ガードで担保)。 */
@@ -51,8 +51,8 @@ const isValidMinutes = (value: unknown): value is number =>
   Number.isInteger(value) &&
   (TIMER_MINUTE_OPTIONS as readonly number[]).includes(value);
 
-/** localStorage から読み込み、サニタイズ + 1h 超データの自動クリアまで一括で行う。1 つでも不整合
- *  (壊れた JSON / 知らない phase / 範囲外 minutes / 締切から 1h 超過) があれば clear して null を返す。
+/** localStorage から読み込み、サニタイズ + 30min 超データの自動クリアまで一括で行う。1 つでも不整合
+ *  (壊れた JSON / 知らない phase / 範囲外 minutes / 締切から 30min 超過) があれば clear して null を返す。
  *  起動時に 1 回だけ呼ぶ前提 (timer-watcher)。 */
 export const readStoredTimer = (): StoredTimer | null => {
   let raw: string | null;
@@ -90,9 +90,9 @@ export const readStoredTimer = (): StoredTimer | null => {
     clearStoredTimer();
     return null;
   }
-  // 1h 超データは「無かったこと」にする (end から 1h 経ったら自動消去のルール)。end が未来の場合は
+  // 30min 超データは「無かったこと」にする (end から 30min 経ったら自動消去のルール)。end が未来の場合は
   // ここでは通す (running / paused の正常状態)。
-  if (Date.now() - candidate.endMs > ONE_HOUR_MS) {
+  if (Date.now() - candidate.endMs > AUTO_CLEAR_DELAY_MS) {
     clearStoredTimer();
     return null;
   }
@@ -132,7 +132,7 @@ export const writeStoredTimer = (snapshot: StoredTimer): void => {
   }
 };
 
-/** ✓/✕/1h 自動掃除のいずれからも呼ばれる「終わりの統一入口」。冪等。 */
+/** ✓/✕/30min 自動掃除のいずれからも呼ばれる「終わりの統一入口」。冪等。 */
 export const clearStoredTimer = (): void => {
   try {
     localStorage.removeItem(STORAGE_KEY);
@@ -146,4 +146,4 @@ export const clearStoredTimer = (): void => {
 export const isPersistedPhase = (phase: TimerPhase): phase is StoredTimer["phase"] =>
   phase === "running" || phase === "paused" || phase === "done";
 
-export { ONE_HOUR_MS };
+export { AUTO_CLEAR_DELAY_MS };

@@ -127,7 +127,7 @@ export const resumeTimer = () => {
  *  終了時刻到達を検出して呼ぶ (TimerLayout)、および timer-alarm.ts の watch / reconcile も同じく呼ぶ
  *  (モード外発火経路)。両者は phase ガードで冪等。
  *
- *  done で localStorage を書き直すのは「kill 後の再起動でも done を見せる」ため。end+1h 自動掃除や
+ *  done で localStorage を書き直すのは「kill 後の再起動でも done を見せる」ため。end+30min 自動掃除や
  *  ✓ボタンが先に来れば消える (どれが先でも収束する)。 */
 export const completeTimer = () => {
   if (timerPhase() !== "running") return;
@@ -136,7 +136,7 @@ export const completeTimer = () => {
 };
 
 /** 「とりけし」/「完了」。選択をクリアして unset (= せっと) に戻し、localStorage も即クリアする。
- *  ✓完了 / ✕とりけし / end+1h 自動掃除のいずれの経路もここに合流する (どれが先でも同じ結果)。 */
+ *  ✓完了 / ✕とりけし / end+30min 自動掃除のいずれの経路もここに合流する (どれが先でも同じ結果)。 */
 export const cancelTimer = () => {
   setSelectedMinutesRaw(null);
   setRunStartMsRaw(null);
