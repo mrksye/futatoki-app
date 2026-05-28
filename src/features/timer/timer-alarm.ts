@@ -63,8 +63,15 @@ export interface TimerAlarm {
    * (iOS は audio session 保持、Android は tab を media-active 扱いに固定)、iOS はアラーム要素を unlock、
    * 非 iOS は AudioContext を resume する。MediaSession の通知タイトルを mediaSessionTitle にセットして
    * endMs までの締切監視を始める。arm 済みでも endMs で張り直す (pause→resume・復帰時のドリフト補正に使用)。
+   *
+   * onDeadlineReached: 締切到達を watch / reconcile が検出した瞬間に、ensureAlarmPlaying の前に呼ばれる。
+   * モード外発火経路の合流点で、外側 (TimerActions / timer-watcher) が「FSM を done に進める / バイブを
+   * 鳴らす / チャイムを disarm する」等の音以外の副作用をここに乗せる。冪等なものを渡すこと: フォア
+   * グラウンドでは TimerLayout の rAF が先に検出して同じ副作用を呼ぶため、watch 検出と二重発火するが
+   * 害ない実装にしておく必要がある (completeTimer は phase ガードで no-op、navigator.vibrate は仕様で
+   * 上書き)。省略時は何もしない。
    */
-  arm(endMs: number, mediaSessionTitle: string): void;
+  arm(endMs: number, mediaSessionTitle: string, onDeadlineReached?: () => void): void;
   /** 締切監視を止めてアラームを止める (pause / とりけし / モード離脱用)。 */
   disarm(): void;
   /**
@@ -185,6 +192,7 @@ async function createHtmlAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
   const keepalive = createKeepalive();
 
   let armedEndMs: number | null = null;
+  let armedOnDeadlineReached: (() => void) | null = null;
   let watchIntervalId: ReturnType<typeof setInterval> | null = null;
   let disposed = false;
 
@@ -216,16 +224,32 @@ async function createHtmlAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
     }
   };
 
+  // 締切到達検知の合流点。watch / reconcile の両方からここに来る。onDeadlineReached を ensureAlarmPlaying
+  // より先に呼ぶ順序は固定: callback 側で FSM を done に進めてから音を鳴らした方が、TimerLayout が rAF で
+  // running を見ていて完了表示に切り替わる前に音が出てしまう一瞬を避けられる (フォアグラウンド経路と
+  // 視覚同期させやすい)。callback 例外は飲み込む (音まで届けるのを優先)。
+  const fireDeadline = (): void => {
+    if (armedOnDeadlineReached) {
+      try {
+        armedOnDeadlineReached();
+      } catch (error) {
+        warn("[timer-alarm] deadline callback failed:", error);
+      }
+    }
+    ensureAlarmPlaying();
+  };
+
   const startWatch = (): void => {
     clearWatch();
     watchIntervalId = setInterval(() => {
-      if (armedEndMs !== null && Date.now() >= armedEndMs) ensureAlarmPlaying();
+      if (armedEndMs !== null && Date.now() >= armedEndMs) fireDeadline();
     }, WATCH_INTERVAL_MS);
   };
 
-  const arm = (endMs: number, mediaSessionTitle: string): void => {
+  const arm = (endMs: number, mediaSessionTitle: string, onDeadlineReached?: () => void): void => {
     if (disposed) return;
     armedEndMs = endMs;
+    armedOnDeadlineReached = onDeadlineReached ?? null;
     keepalive.start();
     setMediaSessionPlaying(mediaSessionTitle);
     unlockAlarm();
@@ -234,6 +258,7 @@ async function createHtmlAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
 
   const disarm = (): void => {
     armedEndMs = null;
+    armedOnDeadlineReached = null;
     clearWatch();
     alarmAudio.pause();
     alarmAudio.currentTime = 0;
@@ -255,7 +280,7 @@ async function createHtmlAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
   const reconcile = (): void => {
     if (disposed || armedEndMs === null) return; // 未 arm (タイマー非稼働) なら何もしない
     if (Date.now() >= armedEndMs) {
-      ensureAlarmPlaying();
+      fireDeadline();
     } else {
       keepalive.start();
       startWatch();
@@ -280,6 +305,7 @@ async function createHtmlAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
     keepalive.stop();
     clearMediaSession();
     armedEndMs = null;
+    armedOnDeadlineReached = null;
   };
 
   return { arm, disarm, ensureAlarmPlaying, dispose };
@@ -305,6 +331,7 @@ async function createWebAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
 
   let alarmSource: AudioBufferSourceNode | null = null;
   let armedEndMs: number | null = null;
+  let armedOnDeadlineReached: (() => void) | null = null;
   let watchIntervalId: ReturnType<typeof setInterval> | null = null;
   let disposed = false;
 
@@ -337,16 +364,29 @@ async function createWebAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
     }
   };
 
+  // HTMLAudio エンジンと同じ合流点。順序 (callback → ensureAlarmPlaying) と例外飲み込みも同様。
+  const fireDeadline = (): void => {
+    if (armedOnDeadlineReached) {
+      try {
+        armedOnDeadlineReached();
+      } catch (error) {
+        warn("[timer-alarm] deadline callback failed:", error);
+      }
+    }
+    ensureAlarmPlaying();
+  };
+
   const startWatch = (): void => {
     clearWatch();
     watchIntervalId = setInterval(() => {
-      if (armedEndMs !== null && Date.now() >= armedEndMs) ensureAlarmPlaying();
+      if (armedEndMs !== null && Date.now() >= armedEndMs) fireDeadline();
     }, WATCH_INTERVAL_MS);
   };
 
-  const arm = (endMs: number, mediaSessionTitle: string): void => {
+  const arm = (endMs: number, mediaSessionTitle: string, onDeadlineReached?: () => void): void => {
     if (disposed) return;
     armedEndMs = endMs;
+    armedOnDeadlineReached = onDeadlineReached ?? null;
     // ジェスチャ内で resume して unlock しておく (以降はバックグラウンドからでも play できる)。
     audioContext.resume().catch((error) => warn("[timer-alarm] resume failed:", error));
     keepalive.start();
@@ -356,6 +396,7 @@ async function createWebAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
 
   const disarm = (): void => {
     armedEndMs = null;
+    armedOnDeadlineReached = null;
     clearWatch();
     stopAlarmSource();
     keepalive.stop();
@@ -378,7 +419,7 @@ async function createWebAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
 
   const reconcile = (): void => {
     if (disposed || armedEndMs === null) return; // 未 arm (タイマー非稼働) なら何もしない
-    if (Date.now() >= armedEndMs) ensureAlarmPlaying();
+    if (Date.now() >= armedEndMs) fireDeadline();
     else {
       keepalive.start();
       startWatch();
@@ -403,6 +444,7 @@ async function createWebAudioAlarm(alarmUrl: string): Promise<TimerAlarm> {
     keepalive.stop();
     clearMediaSession();
     armedEndMs = null;
+    armedOnDeadlineReached = null;
     audioContext.close().catch((error) => warn("[timer-alarm] close failed:", error));
   };
 

@@ -1,8 +1,15 @@
 import { createSignal } from "solid-js";
+import {
+  clearStoredTimer,
+  isPersistedPhase,
+  writeStoredTimer,
+  type StoredTimer,
+} from "./timer-persistence";
 
 /**
- * 分タイマーの操作フェーズと設定値。clockMode === "timer" の間だけ意味を持つセッション状態
- * (永続化なし)。clockMode FSM (free-rotation/state.ts) とは別軸 = timer モードの「中の」状態機械。
+ * 分タイマーの操作フェーズと設定値。clockMode と独立した「timer モードの中の」状態機械で、
+ * timer モード out / アプリ kill / ServiceWorker 自動リロードをまたいで動き続ける (`futatoki.timer`
+ * への永続化は action 末尾で行い、復元は restoreFromStorage 経由で起動時に 1 回だけ)。
  *
  * フェーズは結合した状態なので FSM (timerPhase) で表す:
  *   unset   : まだ分を選んでいない。「せっと」ボタンだけ。
@@ -14,6 +21,12 @@ import { createSignal } from "solid-js";
  *
  * 直交する次元 (選んだ分数 selectedMinutes、開始時刻 runStartMs、一時停止時の残り pausedRemainingMs) は
  * FSM に畳まず別 signal のまま持つ。生 setter は未 export。書き換えは下の action 関数経由のみ。
+ *
+ * 永続化は action 内 inline で write/clear する (createEffect 監視ではなく)。理由: 「書き換えは action
+ * 経由のみ」invariant がそのまま「書き込みタイミングは action 末尾のみ」invariant に翻訳でき、いつ
+ * localStorage が動くかが読める。一方、起動時の復元は restoreFromStorage が「発火経路」(=
+ * completeTimer + アラーム発火) を一切経由しない別 call site として独立しているため、復元時に音が鳴る
+ * ことが構造的にあり得ない (フラグ不要、call site 自体が分離の保証)。
  */
 
 /** 選べる分数 (秒タイマーは作らない方針)。リングメニューにこの順で並ぶ。小刻みは 1・2・3・5 分 (4 分は外した)、
@@ -53,12 +66,36 @@ export const closePicker = () => {
   setPhaseRaw("unset");
 };
 
+/** いま動いている signal 群を localStorage 形式に畳む。永続化対象でない phase なら null を返す。
+ *  各 action の末尾で呼んで writeStoredTimer に渡す。 */
+const snapshotForStorage = (): StoredTimer | null => {
+  const phase = timerPhase();
+  if (!isPersistedPhase(phase)) return null;
+  const sel = selectedMinutes();
+  const start = runStartMs();
+  if (sel === null || start === null) return null;
+  return {
+    phase,
+    selectedMinutes: sel,
+    endMs: start + sel * 60000,
+    pausedRemainingMs: phase === "paused" ? pausedRemainingMs() : null,
+  };
+};
+
+/** 現在の状態を localStorage に書き戻す。snapshotForStorage が null を返す phase は no-op
+ *  (unset / picking でうっかり呼んでも害ない)。 */
+const persistCurrentState = (): void => {
+  const snapshot = snapshotForStorage();
+  if (snapshot !== null) writeStoredTimer(snapshot);
+};
+
 /** リングメニューで分を選択 → 即 running 開始 (armed を挟まず、選んだ瞬間にカウントダウン)。現在時刻を
  *  開始基準に固定する。 */
 export const selectMinutes = (m: number) => {
   setSelectedMinutesRaw(m);
   setRunStartMsRaw(Date.now());
   setPhaseRaw("running");
+  persistCurrentState();
 };
 
 /** 「いちじていし」。running からのみ。残り ms を凍結して paused へ (時計は実時刻のまま動き、扇=残り
@@ -70,6 +107,7 @@ export const pauseTimer = () => {
   if (sel === null || start === null) return;
   setPausedRemainingMsRaw(Math.max(0, start + sel * 60000 - Date.now()));
   setPhaseRaw("paused");
+  persistCurrentState();
 };
 
 /** 「さいかい」。paused からのみ。凍結した残りから running を続行 (end = 今 + 残り になるよう
@@ -82,19 +120,46 @@ export const resumeTimer = () => {
   setRunStartMsRaw(Date.now() - (sel * 60000 - rem));
   setPausedRemainingMsRaw(null);
   setPhaseRaw("running");
+  persistCurrentState();
 };
 
 /** カウントダウンが 0 に達した。running → done (完了音ループ +「完了」ボタン)。盤面の時計 tick が
- *  終了時刻到達を検出して呼ぶ (TimerLayout)。 */
+ *  終了時刻到達を検出して呼ぶ (TimerLayout)、および timer-alarm.ts の watch / reconcile も同じく呼ぶ
+ *  (モード外発火経路)。両者は phase ガードで冪等。
+ *
+ *  done で localStorage を書き直すのは「kill 後の再起動でも done を見せる」ため。end+1h 自動掃除や
+ *  ✓ボタンが先に来れば消える (どれが先でも収束する)。 */
 export const completeTimer = () => {
   if (timerPhase() !== "running") return;
   setPhaseRaw("done");
+  persistCurrentState();
 };
 
-/** 「とりけし」/「完了」。選択をクリアして unset (= せっと) に戻す。どのフェーズからでも。 */
+/** 「とりけし」/「完了」。選択をクリアして unset (= せっと) に戻し、localStorage も即クリアする。
+ *  ✓完了 / ✕とりけし / end+1h 自動掃除のいずれの経路もここに合流する (どれが先でも同じ結果)。 */
 export const cancelTimer = () => {
   setSelectedMinutesRaw(null);
   setRunStartMsRaw(null);
   setPausedRemainingMsRaw(null);
   setPhaseRaw("unset");
+  clearStoredTimer();
+};
+
+/** 起動時の復元経路。timer-watcher が readStoredTimer で得た snapshot を渡して呼ぶ「専用入口」。
+ *  発火経路 (completeTimer + アラーム発火) とは完全に別 call site で、ここでは音もバイブも鳴らないし
+ *  state.ts 側でも何も鳴らさない (state は副作用フリーを保つ)。書き戻し write はしない (起動直後の
+ *  re-write は無意味かつ noisy)。
+ *
+ *  保存時 running でも復帰時点で endMs <= now (= bg/kill 中に締切を過ぎていた) なら done に補正する。
+ *  そのまま running として arm するとアラームの watch が即発火検知して音を鳴らしてしまい、「復帰時に
+ *  既に終わってたら無音」要件を破る。done に補正してしまえば watcher 側も arm 経路を踏まないし、
+ *  TimerLayout の rAF も running ガードで completeTimer を呼ばない (= 発火経路 0 = 無音)。 */
+export const restoreFromStorage = (snapshot: StoredTimer): void => {
+  const effectivePhase: StoredTimer["phase"] =
+    snapshot.phase === "running" && snapshot.endMs <= Date.now() ? "done" : snapshot.phase;
+  const runStartMsValue = snapshot.endMs - snapshot.selectedMinutes * 60000;
+  setSelectedMinutesRaw(snapshot.selectedMinutes);
+  setRunStartMsRaw(runStartMsValue);
+  setPausedRemainingMsRaw(effectivePhase === "paused" ? snapshot.pausedRemainingMs : null);
+  setPhaseRaw(effectivePhase);
 };

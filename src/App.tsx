@@ -5,6 +5,7 @@ import { pickerOpen } from "./features/activity/picker";
 import { languagePickerOpen } from "./features/language-picker/state";
 import { initFullMoonEasterEgg } from "./features/full-moon-easter-egg";
 import { firstLaunchActive } from "./features/first-launch";
+import { useTimerWatcher } from "./features/timer/timer-watcher";
 import { requestChronostasis } from "./lib/chronostasis";
 import { useChronostasisBodyClass } from "./lib/chronostasis/solid";
 import { I18nProvider } from "./i18n";
@@ -20,16 +21,27 @@ const usePickerHoldsChronostasis = () => {
   });
 };
 
+/** I18nProvider の内側で動かす必要があるもの (useI18n に依存する関心事) をまとめる shell。timer-watcher の
+ *  MediaSession タイトルが localized 文字列を必要とするためここに置く。 */
+const AppShell: Component = () => {
+  useTimerWatcher();
+  return (
+    <>
+      <ClockLayout />
+      <Show when={firstLaunchActive()}>
+        <FirstLaunchSplash />
+      </Show>
+    </>
+  );
+};
+
 const App: Component = () => {
   useChronostasisBodyClass();
   usePickerHoldsChronostasis();
   initFullMoonEasterEgg();
   return (
     <I18nProvider>
-      <ClockLayout />
-      <Show when={firstLaunchActive()}>
-        <FirstLaunchSplash />
-      </Show>
+      <AppShell />
     </I18nProvider>
   );
 };

@@ -12,11 +12,12 @@ import {
   pauseTimer,
   resumeTimer,
   cancelTimer,
+  completeTimer,
   TIMER_MINUTE_OPTIONS,
   type RingOrigin,
 } from "../features/timer/state";
-import { timerAlarm, initTimerAlarm } from "../features/timer/timer-alarm";
-import { timerChime, initTimerChime } from "../features/timer/timer-chime";
+import { timerAlarm } from "../features/timer/timer-alarm";
+import { timerChime } from "../features/timer/timer-chime";
 import { closeActivePopover } from "../lib/exclusive-popover";
 import { animateMotion, motionAllowed } from "../lib/motion";
 import StopwatchIcon from "./icons/StopwatchIcon";
@@ -44,12 +45,28 @@ const FAB_CLASS =
   "w-12 h-12 tablet:w-14 tablet:h-14 rounded-full bg-white/80 shadow-md flex items-center " +
   "justify-center active:scale-90 transition-all text-gray-700 before:hidden";
 
+/** 完了時のバイブパターン (Vibration API 対応端末のみ。iOS は非対応で実質 Android 向け)。timer-watcher
+ *  内 onDeadlineReached にも同じ定数があるが、ここはユーザジェスチャからの arm 呼び出しで「モード外
+ *  発火経路」の callback に渡すために再掲する (両経路は冪等)。 */
+const ALARM_VIBRATE_PATTERN = [200, 100, 200];
+
+/** 締切到達時にモード外発火経路 (timer-alarm の setInterval watch) から呼ばれる音以外副作用。
+ *  フォアグラウンドの TimerLayout の rAF と重複しても completeTimer は phase ガード、navigator.vibrate は
+ *  仕様で上書き、chime disarm は冪等なので害なし。 */
+const onDeadlineReached = (): void => {
+  completeTimer();
+  if (typeof navigator.vibrate === "function") navigator.vibrate(ALARM_VIBRATE_PATTERN);
+  timerChime()?.disarm();
+};
+
 /** タイマー音声 (完了アラーム + 予告チャイム) はライフサイクルが同じ (running 開始 / さいかいで arm、
- *  いちじていし / とりけし / 完了 / 退室で disarm) なので、独立した 2 エンジンへの arm/disarm をここで
+ *  いちじていし / とりけし / 完了で disarm) なので、独立した 2 エンジンへの arm/disarm をここで
  *  まとめてファンアウトする。endMs はジェスチャ内の呼び出し側が計算して渡す (両エンジンとも同じ締切)。
- *  mediaSessionTitle はアラームが OS の通知シェード / lock screen に出す表示文字列 (i18n 済)。 */
+ *  mediaSessionTitle はアラームが OS の通知シェード / lock screen に出す表示文字列 (i18n 済)。
+ *  arm 時にモード外発火 callback (onDeadlineReached) も渡して timer-watcher が起動時復元で arm する
+ *  経路と挙動を揃える。 */
 const armTimerAudio = (endMs: number, mediaSessionTitle: string): void => {
-  timerAlarm()?.arm(endMs, mediaSessionTitle);
+  timerAlarm()?.arm(endMs, mediaSessionTitle, onDeadlineReached);
   timerChime()?.arm(endMs);
 };
 const disarmTimerAudio = (): void => {
@@ -60,21 +77,14 @@ const disarmTimerAudio = (): void => {
 const TimerActions: Component = () => {
   const { t } = useI18n();
 
-  // アラーム (AudioContext + 82秒音源の decode) と予告チャイム (オシレータ合成) は初回入室で 1 度だけ生成し、
-  // 以降は使い回す (どちらの init も生成済みなら no-op)。入退室のたびに作り直すと生成/破棄コストと decode の
-  // GC 圧が毎回かかり繰り返すほど重くなるため。resume / arm は必ず下の onClick (ジェスチャ内) で行う
-  // (reactive effect で resume すると iOS がジェスチャ外と判定して unlock に失敗する)。チャイムは iOS では
-  // 生成されない (initTimerChime が iOS で即 return = keepalive のオーディオセッションを奪わないため)。
-  onMount(() => {
-    initTimerAlarm();
-    initTimerChime();
-  });
-  // timer モードを抜ける (= この component が unmount される) とき選択状態を破棄して unset へ戻し、予約発火を
-  // 取り消す (音源本体は使い回すので dispose せず disarm のみ。keepalive / AudioContext は維持)。
-  onCleanup(() => {
-    cancelTimer();
-    disarmTimerAudio();
-  });
+  // アラーム/チャイムの init/dispose と「モード切替で kill しない」責務は timer-watcher に集約済み
+  // (App ルートで useTimerWatcher() が動く)。TimerActions の mount/unmount = timer モードの出入りに
+  // 過剰反応しないことで、モード切替 → モード外発火経路 (timer-alarm の watch) → 起動時自動復元の
+  // 一連が成立する。
+  //
+  // resume / arm は必ず下の onClick (ジェスチャ内) で行う (reactive effect で resume すると iOS が
+  // ジェスチャ外と判定して unlock に失敗する)。チャイムは iOS では生成されない (initTimerChime が
+  // iOS で即 return = keepalive のオーディオセッションを奪わないため)。
 
   /** 現在の running 設定 (開始時刻 + 選んだ分) から終了時刻を出して予約発火を張る/張り直す。 */
   const armCurrentRun = () => {
