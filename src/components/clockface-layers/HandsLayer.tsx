@@ -34,6 +34,13 @@ interface HandsLayerProps {
   /** 分針 (長針) の黒い本体だけの不透明度。白い縁取りは常に不透明のまま残るので、timer モードの現在針は
    *  輪郭がくっきりしたゴースト針になる。時針・中心ネジは常に不透明。未指定なら 1 (通常表示)。 */
   minuteHandOpacity?: number;
+  /** 3 本目の分針 (経過オーバーラン針) を描く位置 (分)。timer の done 状態で「終了時刻から今どれだけ
+   *  過ぎてるか」を示すために、live 現在時刻に追従する薄い色の長針として使う。marker (黒静止) と minute
+   *  hand (grey ghost) の「裏」(= SVG 描画順で先) に置くため、JSX 上は時針の直後に描く。未指定なら描画しない。 */
+  overrunMinutes?: number;
+  /** overrunMinutes 針の stroke 色。default は薄い赤。TimerWedge の濃い端と同トーンで揃えるため呼び出し側
+   *  (TimerLayout) が palette を見て決めて渡す想定。 */
+  overrunColor?: string;
 }
 
 const VIEW = 340;
@@ -150,6 +157,15 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
           <line x1={CENTER} y1={CENTER + 10} x2={CENTER} y2={CENTER - R() * factors().hour}
             stroke="#111111" stroke-width="7" stroke-linecap="round" />
         </g>
+
+        {/* オーバーラン針 (timer の done で live 現在時刻に追従する経過表示)。minute hand と marker の
+            「裏」に来るように SVG 描画順で先に置く。outline 無しで薄い赤の line 1 本のみ。 */}
+        <Show when={props.overrunMinutes !== undefined}>
+          <g transform={`rotate(${(props.overrunMinutes ?? 0) * 6} ${CENTER} ${CENTER})`}>
+            <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
+              stroke={props.overrunColor ?? "#f3c8c8"} stroke-width="3.5" stroke-linecap="round" />
+          </g>
+        </Show>
 
         {/* 分針 (同じ outline 思想で padding 1.25)。shake 用の外側 wrapper <g> で囲む。
             opacity は黒い本体の line だけに載せ、白い縁取りは不透明のまま残す (timer の現在針ゴースト

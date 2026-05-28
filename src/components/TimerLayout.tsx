@@ -5,6 +5,8 @@ import TimerWedge from "../features/timer/TimerWedge";
 import { useOrientation } from "../hooks/useOrientation";
 import { useViewport } from "../hooks/useViewport";
 import { useI18n } from "../i18n";
+import { colorMode } from "../features/settings/color-mode";
+import { paletteId } from "../features/settings/palette";
 import {
   timerPhase,
   selectedMinutes,
@@ -48,6 +50,12 @@ import {
 
 /** PM 位置のグレー現在針 (長針 ghost) の黒本体の不透明度。黒い終了マーカー (不透明) との対比で薄く見せる。 */
 const NOW_HAND_OPACITY = 0.2;
+
+/** done 中のオーバーラン針 (live 現在時刻に追従する経過表示針) の色。TimerWedge の濃い端 (nearColor) と
+ *  同じトーンで揃える。盤面背景に opacity 0.8 の色扇が乗る sector では明るめの淡赤 #ffdada、それ以外
+ *  (badge / monotone, 盤面が白) では白に溶けないよう少し濃いめの淡赤 #f3c8c8。 */
+const OVERRUN_COLOR_SECTOR = "#ffdada";
+const OVERRUN_COLOR_DEFAULT = "#f3c8c8";
 
 /** 完了時のバイブパターン (対応端末のみ。iOS Safari は Vibration API 非対応なので実質 Android 向け)。 */
 const ALARM_VIBRATE_PATTERN = [200, 100, 200];
@@ -116,6 +124,16 @@ const TimerLayout: Component = () => {
     const d = new Date(e);
     return d.getMinutes() + d.getSeconds() / 60;
   };
+
+  /** done のとき live 現在時刻に追従して動く「経過オーバーラン針」の位置 (分, 小数)。終了時刻で凍る
+   *  marker (黒) と ghost grey の重なりから離れて進むことで、子供と一緒に「もう X 分過ぎてるで」を
+   *  視覚的に共有できる。done 以外は undefined で HandsLayer 側で描画スキップ。 */
+  const overrunMinutes = (): number | undefined =>
+    timerPhase() === "done" ? refMinuteFloat() : undefined;
+
+  /** overrun 針の色。TimerWedge の nearColor() と同じ判定で揃える (扇の濃い端と同トーン)。 */
+  const overrunColor = () =>
+    colorMode() === "sector" && paletteId() !== "monotone" ? OVERRUN_COLOR_SECTOR : OVERRUN_COLOR_DEFAULT;
 
   /** 残り秒。running=実時間で減る / paused=凍結した残り / done=0。 */
   const remainingSeconds = (): number | null => {
@@ -277,6 +295,8 @@ const TimerLayout: Component = () => {
                 minutes={boardMinuteFloat()}
                 minuteHandOpacity={NOW_HAND_OPACITY}
                 markerMinutes={markerMinutes()}
+                overrunMinutes={overrunMinutes()}
+                overrunColor={overrunColor()}
               />
             </div>
           </Show>
