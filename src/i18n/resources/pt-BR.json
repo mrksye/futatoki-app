@@ -31,7 +31,8 @@
     "resume": "Continuar",
     "mute": "Silêncio",
     "done": "Pronto",
-    "runningTitle": "Futatoki – cronômetro em andamento"
+    "runningTitle": "Futatoki – cronômetro em andamento",
+    "startToast": "Vai tocar no fim"
   },
   "section": {
     "color": "Cores",

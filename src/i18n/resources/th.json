@@ -31,7 +31,8 @@
     "resume": "ทำต่อ",
     "mute": "เงียบ ๆ",
     "done": "เสร็จแล้ว",
-    "runningTitle": "Futatoki – กำลังจับเวลา"
+    "runningTitle": "Futatoki – กำลังจับเวลา",
+    "startToast": "ตอนจบจะมีเสียงนะ"
   },
   "section": {
     "color": "สี",

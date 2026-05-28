@@ -31,7 +31,8 @@
     "resume": "Wznów",
     "mute": "Cisza",
     "done": "Gotowe",
-    "runningTitle": "Futatoki – minutnik działa"
+    "runningTitle": "Futatoki – minutnik działa",
+    "startToast": "Zadźwięczy na końcu"
   },
   "section": {
     "color": "Kolory",

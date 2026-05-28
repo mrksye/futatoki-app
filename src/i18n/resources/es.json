@@ -31,7 +31,8 @@
     "resume": "Continuar",
     "mute": "Silencio",
     "done": "Listo",
-    "runningTitle": "Futatoki – temporizador en marcha"
+    "runningTitle": "Futatoki – temporizador en marcha",
+    "startToast": "Sonará al terminar"
   },
   "section": {
     "color": "Colores",

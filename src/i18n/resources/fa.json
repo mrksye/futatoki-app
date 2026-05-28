@@ -31,7 +31,8 @@
     "resume": "ادامه",
     "mute": "سکوت",
     "done": "تمام",
-    "runningTitle": "Futatoki – زمان‌سنج فعال است"
+    "runningTitle": "Futatoki – زمان‌سنج فعال است",
+    "startToast": "در پایان زنگ می‌خورد"
   },
   "section": {
     "color": "رَنگ‌ها",

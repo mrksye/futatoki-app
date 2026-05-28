@@ -31,7 +31,8 @@
     "resume": "চালিয়ে যান",
     "mute": "চুপ",
     "done": "হয়ে গেছে",
-    "runningTitle": "Futatoki – টাইমার চলছে"
+    "runningTitle": "Futatoki – টাইমার চলছে",
+    "startToast": "শেষে শব্দ হবে"
   },
   "section": {
     "color": "রঙ",

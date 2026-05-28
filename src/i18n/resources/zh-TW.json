@@ -31,7 +31,8 @@
     "resume": "繼續",
     "mute": "安靜",
     "done": "完成",
-    "runningTitle": "扶嗒托基・計時中"
+    "runningTitle": "扶嗒托基・計時中",
+    "startToast": "結束時會響哦"
   },
   "section": {
     "color": "配色",

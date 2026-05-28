@@ -31,7 +31,8 @@
     "resume": "Weiter",
     "mute": "Leise",
     "done": "Fertig",
-    "runningTitle": "Futatoki – Timer läuft"
+    "runningTitle": "Futatoki – Timer läuft",
+    "startToast": "Klingelt am Ende"
   },
   "section": {
     "color": "Farben",

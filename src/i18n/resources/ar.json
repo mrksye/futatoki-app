@@ -31,7 +31,8 @@
     "resume": "مُتَابَعَة",
     "mute": "هُدُوء",
     "done": "تَمَّ",
-    "runningTitle": "Futatoki – الْمُؤَقِّت قَيْد التَّشْغِيل"
+    "runningTitle": "Futatoki – الْمُؤَقِّت قَيْد التَّشْغِيل",
+    "startToast": "سَيَرِنُّ عِنْدَ الِانْتِهَاء"
   },
   "section": {
     "color": "أَلْوَان",

@@ -31,7 +31,8 @@
     "resume": "Devam",
     "mute": "Sessizlik",
     "done": "Bitti",
-    "runningTitle": "Futatoki – zamanlayıcı çalışıyor"
+    "runningTitle": "Futatoki – zamanlayıcı çalışıyor",
+    "startToast": "Bitince ses çalacak"
   },
   "section": {
     "color": "Renkler",

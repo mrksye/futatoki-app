@@ -31,7 +31,8 @@
     "resume": "Riprendi",
     "mute": "Silenzio",
     "done": "Fatto",
-    "runningTitle": "Futatoki – timer in corso"
+    "runningTitle": "Futatoki – timer in corso",
+    "startToast": "Suonerà alla fine"
   },
   "section": {
     "color": "Colori",

@@ -31,7 +31,8 @@
     "resume": "जारी रखें",
     "mute": "चुप",
     "done": "हो गया",
-    "runningTitle": "Futatoki – टाइमर चालू है"
+    "runningTitle": "Futatoki – टाइमर चालू है",
+    "startToast": "खत्म होने पर बजेगा"
   },
   "section": {
     "color": "रंग",

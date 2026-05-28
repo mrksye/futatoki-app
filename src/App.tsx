@@ -6,6 +6,7 @@ import { languagePickerOpen } from "./features/language-picker/state";
 import { initFullMoonEasterEgg } from "./features/full-moon-easter-egg";
 import { firstLaunchActive } from "./features/first-launch";
 import { useTimerWatcher } from "./features/timer/timer-watcher";
+import TimerStartToast from "./features/timer/TimerStartToast";
 import { requestChronostasis } from "./lib/chronostasis";
 import { useChronostasisBodyClass } from "./lib/chronostasis/solid";
 import { I18nProvider } from "./i18n";
@@ -31,6 +32,7 @@ const AppShell: Component = () => {
       <Show when={firstLaunchActive()}>
         <FirstLaunchSplash />
       </Show>
+      <TimerStartToast />
     </>
   );
 };

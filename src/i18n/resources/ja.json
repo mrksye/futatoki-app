@@ -31,7 +31,8 @@
     "resume": "つづける",
     "mute": "しずかに",
     "done": "おしまい",
-    "runningTitle": "ふたとき・たいむうぉっち稼働中"
+    "runningTitle": "ふたとき・たいむうぉっち稼働中",
+    "startToast": "おわるとき おとで しらせるよ"
   },
   "section": {
     "color": "はいしょく",

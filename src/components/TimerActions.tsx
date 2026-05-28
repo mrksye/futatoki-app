@@ -18,6 +18,7 @@ import {
 } from "../features/timer/state";
 import { timerAlarm } from "../features/timer/timer-alarm";
 import { timerChime } from "../features/timer/timer-chime";
+import { showTimerStartToast } from "../features/timer/TimerStartToast";
 import { closeActivePopover } from "../lib/exclusive-popover";
 import { animateMotion, motionAllowed } from "../lib/motion";
 import StopwatchIcon from "./icons/StopwatchIcon";
@@ -412,6 +413,7 @@ const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
         // 無くなったため)。
         const start = runStartMs();
         if (start !== null) armTimerAudio(start + minutes * 60000, t("timer.runningTitle"));
+        showTimerStartToast(t("timer.startToast"));
         return;
       }
     }
@@ -527,6 +529,7 @@ const TimerRingButton: Component<{
     selectMinutes(props.minutes);
     const start = runStartMs();
     if (start !== null) armTimerAudio(start + props.minutes * 60000, t("timer.runningTitle"));
+    showTimerStartToast(t("timer.startToast"));
   };
 
   return (

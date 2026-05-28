@@ -31,7 +31,8 @@
     "resume": "Lanjut",
     "mute": "Diam",
     "done": "Selesai",
-    "runningTitle": "Futatoki – pewaktu berjalan"
+    "runningTitle": "Futatoki – pewaktu berjalan",
+    "startToast": "Akan berbunyi di akhir"
   },
   "section": {
     "color": "Warna",

@@ -31,7 +31,8 @@
     "resume": "Продолжить",
     "mute": "Тише",
     "done": "Готово",
-    "runningTitle": "Futatoki – таймер идёт"
+    "runningTitle": "Futatoki – таймер идёт",
+    "startToast": "Прозвучит сигнал в конце"
   },
   "section": {
     "color": "Цвета",
