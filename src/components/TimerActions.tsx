@@ -1,4 +1,4 @@
-import { For, Show, createSignal, onCleanup, onMount, type Component } from "solid-js";
+import { For, Show, createEffect, createSignal, onCleanup, onMount, type Component } from "solid-js";
 import { useI18n } from "../i18n";
 import { useIsTablet } from "../hooks/useIsTablet";
 import {
@@ -25,6 +25,7 @@ import PlayIcon from "./icons/PlayIcon";
 import PauseIcon from "./icons/PauseIcon";
 import CancelIcon from "./icons/CancelIcon";
 import CheckIcon from "./icons/CheckIcon";
+import MuteIcon from "./icons/MuteIcon";
 
 /**
  * 分タイマーの操作 UI。timer モード中だけ ClockLayout から mount される floating レイヤーで、表示専用の
@@ -34,7 +35,9 @@ import CheckIcon from "./icons/CheckIcon";
  *  - unset:   「せっと」(ストップウォッチ) 1 個。押すとリングメニューを開く。
  *  - running: 「いちじていし」(⏸, 下=primary) +「とりけし」(✕, 上)。リングで分を選ぶと即この状態。
  *  - paused:  「さいかい」(▶, 下=primary) +「とりけし」(✕, 上)。
- *  - done:    「完了」(✓) 1 個。押すと音を止めて unset に戻る。
+ *  - done:    「完了」(✓ primary, 下) +「しずかに」(🔇 上)。完了で unset リセット、しずかには音だけ止めて
+ *             done 画面を残す。さらに done 中は画面どこをタップしても自動で音を止める (autoRotate の
+ *             「画面どこタップで停止」と同じパターン、document level listener で実現)。
  *
  * リングメニューはできごと picker (ActivityPicker) の構築を参考にした TimerRingMenu (下記)。
  * mount/unmount は timer モードの出入りに同期するので、unmount 時に cancelTimer で状態を unset へ
@@ -107,6 +110,19 @@ const TimerActions: Component = () => {
     cancelTimer();
     disarmTimerAudio();
   };
+  /** しずかに: 音だけ止めて done 画面 (経過時間表示) は残す。FSM は触らない。ボタン直接タップでも
+   *  document listener 経由でも結果は同じ (disarm は冪等)。 */
+  const onMute = () => disarmTimerAudio();
+
+  // done 中は画面のどこをタップしても音を止める。子供がボタン位置を探さなくても止められる UX。
+  // disarm 冪等なので完了ボタン onClick との二重発火 (pointerdown → click) は無害。
+  // listener は done に入ったタイミングで登録、phase が抜けたら Solid の effect 再実行で onCleanup が走る。
+  createEffect(() => {
+    if (timerPhase() !== "done") return;
+    const handler = () => disarmTimerAudio();
+    document.addEventListener("pointerdown", handler, { passive: true });
+    onCleanup(() => document.removeEventListener("pointerdown", handler));
+  });
 
   /** せっとを押したら他の popover (もーど / 設定) を閉じ、ボタン中心をリングの中心にして開く。 */
   const onSet = (e: MouseEvent) => {
@@ -151,10 +167,14 @@ const TimerActions: Component = () => {
           </button>
         </Show>
 
-        {/* done: 完了 (✓) 1 個。音を止めて unset に戻す。 */}
+        {/* done: 完了 (✓ primary, 下) + しずかに (🔇 上)。flex-col-reverse なので JSX 順 = 下→上。
+            画面どこタップでも消音される (上の createEffect)、しずかにボタンは hint 兼キーボード操作経路。 */}
         <Show when={timerPhase() === "done"}>
           <button class={FAB_CLASS} aria-label={t("timer.done")} onClick={onCancel}>
             <CheckIcon class={iconClass} />
+          </button>
+          <button class={FAB_CLASS} aria-label={t("timer.mute")} onClick={onMute}>
+            <MuteIcon class={iconClass} />
           </button>
         </Show>
       </div>
