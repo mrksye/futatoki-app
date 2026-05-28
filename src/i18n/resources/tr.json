@@ -29,7 +29,8 @@
     "minuteOption": "{n} dk",
     "pause": "Duraklat",
     "resume": "Devam",
-    "done": "Bitti"
+    "done": "Bitti",
+    "runningTitle": "Futatoki – zamanlayıcı çalışıyor"
   },
   "section": {
     "color": "Renkler",

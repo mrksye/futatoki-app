@@ -29,7 +29,8 @@
     "minuteOption": "{n} دقیقه",
     "pause": "توقف",
     "resume": "ادامه",
-    "done": "تمام"
+    "done": "تمام",
+    "runningTitle": "Futatoki – زمان‌سنج فعال است"
   },
   "section": {
     "color": "رَنگ‌ها",

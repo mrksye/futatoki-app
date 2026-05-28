@@ -29,7 +29,8 @@
     "minuteOption": "{n} นาที",
     "pause": "หยุดชั่วคราว",
     "resume": "ทำต่อ",
-    "done": "เสร็จแล้ว"
+    "done": "เสร็จแล้ว",
+    "runningTitle": "Futatoki – กำลังจับเวลา"
   },
   "section": {
     "color": "สี",

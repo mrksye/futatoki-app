@@ -29,7 +29,8 @@
     "minuteOption": "{n} mnt",
     "pause": "Jeda",
     "resume": "Lanjut",
-    "done": "Selesai"
+    "done": "Selesai",
+    "runningTitle": "Futatoki – pewaktu berjalan"
   },
   "section": {
     "color": "Warna",

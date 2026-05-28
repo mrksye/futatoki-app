@@ -29,7 +29,8 @@
     "minuteOption": "{n} मिनट",
     "pause": "रोकें",
     "resume": "जारी रखें",
-    "done": "हो गया"
+    "done": "हो गया",
+    "runningTitle": "Futatoki – टाइमर चालू है"
   },
   "section": {
     "color": "रंग",

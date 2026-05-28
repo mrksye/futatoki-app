@@ -29,7 +29,8 @@
     "minuteOption": "{n} min",
     "pause": "Pauza",
     "resume": "Wznów",
-    "done": "Gotowe"
+    "done": "Gotowe",
+    "runningTitle": "Futatoki – minutnik działa"
   },
   "section": {
     "color": "Kolory",

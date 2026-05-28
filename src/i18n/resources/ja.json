@@ -29,7 +29,8 @@
     "minuteOption": "{n}ふん",
     "pause": "とめる",
     "resume": "つづける",
-    "done": "おしまい"
+    "done": "おしまい",
+    "runningTitle": "ふたとき・たいむうぉっち稼働中"
   },
   "section": {
     "color": "はいしょく",

@@ -29,7 +29,8 @@
     "minuteOption": "{n} 分钟",
     "pause": "暂停",
     "resume": "继续",
-    "done": "完成"
+    "done": "完成",
+    "runningTitle": "扶嗒托基・计时中"
   },
   "section": {
     "color": "配色",

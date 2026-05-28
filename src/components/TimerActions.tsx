@@ -46,9 +46,10 @@ const FAB_CLASS =
 
 /** タイマー音声 (完了アラーム + 予告チャイム) はライフサイクルが同じ (running 開始 / さいかいで arm、
  *  いちじていし / とりけし / 完了 / 退室で disarm) なので、独立した 2 エンジンへの arm/disarm をここで
- *  まとめてファンアウトする。endMs はジェスチャ内の呼び出し側が計算して渡す (両エンジンとも同じ締切)。 */
-const armTimerAudio = (endMs: number): void => {
-  timerAlarm()?.arm(endMs);
+ *  まとめてファンアウトする。endMs はジェスチャ内の呼び出し側が計算して渡す (両エンジンとも同じ締切)。
+ *  mediaSessionTitle はアラームが OS の通知シェード / lock screen に出す表示文字列 (i18n 済)。 */
+const armTimerAudio = (endMs: number, mediaSessionTitle: string): void => {
+  timerAlarm()?.arm(endMs, mediaSessionTitle);
   timerChime()?.arm(endMs);
 };
 const disarmTimerAudio = (): void => {
@@ -79,7 +80,7 @@ const TimerActions: Component = () => {
   const armCurrentRun = () => {
     const start = runStartMs();
     const minutes = selectedMinutes();
-    if (start !== null && minutes !== null) armTimerAudio(start + minutes * 60000);
+    if (start !== null && minutes !== null) armTimerAudio(start + minutes * 60000, t("timer.runningTitle"));
   };
   /** いちじていし: FSM を paused にして予約発火を取り消す (keepalive は維持)。 */
   const onPause = () => {
@@ -204,6 +205,7 @@ const INERTIA_DECAY_PER_MS = 0.003;
 const INERTIA_VELOCITY_MIN = 0.015;
 
 const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
+  const { t } = useI18n();
   const isTablet = useIsTablet();
   const ringRadius = () => (isTablet() ? RING_RADIUS_TABLET_PX : RING_RADIUS_MOBILE_PX);
   const btnSize = () => (isTablet() ? BTN_SIZE_TABLET_PX : BTN_SIZE_MOBILE_PX);
@@ -364,7 +366,7 @@ const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
         // (resume) しつつ終了時刻基準の予約発火を張る (旧 Howler が肩代わりしていたグローバル unlock が
         // 無くなったため)。
         const start = runStartMs();
-        if (start !== null) armTimerAudio(start + minutes * 60000);
+        if (start !== null) armTimerAudio(start + minutes * 60000, t("timer.runningTitle"));
         return;
       }
     }
@@ -479,7 +481,7 @@ const TimerRingButton: Component<{
     e.stopPropagation();
     selectMinutes(props.minutes);
     const start = runStartMs();
-    if (start !== null) armTimerAudio(start + props.minutes * 60000);
+    if (start !== null) armTimerAudio(start + props.minutes * 60000, t("timer.runningTitle"));
   };
 
   return (

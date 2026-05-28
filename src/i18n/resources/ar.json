@@ -29,7 +29,8 @@
     "minuteOption": "{n} دقيقة",
     "pause": "إِيقَاف مُؤَقَّت",
     "resume": "مُتَابَعَة",
-    "done": "تَمَّ"
+    "done": "تَمَّ",
+    "runningTitle": "Futatoki – الْمُؤَقِّت قَيْد التَّشْغِيل"
   },
   "section": {
     "color": "أَلْوَان",

@@ -29,7 +29,8 @@
     "minuteOption": "{n} мин",
     "pause": "Пауза",
     "resume": "Продолжить",
-    "done": "Готово"
+    "done": "Готово",
+    "runningTitle": "Futatoki – таймер идёт"
   },
   "section": {
     "color": "Цвета",

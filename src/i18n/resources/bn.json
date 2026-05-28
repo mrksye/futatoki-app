@@ -29,7 +29,8 @@
     "minuteOption": "{n} মিনিট",
     "pause": "বিরতি",
     "resume": "চালিয়ে যান",
-    "done": "হয়ে গেছে"
+    "done": "হয়ে গেছে",
+    "runningTitle": "Futatoki – টাইমার চলছে"
   },
   "section": {
     "color": "রঙ",

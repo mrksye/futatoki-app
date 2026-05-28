@@ -29,7 +29,8 @@
     "minuteOption": "{n} min",
     "pause": "Pausa",
     "resume": "Continuar",
-    "done": "Listo"
+    "done": "Listo",
+    "runningTitle": "Futatoki – temporizador en marcha"
   },
   "section": {
     "color": "Colores",

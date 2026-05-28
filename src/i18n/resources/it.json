@@ -29,7 +29,8 @@
     "minuteOption": "{n} min",
     "pause": "Pausa",
     "resume": "Riprendi",
-    "done": "Fatto"
+    "done": "Fatto",
+    "runningTitle": "Futatoki – timer in corso"
   },
   "section": {
     "color": "Colori",

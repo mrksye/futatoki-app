@@ -29,7 +29,8 @@
     "minuteOption": "{n} min",
     "pause": "Pausar",
     "resume": "Continuar",
-    "done": "Pronto"
+    "done": "Pronto",
+    "runningTitle": "Futatoki – cronômetro em andamento"
   },
   "section": {
     "color": "Cores",
