@@ -38,7 +38,7 @@ interface HandsLayerProps {
    *  過ぎてるか」を示すために、live 現在時刻に追従する薄い色の長針として使う。marker (黒静止) と minute
    *  hand (grey ghost) の「裏」(= SVG 描画順で先) に置くため、JSX 上は時針の直後に描く。未指定なら描画しない。 */
   overrunMinutes?: number;
-  /** overrunMinutes 針の stroke 色。default は優しい警告色のコーラル赤。TimerWedge の濃い端と同トーンで揃えるため呼び出し側
+  /** overrunMinutes 針の stroke 色。default は薄い赤。TimerWedge の濃い端と同トーンで揃えるため呼び出し側
    *  (TimerLayout) が palette を見て決めて渡す想定。 */
   overrunColor?: string;
 }
@@ -166,7 +166,7 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
             <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
               stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
             <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
-              stroke={props.overrunColor ?? "#e89e9e"} stroke-width="3.5" stroke-linecap="round" />
+              stroke={props.overrunColor ?? "#f3c8c8"} stroke-width="3.5" stroke-linecap="round" />
           </g>
         </Show>
 
