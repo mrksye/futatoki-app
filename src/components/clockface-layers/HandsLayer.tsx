@@ -159,9 +159,12 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
         </g>
 
         {/* オーバーラン針 (timer の done で live 現在時刻に追従する経過表示)。minute hand と marker の
-            「裏」に来るように SVG 描画順で先に置く。outline 無しで薄い赤の line 1 本のみ。 */}
+            「裏」に来るように SVG 描画順で先に置く。本体は薄い色だが、minute hand / marker と同じ
+            「白 width6 → 本体 width3.5」の二枚重ねで白い縁取りを付ける (padding 1.25 で揃える)。 */}
         <Show when={props.overrunMinutes !== undefined}>
           <g transform={`rotate(${(props.overrunMinutes ?? 0) * 6} ${CENTER} ${CENTER})`}>
+            <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
+              stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
             <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
               stroke={props.overrunColor ?? "#f3c8c8"} stroke-width="3.5" stroke-linecap="round" />
           </g>
