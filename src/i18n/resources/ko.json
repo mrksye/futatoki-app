@@ -32,7 +32,7 @@
     "mute": "조용히",
     "done": "끝",
     "runningTitle": "Futatoki · 타이머 작동 중",
-    "startToast": "끝나면 소리로 알릴게요"
+    "startToast": "소리로 알려줄게요"
   },
   "section": {
     "color": "색상",

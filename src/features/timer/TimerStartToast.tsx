@@ -2,9 +2,9 @@ import { createEffect, createSignal, type Component } from "solid-js";
 import { motionAllowed } from "../../lib/motion";
 
 /**
- * タイマー開始時に画面下から出てスッと消える通知トースト。「終了時に音で知らせる」を告知することで、
+ * タイマー開始時に画面下から出てスッと消える通知トースト。「音で知らせる」を告知することで、
  * 1) 静かな場所で予期せず音が鳴る事故を防ぐ、2) 音を切ってる人にアラームが届かない事故を防ぐ、の
- * 両方を一度にケアする。
+ * 両方を一度にケアする。文言は短く言い切り、どの locale でも 1 行に収まる長さに保つ。
  *
  * PilotMode の toast.ts (生 DOM 注入) とは意図的に独立した再実装。Solid component 化しているので
  * reactive な signal で表示制御できる (将来別メッセージへの拡張余地がある)。App ルートに 1 回 mount し
