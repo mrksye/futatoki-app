@@ -166,7 +166,7 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
             <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
               stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
             <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
-              stroke={props.overrunColor ?? "#e87a7a"} stroke-width="3.5" stroke-linecap="round" />
+              stroke={props.overrunColor ?? "#e89e9e"} stroke-width="3.5" stroke-linecap="round" />
           </g>
         </Show>
 

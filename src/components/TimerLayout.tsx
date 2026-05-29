@@ -52,11 +52,11 @@ import {
 const NOW_HAND_OPACITY = 0.2;
 
 /** done 中のオーバーラン針 (live 現在時刻に追従する経過表示針) の色。「もう過ぎてるで」を伝える優しい警告色
- *  として、淡いピンクより一段はっきりした暖かいコーラル赤に寄せる (脅かさず気づける程度)。盤面背景に
- *  opacity 0.8 の色扇が乗る sector では扇に埋もれない明るめの #ff8f8f、それ以外 (badge / monotone, 盤面が
- *  白) では白地で浮きすぎず読める少し落ち着いた #e87a7a。白い縁取りで本体彩度が上がっても柔らかく見える。 */
-const OVERRUN_COLOR_SECTOR = "#ff8f8f";
-const OVERRUN_COLOR_DEFAULT = "#e87a7a";
+ *  として、淡いピンクより少しだけはっきりした暖かいコーラル赤に寄せる (脅かさず気づける程度に淡く留める)。
+ *  盤面背景に opacity 0.8 の色扇が乗る sector では扇に埋もれない明るめの #ffb0b0、それ以外 (badge / monotone,
+ *  盤面が白) では白地で浮きすぎず読める少し落ち着いた #e89e9e。白い縁取りで本体彩度が上がっても柔らかく見える。 */
+const OVERRUN_COLOR_SECTOR = "#ffb0b0";
+const OVERRUN_COLOR_DEFAULT = "#e89e9e";
 
 /** 完了時のバイブパターン (対応端末のみ。iOS Safari は Vibration API 非対応なので実質 Android 向け)。 */
 const ALARM_VIBRATE_PATTERN = [200, 100, 200];
