@@ -12,8 +12,8 @@
     "badge": "圆点",
     "mergeToSingle": "叠起来",
     "splitToTwo": "分开",
-    "rewindMinute": "退{n}分钟",
-    "random": "随机",
+    "rewindMinute": "倒回{n}分",
+    "random": "抽一个",
     "noNumerals": "无"
   },
   "mode": {
@@ -33,7 +33,7 @@
     "done": "完成",
     "runningTitle": "扶嗒托基・计时中",
     "startToast": "用声音提醒你哦",
-    "specify": "指定",
+    "specify": "到几点",
     "timeOption": "到{time}"
   },
   "section": {
@@ -45,7 +45,7 @@
   },
   "activity": {
     "add": "活动",
-    "reset": "清空",
+    "reset": "擦掉",
     "icon": {
       "breakfast": "早饭",
       "lunch": "午饭",
@@ -70,7 +70,7 @@
     "vivid": "天空色",
     "ygb": "天阳草",
     "primary3": "三原色",
-    "wheel": "色环",
+    "wheel": "色相环",
     "cud12": "通用配色",
     "monotone": "单色"
   },
