@@ -258,13 +258,13 @@ const TimerLayout: Component = () => {
             たいむ遷移の収束/発散フェーズ中は ClockLayout の clock ツリーが同じ位置に同じ merged 盤を描く
             (継ぎ目を消す受け渡し) ので、ここでは隠す (timerShowsLeftFace)。 */}
         <div
-          class="relative z-10 flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
+          class="timer-face-cell relative z-10 flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
           classList={{ "-mr-3": isLandscape(), "-mb-3": !isLandscape() }}
         >
           <Show when={timerShowsLeftFace()}>
             <div
               ref={leftFaceRef}
-              class="relative"
+              class="timer-face relative"
               style={{ width: `${clockSize()}px`, height: `${clockSize()}px`, "transform-origin": "center" }}
             >
               <ClockFace period="merged" hours={refHours()} />
@@ -278,13 +278,13 @@ const TimerLayout: Component = () => {
             入室/退室で盤が L 盤の裏へスライドする (下の createEffect)。左へのはみ出しは寄せ量 (1.5rem 戻し)
             で L 盤の内側に収めて防ぐ (overflow クリップだと中央に切り口の線が出るため使わない)。 */}
         <div
-          class="relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
+          class="timer-face-cell relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
           classList={{ "-ml-3": isLandscape(), "-mt-3": !isLandscape() }}
         >
           <Show when={!timerBoardHidden()}>
             <div
               ref={timerBoardRef}
-              class="relative"
+              class="timer-face timer-board-face relative"
               style={{ width: `${timerBoardSize()}px`, height: `${timerBoardSize()}px`, "transform-origin": "center" }}
             >
               <ClockFace period="merged" hours={boardHours()} bezel="gold">

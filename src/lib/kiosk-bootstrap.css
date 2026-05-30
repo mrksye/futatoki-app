@@ -71,4 +71,26 @@ html, body, #root {
     width: 100% !important;
     height: 100% !important;
   }
+  /* TimerLayout 参照。たいむモードは AM 位置の現在時計と PM 位置のタイマー盤を半盤ずつ並べる
+   * (とけい / 回転モードの「わける」と同じ二盤レイアウト)。盤の寸法は JS が viewport から算出した
+   * 固定 px を inline style で持つため、上の split と同様に印刷の半幅で overflow して中央で重なる。
+   * 隣接盤を中央へ寄せる負マージン (`-mr-3` / `-ml-3` / `-mb-3` / `-mt-3`) を消し、内側の盤を full
+   * size に上書きして SVG の自動 fit に任せ、左右 (portrait は上下) へ綺麗に並べる。 */
+  .timer-face-cell {
+    margin: 0 !important;
+  }
+  .timer-face {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  /* タイマー盤 (PM 位置) は画面と同じく一回り小さい懐中時計の佇まいを保つ。AM 位置の現在時計を
+   * 半盤一杯 (100%) に対し、TIMER_BOARD_SCALE (TimerLayout.tsx) と同じ比率で縮める。 */
+  .timer-board-face {
+    width: 88% !important;
+    height: 88% !important;
+  }
+  /* 集中向けの装飾グラデ背景は SkyBackground と同じく白塗りにして紙に余計な色を載せない。 */
+  .timer-background {
+    background: white !important;
+  }
 }
