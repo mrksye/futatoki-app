@@ -255,10 +255,16 @@ const staggerStartIndex = (count: number) => Math.round((count * 2) / 3);
  *  比から出す。初期位置の左ローテートと bloom の起点の両方に使う。 */
 const nineOClockSlot = (count: number) => Math.round(count * 0.75);
 
+/** 時刻指定の刻み (分) と、起点から並べる窓の幅 (分)。窓を「起点から TIME_WINDOW_MIN 先まで」で切るので、
+ *  個数は窓幅 ÷ 刻み + 1 = 12 個に構造的に決まり、現在時刻の端数に関係なくリングの個数は常に一定になる
+ *  (個数を直接マジックナンバーで持たず、刻みと窓幅という時間の言葉で表す)。 */
+const TIME_STEP_MIN = 5;
+const TIME_WINDOW_MIN = 55;
+
 /** 基準時刻 (ms) から時刻指定の選択肢を作る。秒を切り捨て、5 の倍数の分のうち「直近 (= 5 分以上 10 分未満
- *  先)」を起点に、5 分刻みで現在時刻から 60 分以内まで並べる。直近の 5 の倍数 (5 分未満先) は近すぎるので
- *  飛ばし、その次から始める。例: 15:11 → [15:20, 15:25, 15:30, … , 16:10]。これだけだとリングがガラ空きで
- *  押しにくいので、下の items() で 2 周ぶん複製して隙間を埋める。 */
+ *  先)」を起点に、TIME_STEP_MIN 刻みで起点から TIME_WINDOW_MIN 先まで並べる。直近の 5 の倍数 (5 分未満先)
+ *  は近すぎるので飛ばし、その次から始める。例: 15:11 → 起点 15:20、[15:20, 15:25, … , 16:15] (12 個)。
+ *  窓幅で切るので、現在時刻の端数に関係なくリングの個数は常に一定。 */
 const buildTimeTargets = (baseMs: number): number[] => {
   const d = new Date(baseMs);
   d.setSeconds(0, 0);
@@ -266,8 +272,8 @@ const buildTimeTargets = (baseMs: number): number[] => {
   const firstOffset = ((5 - (d.getMinutes() % 5)) % 5) + 5;
   const baseMinMs = d.getTime();
   const targets: number[] = [];
-  for (let off = firstOffset; off <= 60; off += 5) {
-    targets.push(baseMinMs + off * 60000);
+  for (let off = 0; off <= TIME_WINDOW_MIN; off += TIME_STEP_MIN) {
+    targets.push(baseMinMs + (firstOffset + off) * 60000);
   }
   return targets;
 };
@@ -339,15 +345,14 @@ const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
 
   /** 描画順 (slot 0 から CW) に並べたリング項目。
    *  - minutes: RING_ITEMS (= 左ローテート済みの分選択肢) をそのまま。
-   *  - time: 6 個の時刻を 2 周ぶん複製して 12 個にし、先頭 (一番近い時刻) が 8 時方向 (stagger 起点) に
-   *    来るよう左ローテートする。これで「8 時方向から右回りに 10 分後・20 分後…」の並びになる。 */
+   *  - time: 生成した時刻配列を、先頭 (一番近い時刻) が 9 時方向 (stagger 起点) に来るよう左ローテートする。
+   *    これで「9 時方向から右回りに直近・+5 分・+10 分…」の並びになる。 */
   const items = (): RingItem[] => {
     if (ringMode() === "time") {
       const targets = buildTimeTargets(baseTimeMs());
-      const doubled = [...targets, ...targets];
-      const n = doubled.length;
+      const n = targets.length;
       const rot = (n - nineOClockSlot(n)) % n; // 先頭 (一番近い時刻) を 9 時方向 slot へ
-      const ordered = [...doubled.slice(rot), ...doubled.slice(0, rot)];
+      const ordered = [...targets.slice(rot), ...targets.slice(0, rot)];
       return ordered.map((ms) => ({
         label: formatClock(ms),
         ariaLabel: t("timer.timeOption", { time: formatClock(ms) }),
