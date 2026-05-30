@@ -250,24 +250,26 @@ const APPEAR_DURATION_MS = 280;
  *  個数 (分=15 / 時刻=12) が変わっても同じ方向になるよう count から出す。 */
 const staggerStartIndex = (count: number) => Math.round((count * 2) / 3);
 
-/** 時刻指定リング (12 個) で、一番近い時刻 (t0) を出す slot = 9 時方向 (真左 = 180°)。初期位置の左ローテートと
- *  bloom の起点の両方に使う。slot は 12 時起点 CW で、9 = (9/12)*360-90 = 180° = 真左。 */
-const TIME_RING_START_SLOT = 9;
+/** 時刻指定リングで一番近い時刻 (t0) を出す slot = 9 時方向 (真左 = 180°)。12 時起点 CW で 180° に来る
+ *  index は i/count = 3/4 の地点 (i = (i/count)*360-90 = 180 → i = 0.75*count)。リング個数が可変なので
+ *  比から出す。初期位置の左ローテートと bloom の起点の両方に使う。 */
+const nineOClockSlot = (count: number) => Math.round(count * 0.75);
 
-/** 時刻指定リングの基準個数。今から一番近い 10 分後 (端数切り上げ) から 10 分刻みで 6 つ。これだけだと
- *  リングが半分以上ガラ空きで押しにくいので、下の items() で 2 周ぶん複製して 12 個に膨らませて隙間を
- *  埋める。 */
-const RING_TIME_COUNT = 6;
-
-/** 基準時刻 (ms) から時刻指定の選択肢を作る。秒を切り捨てて「次の 10 分の倍数」へ切り上げた時刻を起点に、
- *  10 分刻みで RING_TIME_COUNT 個。例: 15:11 → [15:20, 15:30, 15:40, 15:50, 16:00, 16:10]。ちょうど 10 分
- *  境界上 (端数 0) なら +10 分して必ず未来にする。 */
+/** 基準時刻 (ms) から時刻指定の選択肢を作る。秒を切り捨て、5 の倍数の分のうち「直近 (= 5 分以上 10 分未満
+ *  先)」を起点に、5 分刻みで現在時刻から 60 分以内まで並べる。直近の 5 の倍数 (5 分未満先) は近すぎるので
+ *  飛ばし、その次から始める。例: 15:11 → [15:20, 15:25, 15:30, … , 16:10]。これだけだとリングがガラ空きで
+ *  押しにくいので、下の items() で 2 周ぶん複製して隙間を埋める。 */
 const buildTimeTargets = (baseMs: number): number[] => {
   const d = new Date(baseMs);
   d.setSeconds(0, 0);
-  const add = 10 - (d.getMinutes() % 10); // 1..10 分、境界ちょうどなら 10 (= 必ず未来)
-  const firstMs = d.getTime() + add * 60000;
-  return Array.from({ length: RING_TIME_COUNT }, (_, k) => firstMs + k * 10 * 60000);
+  // 次の 5 の倍数までの分 (0..4)。これは 5 分未満で近すぎるので +5 して 5..9 分後を起点にする。
+  const firstOffset = ((5 - (d.getMinutes() % 5)) % 5) + 5;
+  const baseMinMs = d.getTime();
+  const targets: number[] = [];
+  for (let off = firstOffset; off <= 60; off += 5) {
+    targets.push(baseMinMs + off * 60000);
+  }
+  return targets;
 };
 
 /** リング上の 1 項目。表示ラベル / aria ラベル / タップ確定時の動作 (分なら selectMinutes、時刻なら
@@ -344,7 +346,7 @@ const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
       const targets = buildTimeTargets(baseTimeMs());
       const doubled = [...targets, ...targets];
       const n = doubled.length;
-      const rot = (n - TIME_RING_START_SLOT) % n; // 先頭 (一番近い時刻) を 9 時方向 slot へ
+      const rot = (n - nineOClockSlot(n)) % n; // 先頭 (一番近い時刻) を 9 時方向 slot へ
       const ordered = [...doubled.slice(rot), ...doubled.slice(0, rot)];
       return ordered.map((ms) => ({
         label: formatClock(ms),
@@ -560,7 +562,7 @@ const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
               onActivate={item.activate}
               index={i()}
               count={items().length}
-              staggerStart={ringMode() === "time" ? TIME_RING_START_SLOT : staggerStartIndex(items().length)}
+              staggerStart={ringMode() === "time" ? nineOClockSlot(items().length) : staggerStartIndex(items().length)}
               ringRadius={ringRadius()}
               size={btnSize()}
               font={btnFont()}
