@@ -32,7 +32,9 @@
     "mute": "Chut",
     "done": "Terminé",
     "runningTitle": "Futatoki – minuteur en cours",
-    "startToast": "Un son te préviendra"
+    "startToast": "Un son te préviendra",
+    "specify": "heure",
+    "timeOption": "jusqu'à {time}"
   },
   "section": {
     "color": "Couleurs",

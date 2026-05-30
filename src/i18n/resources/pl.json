@@ -32,7 +32,9 @@
     "mute": "Cisza",
     "done": "Gotowe",
     "runningTitle": "Futatoki – minutnik działa",
-    "startToast": "Dam znać dźwiękiem"
+    "startToast": "Dam znać dźwiękiem",
+    "specify": "godzina",
+    "timeOption": "do {time}"
   },
   "section": {
     "color": "Kolory",

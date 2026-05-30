@@ -32,7 +32,9 @@
     "mute": "Diam",
     "done": "Selesai",
     "runningTitle": "Futatoki – pewaktu berjalan",
-    "startToast": "Akan kukabari dengan bunyi"
+    "startToast": "Akan kukabari dengan bunyi",
+    "specify": "waktu",
+    "timeOption": "sampai {time}"
   },
   "section": {
     "color": "Warna",

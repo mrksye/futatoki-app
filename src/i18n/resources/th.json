@@ -32,7 +32,9 @@
     "mute": "เงียบ ๆ",
     "done": "เสร็จแล้ว",
     "runningTitle": "Futatoki – กำลังจับเวลา",
-    "startToast": "จะส่งเสียงบอกนะ"
+    "startToast": "จะส่งเสียงบอกนะ",
+    "specify": "เวลา",
+    "timeOption": "ถึง {time}"
   },
   "section": {
     "color": "สี",

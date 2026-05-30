@@ -32,7 +32,9 @@
     "mute": "سکوت",
     "done": "تمام",
     "runningTitle": "Futatoki – زمان‌سنج فعال است",
-    "startToast": "با صدا خبرت می‌کنم"
+    "startToast": "با صدا خبرت می‌کنم",
+    "specify": "ساعت",
+    "timeOption": "تا {time}"
   },
   "section": {
     "color": "رَنگ‌ها",

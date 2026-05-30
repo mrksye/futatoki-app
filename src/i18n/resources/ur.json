@@ -32,7 +32,9 @@
     "mute": "چپ",
     "done": "ہو گیا",
     "runningTitle": "Futatoki – ٹائمر چل رہا ہے",
-    "startToast": "آواز سے بتا دوں گا"
+    "startToast": "آواز سے بتا دوں گا",
+    "specify": "وقت",
+    "timeOption": "{time} تک"
   },
   "section": {
     "color": "رَنگ",

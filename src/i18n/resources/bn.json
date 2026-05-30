@@ -32,7 +32,9 @@
     "mute": "চুপ",
     "done": "হয়ে গেছে",
     "runningTitle": "Futatoki – টাইমার চলছে",
-    "startToast": "শব্দ দিয়ে জানাব"
+    "startToast": "শব্দ দিয়ে জানাব",
+    "specify": "সময়",
+    "timeOption": "{time} পর্যন্ত"
   },
   "section": {
     "color": "রঙ",

@@ -32,7 +32,9 @@
     "mute": "安静",
     "done": "完成",
     "runningTitle": "扶嗒托基・计时中",
-    "startToast": "用声音提醒你哦"
+    "startToast": "用声音提醒你哦",
+    "specify": "指定",
+    "timeOption": "到{time}"
   },
   "section": {
     "color": "配色",

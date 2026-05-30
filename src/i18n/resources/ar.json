@@ -32,7 +32,9 @@
     "mute": "هُدُوء",
     "done": "تَمَّ",
     "runningTitle": "Futatoki – الْمُؤَقِّت قَيْد التَّشْغِيل",
-    "startToast": "سَأُنَبِّهُكَ بِصَوت"
+    "startToast": "سَأُنَبِّهُكَ بِصَوت",
+    "specify": "وقت",
+    "timeOption": "حتى {time}"
   },
   "section": {
     "color": "أَلْوَان",

@@ -32,7 +32,9 @@
     "mute": "चुप",
     "done": "हो गया",
     "runningTitle": "Futatoki – टाइमर चालू है",
-    "startToast": "आवाज़ से बता दूँगा"
+    "startToast": "आवाज़ से बता दूँगा",
+    "specify": "समय",
+    "timeOption": "{time} तक"
   },
   "section": {
     "color": "रंग",

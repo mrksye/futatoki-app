@@ -98,6 +98,18 @@ export const selectMinutes = (m: number) => {
   persistCurrentState();
 };
 
+/** リングメニューで時刻 (目標の壁時計時刻 epoch ms) を選択 → 即 running 開始。selectedMinutes は
+ *  「今から目標までの分」(端数あり) として持つので、開始基準を今に固定すれば endMs = 目標時刻になり、
+ *  扇・マーカー・残り表示・永続化はすべて分指定と同じ下流を流れる。targetMs は呼び出し側が今より未来で
+ *  渡す前提 (リングの選択肢は端数切り上げの 10 分刻みなので必ず未来)。 */
+export const selectTargetTime = (targetMs: number) => {
+  const now = Date.now();
+  setSelectedMinutesRaw((targetMs - now) / 60000);
+  setRunStartMsRaw(now);
+  setPhaseRaw("running");
+  persistCurrentState();
+};
+
 /** 「いちじていし」。running からのみ。残り ms を凍結して paused へ (時計は実時刻のまま動き、扇=残り
  *  だけ凍結。再開時にこの残りから続ける)。 */
 export const pauseTimer = () => {

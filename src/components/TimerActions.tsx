@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createSignal, onCleanup, onMount, type Component } from "solid-js";
+import { For, Show, createEffect, createSignal, onCleanup, onMount, type Component, type JSX } from "solid-js";
 import { useI18n } from "../i18n";
 import { useIsTablet } from "../hooks/useIsTablet";
 import {
@@ -9,6 +9,7 @@ import {
   openPicker,
   closePicker,
   selectMinutes,
+  selectTargetTime,
   pauseTimer,
   resumeTimer,
   cancelTimer,
@@ -48,6 +49,11 @@ import MuteIcon from "./icons/MuteIcon";
 const FAB_CLASS =
   "w-12 h-12 tablet:w-14 tablet:h-14 rounded-full bg-white/80 shadow-md flex items-center " +
   "justify-center active:scale-90 transition-all text-gray-700 before:hidden";
+
+/** せっと FAB の一辺 (FAB_CLASS の w-12 / tablet:w-14)。origin = FAB 中心なので、してい ボタンの右端を
+ *  FAB の右端に合わせるのに半分ぶん右へ寄せる用。 */
+const FAB_SIZE_MOBILE_PX = 48;
+const FAB_SIZE_TABLET_PX = 56;
 
 /** 完了時のバイブパターン (Vibration API 対応端末のみ。iOS は非対応で実質 Android 向け)。timer-watcher
  *  内 onDeadlineReached にも同じ定数があるが、ここはユーザジェスチャからの arm 呼び出しで「モード外
@@ -233,11 +239,44 @@ const BTN_SIZE_MOBILE_PX = 50;
 const BTN_SIZE_TABLET_PX = 64;
 const BTN_FONT_MOBILE_PX = 20;
 const BTN_FONT_TABLET_PX = 26;
+/** 時刻ラベル (H:MM) は分ラベルより長いので、正円ではなく横長 pill にして左右に小さめ padding を付ける
+ *  (下の isPill)。フォントは分より一段だけ小さく。 */
+const BTN_FONT_TIME_MOBILE_PX = 18;
+const BTN_FONT_TIME_TABLET_PX = 24;
 const STAGGER_MS = 30;
 const APPEAR_DURATION_MS = 280;
 /** bloom の stagger 起点 index = 8 時方向 (= 12 時起点で時計回り 2/3 周地点)。せっとボタンが右下角に
- *  居るので、8 時 (画面内へ向かう左下方向) から咲かせて 9→10→11→12 と見える側を CW でなぞる。 */
-const STAGGER_START_INDEX = Math.round((RING_ITEMS.length * 2) / 3);
+ *  居るので、8 時 (画面内へ向かう左下方向) から咲かせて 9→10→11→12 と見える側を CW でなぞる。リングの
+ *  個数 (分=15 / 時刻=12) が変わっても同じ方向になるよう count から出す。 */
+const staggerStartIndex = (count: number) => Math.round((count * 2) / 3);
+
+/** 時刻指定リング (12 個) で、一番近い時刻 (t0) を出す slot = 9 時方向 (真左 = 180°)。初期位置の左ローテートと
+ *  bloom の起点の両方に使う。slot は 12 時起点 CW で、9 = (9/12)*360-90 = 180° = 真左。 */
+const TIME_RING_START_SLOT = 9;
+
+/** 時刻指定リングの基準個数。今から一番近い 10 分後 (端数切り上げ) から 10 分刻みで 6 つ。これだけだと
+ *  リングが半分以上ガラ空きで押しにくいので、下の items() で 2 周ぶん複製して 12 個に膨らませて隙間を
+ *  埋める。 */
+const RING_TIME_COUNT = 6;
+
+/** 基準時刻 (ms) から時刻指定の選択肢を作る。秒を切り捨てて「次の 10 分の倍数」へ切り上げた時刻を起点に、
+ *  10 分刻みで RING_TIME_COUNT 個。例: 15:11 → [15:20, 15:30, 15:40, 15:50, 16:00, 16:10]。ちょうど 10 分
+ *  境界上 (端数 0) なら +10 分して必ず未来にする。 */
+const buildTimeTargets = (baseMs: number): number[] => {
+  const d = new Date(baseMs);
+  d.setSeconds(0, 0);
+  const add = 10 - (d.getMinutes() % 10); // 1..10 分、境界ちょうどなら 10 (= 必ず未来)
+  const firstMs = d.getTime() + add * 60000;
+  return Array.from({ length: RING_TIME_COUNT }, (_, k) => firstMs + k * 10 * 60000);
+};
+
+/** リング上の 1 項目。表示ラベル / aria ラベル / タップ確定時の動作 (分なら selectMinutes、時刻なら
+ *  selectTargetTime) を束ねて持ち、分モードと時刻モードを同じ描画・スナップ経路で扱えるようにする。 */
+interface RingItem {
+  label: string;
+  ariaLabel: string;
+  activate: () => void;
+}
 
 /** ドラッグ判定閾値 (できごと picker と同思想: 早い動きは低閾値、遅い drift は高閾値)。 */
 const DRAG_THRESHOLD_FAST_PX = 2;
@@ -251,15 +290,74 @@ const INERTIA_DECAY_PER_MS = 0.003;
 const INERTIA_VELOCITY_MIN = 0.015;
 
 const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
-  const { t } = useI18n();
+  const { t, formatNumeral } = useI18n();
   const isTablet = useIsTablet();
   const ringRadius = () => (isTablet() ? RING_RADIUS_TABLET_PX : RING_RADIUS_MOBILE_PX);
   const btnSize = () => (isTablet() ? BTN_SIZE_TABLET_PX : BTN_SIZE_MOBILE_PX);
-  const btnFont = () => (isTablet() ? BTN_FONT_TABLET_PX : BTN_FONT_MOBILE_PX);
+  /** ラベルのフォント。時刻モードは H:MM が長いので一回り小さく。 */
+  const btnFont = () =>
+    ringMode() === "time"
+      ? isTablet()
+        ? BTN_FONT_TIME_TABLET_PX
+        : BTN_FONT_TIME_MOBILE_PX
+      : isTablet()
+        ? BTN_FONT_TABLET_PX
+        : BTN_FONT_MOBILE_PX;
 
   /** origin が null (保険) なら画面中央。 */
   const origin = (): RingOrigin =>
     props.origin ?? { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+
+  // リングの種類: 分選択 (初期) か時刻指定か。中央の「してい」ボタンで time へ切り替える。time に入った
+  // 瞬間の現在時刻を baseTimeMs に固定して選択肢を作る (毎分ズレないよう snapshot)。
+  const [ringMode, setRingMode] = createSignal<"minutes" | "time">("minutes");
+  const [baseTimeMs, setBaseTimeMs] = createSignal(0);
+
+  /** 分タップ確定 → 即 running。アラーム arm とトーストもこのジェスチャ内で行う (AudioContext unlock)。 */
+  const startWithMinutes = (m: number) => {
+    selectMinutes(m);
+    const start = runStartMs();
+    if (start !== null) armTimerAudio(start + m * 60000, t("timer.runningTitle"));
+    showTimerStartToast(t("timer.startToast"));
+  };
+  /** 時刻タップ確定 → 即 running。endMs は目標時刻そのものなので arm にもそれを渡す。 */
+  const startWithTargetTime = (targetMs: number) => {
+    selectTargetTime(targetMs);
+    armTimerAudio(targetMs, t("timer.runningTitle"));
+    showTimerStartToast(t("timer.startToast"));
+  };
+
+  /** ロケール数字で時刻を H:MM 表記 (分のみ 2 桁ゼロ埋め)。例: 15:20。 */
+  const formatClock = (ms: number): string => {
+    const d = new Date(ms);
+    const m = d.getMinutes();
+    const mm = m < 10 ? formatNumeral(0) + formatNumeral(m) : formatNumeral(m);
+    return `${formatNumeral(d.getHours())}:${mm}`;
+  };
+
+  /** 描画順 (slot 0 から CW) に並べたリング項目。
+   *  - minutes: RING_ITEMS (= 左ローテート済みの分選択肢) をそのまま。
+   *  - time: 6 個の時刻を 2 周ぶん複製して 12 個にし、先頭 (一番近い時刻) が 8 時方向 (stagger 起点) に
+   *    来るよう左ローテートする。これで「8 時方向から右回りに 10 分後・20 分後…」の並びになる。 */
+  const items = (): RingItem[] => {
+    if (ringMode() === "time") {
+      const targets = buildTimeTargets(baseTimeMs());
+      const doubled = [...targets, ...targets];
+      const n = doubled.length;
+      const rot = (n - TIME_RING_START_SLOT) % n; // 先頭 (一番近い時刻) を 9 時方向 slot へ
+      const ordered = [...doubled.slice(rot), ...doubled.slice(0, rot)];
+      return ordered.map((ms) => ({
+        label: formatClock(ms),
+        ariaLabel: t("timer.timeOption", { time: formatClock(ms) }),
+        activate: () => startWithTargetTime(ms),
+      }));
+    }
+    return RING_ITEMS.map((m) => ({
+      label: formatNumeral(m),
+      ariaLabel: t("timer.minuteOption", { n: formatNumeral(m) }),
+      activate: () => startWithMinutes(m),
+    }));
+  };
 
   const [ringRotation, setRingRotation] = createSignal(0); // deg
   const rotateRing = (deltaDeg: number) => setRingRotation((r) => r + deltaDeg);
@@ -393,27 +491,22 @@ const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
       dragHappened = false;
       return;
     }
-    // 隙間タップ救済: 「リング帯」(中心からの距離が ringRadius ± btnSize) 内なら最寄り数字へ snap。
-    // 数字本体タップは TimerRingButton 側 (stopPropagation) で完結するので、ここに来るのは隙間だけ。
+    // 隙間タップ救済: 「リング帯」(中心からの距離が ringRadius ± btnSize) 内なら最寄り項目へ snap。
+    // 項目本体タップは TimerRingButton 側 (stopPropagation) で完結するので、ここに来るのは隙間だけ。
+    // activate() の中でアラーム arm とトーストまで行う (この onClick がジェスチャ起点 = AudioContext unlock)。
     if (pointerDownCoords) {
       const o = origin();
       const dx = pointerDownCoords.x - o.x;
       const dy = pointerDownCoords.y - o.y;
       const dist = Math.hypot(dx, dy);
       if (dist >= ringRadius() - btnSize() && dist <= ringRadius() + btnSize()) {
-        const N = RING_ITEMS.length;
+        const list = items();
+        const N = list.length;
         const ringRotRad = (ringRotation() * Math.PI) / 180;
         // ボタンは angleRad = (i/N)*2π - π/2 で配置 + 親リングの rotation。逆算で最寄り index。
         const rawIdx = ((Math.atan2(dy, dx) - ringRotRad + Math.PI / 2) / (2 * Math.PI)) * N;
         const nearest = ((Math.round(rawIdx) % N) + N) % N;
-        const minutes = RING_ITEMS[nearest]!;
-        selectMinutes(minutes);
-        // この onClick がジェスチャの起点。ここでアラームとチャイムを arm し、両 AudioContext を unlock
-        // (resume) しつつ終了時刻基準の予約発火を張る (旧 Howler が肩代わりしていたグローバル unlock が
-        // 無くなったため)。
-        const start = runStartMs();
-        if (start !== null) armTimerAudio(start + minutes * 60000, t("timer.runningTitle"));
-        showTimerStartToast(t("timer.startToast"));
+        list[nearest]!.activate();
         return;
       }
     }
@@ -459,52 +552,93 @@ const TimerRingMenu: Component<{ origin: RingOrigin | null }> = (props) => {
           "will-change": "transform",
         }}
       >
-        <For each={RING_ITEMS}>
-          {(minutes, i) => (
+        <For each={items()}>
+          {(item, i) => (
             <TimerRingButton
-              minutes={minutes}
+              label={item.label}
+              ariaLabel={item.ariaLabel}
+              onActivate={item.activate}
               index={i()}
-              count={RING_ITEMS.length}
+              count={items().length}
+              staggerStart={ringMode() === "time" ? TIME_RING_START_SLOT : staggerStartIndex(items().length)}
               ringRadius={ringRadius()}
               size={btnSize()}
               font={btnFont()}
+              isPill={ringMode() === "time"}
             />
           )}
         </For>
       </div>
+
+      {/* リング中央 (= せっとボタン位置) のモード切替ボタン。分モードなら「してい」テキスト (→時刻)、
+          時刻モードならタイマーアイコン (→分) を出して相互に行き来できる。右下角に居るので右端を origin に
+          合わせて左へ伸ばし (translate(-100%, -50%))、ボタン全体を画面内に収める。回転 container の外で
+          常に upright・固定。 */}
+      <ModeToggleButton
+        origin={{
+          // 右端を FAB の右端に合わせる: origin (= FAB 中心) から FAB 半分ぶん右へ寄せた点を右端基準にする。
+          x: origin().x + (isTablet() ? FAB_SIZE_TABLET_PX : FAB_SIZE_MOBILE_PX) / 2,
+          y: origin().y,
+        }}
+        ariaLabel={ringMode() === "minutes" ? t("timer.specify") : t("timer.set")}
+        onActivate={() => {
+          // どちらへ切り替えても、新しいリングが初期姿勢 (t0 が 8 時方向) で出るよう回転をリセット。
+          cancelInertia();
+          cancelPendingRotation();
+          setRingRotation(0);
+          if (ringMode() === "minutes") {
+            setBaseTimeMs(Date.now());
+            setRingMode("time");
+          } else {
+            setRingMode("minutes");
+          }
+        }}
+      >
+        {ringMode() === "minutes" ? (
+          t("timer.specify")
+        ) : (
+          <StopwatchIcon class="w-6 h-6 tablet:w-7 tablet:h-7" />
+        )}
+      </ModeToggleButton>
     </div>
   );
 };
 
-/** リング上の数字。見た目専用 (pointer-events none, 親 container から継承)。タップ/ドラッグは
- *  すべて overlay 側で受け、選択は overlay の「最寄りスナップ」で確定する。これにより「数字を掴んで
- *  ドラッグ = 回転、タップ = 最寄り数字確定」が両立する (ボタンが pointer を奪わない)。 */
+/** リング上の項目 (分 or 時刻)。見た目専用 (pointer-events none, 親 container から継承)。タップ/ドラッグは
+ *  すべて overlay 側で受け、選択は overlay の「最寄りスナップ」で確定する。これにより「項目を掴んで
+ *  ドラッグ = 回転、タップ = 最寄り項目確定」が両立する (ボタンが pointer を奪わない)。確定動作は親が
+ *  渡す onActivate に閉じ込めてあるので、ここは分/時刻のどちらかを知らない。 */
 const TimerRingButton: Component<{
-  minutes: number;
+  label: string;
+  ariaLabel: string;
+  onActivate: () => void;
   index: number;
   count: number;
+  staggerStart: number;
   ringRadius: number;
   size: number;
   font: number;
+  /** true なら横長 pill (幅 auto + 左右 padding)、false なら正円 (幅 = size)。時刻ラベルは長いので pill。 */
+  isPill: boolean;
 }> = (props) => {
-  const { t, formatNumeral } = useI18n();
   let ref: HTMLButtonElement | undefined;
 
-  // 円周位置 (12 時 = -90° から CW)。container 中心基準の top-left オフセット。
+  // 円周上の中心座標 (12 時 = -90° から CW)。pill は幅が可変なので、top-left オフセットではなく
+  // translate(-50%, -50%) で「自分の中心」を円周点に合わせる (幅を知らずに中央寄せできる)。
   const angleRad = (props.index / props.count) * 2 * Math.PI - Math.PI / 2;
-  const offsetX = props.ringRadius * Math.cos(angleRad) - props.size / 2;
-  const offsetY = props.ringRadius * Math.sin(angleRad) - props.size / 2;
-  // 親リングの rotate を打ち消して数字を upright に保つ (--ring-rot 変化は CSS cascade で自動反映)。
+  const cx = props.ringRadius * Math.cos(angleRad);
+  const cy = props.ringRadius * Math.sin(angleRad);
+  // 親リングの rotate を打ち消してラベルを upright に保つ (--ring-rot 変化は CSS cascade で自動反映)。
   const restingTransform =
-    `translate(${offsetX}px, ${offsetY}px) rotate(calc(-1 * var(--ring-rot, 0deg)))`;
+    `translate(${cx}px, ${cy}px) translate(-50%, -50%) rotate(calc(-1 * var(--ring-rot, 0deg)))`;
 
-  // bloom: origin (= container 中心 = せっとボタン) から円周へ scale 0→1。stagger は 9 時 (= 画面内へ
+  // bloom: origin (= container 中心 = せっとボタン) から円周へ scale 0→1。stagger は 8 時 (= 画面内へ
   // 向かう側) を起点に CW で続く → 最初に咲く数個が確実に見える位置に来る。
   onMount(() => {
     if (!ref) return;
-    const staggerOffset = (props.index - STAGGER_START_INDEX + props.count) % props.count;
-    const start = `translate(${-props.size / 2}px, ${-props.size / 2}px) scale(0)`;
-    const end = `translate(${offsetX}px, ${offsetY}px) scale(1)`;
+    const staggerOffset = (props.index - props.staggerStart + props.count) % props.count;
+    const start = `translate(0px, 0px) translate(-50%, -50%) scale(0)`;
+    const end = `translate(${cx}px, ${cy}px) translate(-50%, -50%) scale(1)`;
     animateMotion(
       ref,
       [
@@ -520,34 +654,88 @@ const TimerRingButton: Component<{
     );
   });
 
-  // 数字本体の直タップで確定。stopPropagation で overlay の onClick (隙間救済 / 慣性停止ゲート) を
+  // ラベル本体の直タップで確定。stopPropagation で overlay の onClick (隙間救済 / 慣性停止ゲート) を
   // 飛び越えるので、慣性で空回り中でも一発で選択できる (overlay 任せだと第一タップが回転停止に食われる)。
-  // この click ハンドラ自体がジェスチャの起点なので、ここでアラームとチャイムを arm する = 両 AudioContext を
+  // この click ハンドラ自体がジェスチャの起点なので、onActivate 内のアラーム arm が両 AudioContext を
   // ユーザジェスチャ内で resume できる (overlay 隙間救済路と同じ arm 手順)。
   const onClick = (e: MouseEvent) => {
     e.stopPropagation();
-    selectMinutes(props.minutes);
-    const start = runStartMs();
-    if (start !== null) armTimerAudio(start + props.minutes * 60000, t("timer.runningTitle"));
-    showTimerStartToast(t("timer.startToast"));
+    props.onActivate();
   };
 
   return (
     <button
       ref={ref}
-      class="absolute top-0 left-0 rounded-full bg-white shadow-lg text-gray-800 font-black flex items-center justify-center before:hidden"
+      class={
+        "absolute top-0 left-0 rounded-full bg-white shadow-lg text-gray-800 font-black flex items-center justify-center whitespace-nowrap before:hidden" +
+        (props.isPill ? " px-2.5 tablet:px-3" : "")
+      }
       style={{
-        width: `${props.size}px`,
+        // pill は幅 auto (内容 + 左右 padding)、正円は size の正方形。高さはどちらも size。
+        ...(props.isPill ? {} : { width: `${props.size}px` }),
         height: `${props.size}px`,
         "font-size": `${props.font}px`,
         transform: restingTransform,
-        // 各数字を GPU layer に固定 → 親 rotate と自分の counter-rotate が composite-only で完結。
+        // 各ボタンを GPU layer に固定 → 親 rotate と自分の counter-rotate が composite-only で完結。
         "will-change": "transform",
       }}
       onClick={onClick}
-      aria-label={t("timer.minuteOption", { n: formatNumeral(props.minutes) })}
+      aria-label={props.ariaLabel}
     >
-      {formatNumeral(props.minutes)}
+      {props.label}
+    </button>
+  );
+};
+
+/** リング中央 (せっとボタン位置) に出るモード切替ボタン。分モードでは「してい」テキスト、時刻モードでは
+ *  タイマーアイコンを children で受けて描画する。りせっとボタン (ActivityPicker) と同じ作り: fixed、
+ *  scale 0→1 で出現、overlay の drag/click に巻き込まれないよう pointerdown / click を止める。ただし
+ *  origin が画面右下角なので、中心ではなく右端を origin に合わせて左へ伸ばし (translate(-100%, -50%))、
+ *  ボタン全体を画面内に収める。中身は children で直接描画 (グローバルの button[aria-label]::before は
+ *  before:hidden で抑止)。 */
+const ModeToggleButton: Component<{
+  origin: RingOrigin;
+  ariaLabel: string;
+  onActivate: () => void;
+  children: JSX.Element;
+}> = (props) => {
+  let buttonRef: HTMLButtonElement | undefined;
+
+  onMount(() => {
+    if (!buttonRef) return;
+    animateMotion(
+      buttonRef,
+      [
+        { transform: "translate(-100%, -50%) scale(0)", opacity: 0 },
+        { transform: "translate(-100%, -50%) scale(1)", opacity: 1 },
+      ],
+      { duration: APPEAR_DURATION_MS, easing: "cubic-bezier(.34,1.56,.64,1)", fill: "backwards" },
+    );
+  });
+
+  const onPointerDown = (e: PointerEvent) => e.stopPropagation();
+  const onClick = (e: MouseEvent) => {
+    e.stopPropagation();
+    props.onActivate();
+  };
+
+  return (
+    <button
+      ref={buttonRef}
+      class="fixed px-3 py-1.5 tablet:px-6 tablet:py-3 rounded-full text-base tablet:text-xl font-bold whitespace-nowrap bg-white text-gray-800 shadow-lg before:hidden"
+      style={{
+        left: `${props.origin.x}px`,
+        top: `${props.origin.y}px`,
+        // 右端を origin に合わせて左へ伸ばす (角でも全体が画面内)。
+        transform: "translate(-100%, -50%)",
+        cursor: "pointer",
+        "will-change": "transform",
+      }}
+      onPointerDown={onPointerDown}
+      onClick={onClick}
+      aria-label={props.ariaLabel}
+    >
+      {props.children}
     </button>
   );
 };

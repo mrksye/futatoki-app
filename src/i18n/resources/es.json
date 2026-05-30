@@ -32,7 +32,9 @@
     "mute": "Silencio",
     "done": "Listo",
     "runningTitle": "Futatoki – temporizador en marcha",
-    "startToast": "Te aviso con un sonido"
+    "startToast": "Te aviso con un sonido",
+    "specify": "hora",
+    "timeOption": "hasta las {time}"
   },
   "section": {
     "color": "Colores",

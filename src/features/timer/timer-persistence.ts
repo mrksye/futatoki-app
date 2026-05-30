@@ -1,5 +1,5 @@
 import { BRAND_CONFIG } from "../../../branding/brand.config";
-import { TIMER_MINUTE_OPTIONS, type TimerPhase } from "./state";
+import { type TimerPhase } from "./state";
 
 /**
  * 分タイマーの localStorage 永続化レイヤー。アプリ kill / モード切替 / ServiceWorker 自動リロードを
@@ -26,7 +26,8 @@ const AUTO_CLEAR_DELAY_MS = 30 * 60 * 1000;
  *  そもそも書かない (state.ts 側の action ガードで担保)。 */
 export interface StoredTimer {
   phase: "running" | "paused" | "done";
-  /** TIMER_MINUTE_OPTIONS のいずれか。 */
+  /** カウントダウンの長さ (分)。分指定は TIMER_MINUTE_OPTIONS の整数、時刻指定は「今から目標時刻まで」の
+   *  端数あり実数。どちらも endMs の逆算 (endMs - selectedMinutes*60000) に使う。 */
   selectedMinutes: number;
   /** 締切 epoch(ms)。running/done は runStartMs + selectedMinutes*60000、paused は arbitrary
    *  (pauseTimer 時点での「もし時間が止まらなかったら鳴っていた時刻」と等価)。 */
@@ -46,10 +47,10 @@ const warn = (message: string, error: unknown): void => {
 const isValidPhase = (value: unknown): value is StoredTimer["phase"] =>
   value === "running" || value === "paused" || value === "done";
 
+/** カウントダウン長 (分) として妥当か。分指定は整数だが時刻指定は端数ありなので「正の有限実数で 24 時間
+ *  以内」まで許す (上限はサニタイズ用の保険で、リングの選択肢は最大でも 1 時間程度)。 */
 const isValidMinutes = (value: unknown): value is number =>
-  typeof value === "number" &&
-  Number.isInteger(value) &&
-  (TIMER_MINUTE_OPTIONS as readonly number[]).includes(value);
+  typeof value === "number" && Number.isFinite(value) && value > 0 && value <= 24 * 60;
 
 /** localStorage から読み込み、サニタイズ + 30min 超データの自動クリアまで一括で行う。1 つでも不整合
  *  (壊れた JSON / 知らない phase / 範囲外 minutes / 締切から 30min 超過) があれば clear して null を返す。

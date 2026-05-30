@@ -32,7 +32,9 @@
     "mute": "しずかに",
     "done": "おしまい",
     "runningTitle": "ふたとき・たいむうぉっち稼働中",
-    "startToast": "おとで しらせるよ"
+    "startToast": "おとで しらせるよ",
+    "specify": "してい",
+    "timeOption": "{time}まで"
   },
   "section": {
     "color": "はいしょく",

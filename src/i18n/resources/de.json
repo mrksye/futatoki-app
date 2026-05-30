@@ -32,7 +32,9 @@
     "mute": "Leise",
     "done": "Fertig",
     "runningTitle": "Futatoki – Timer läuft",
-    "startToast": "Ein Ton sagt Bescheid"
+    "startToast": "Ein Ton sagt Bescheid",
+    "specify": "Uhrzeit",
+    "timeOption": "bis {time}"
   },
   "section": {
     "color": "Farben",

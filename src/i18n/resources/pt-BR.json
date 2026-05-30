@@ -32,7 +32,9 @@
     "mute": "Silêncio",
     "done": "Pronto",
     "runningTitle": "Futatoki – cronômetro em andamento",
-    "startToast": "Te aviso com um som"
+    "startToast": "Te aviso com um som",
+    "specify": "hora",
+    "timeOption": "até {time}"
   },
   "section": {
     "color": "Cores",

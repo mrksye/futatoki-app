@@ -32,7 +32,9 @@
     "mute": "조용히",
     "done": "끝",
     "runningTitle": "Futatoki · 타이머 작동 중",
-    "startToast": "소리로 알려줄게요"
+    "startToast": "소리로 알려줄게요",
+    "specify": "시각",
+    "timeOption": "{time}까지"
   },
   "section": {
     "color": "색상",

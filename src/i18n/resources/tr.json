@@ -32,7 +32,9 @@
     "mute": "Sessizlik",
     "done": "Bitti",
     "runningTitle": "Futatoki – zamanlayıcı çalışıyor",
-    "startToast": "Sesle haber veririm"
+    "startToast": "Sesle haber veririm",
+    "specify": "saat",
+    "timeOption": "{time}'e kadar"
   },
   "section": {
     "color": "Renkler",

@@ -32,7 +32,9 @@
     "mute": "Hush",
     "done": "Done",
     "runningTitle": "Futatoki – timer running",
-    "startToast": "I'll let you know with a sound"
+    "startToast": "I'll let you know with a sound",
+    "specify": "time",
+    "timeOption": "until {time}"
   },
   "section": {
     "color": "Colors",

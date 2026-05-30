@@ -32,7 +32,9 @@
     "mute": "Silenzio",
     "done": "Fatto",
     "runningTitle": "Futatoki – timer in corso",
-    "startToast": "Te lo dico con un suono"
+    "startToast": "Te lo dico con un suono",
+    "specify": "orario",
+    "timeOption": "fino alle {time}"
   },
   "section": {
     "color": "Colori",
