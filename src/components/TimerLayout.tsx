@@ -16,6 +16,7 @@ import {
 } from "../features/timer/state";
 import { timerAlarm } from "../features/timer/timer-alarm";
 import { timerChime } from "../features/timer/timer-chime";
+import { nowHandStyle, overrunHandColor } from "../features/timer/timer-hand-style";
 import {
   timerTransitionPhase,
   timerTransitionKind,
@@ -47,15 +48,6 @@ import {
  *    (markerMinutes, タイマーの目標)。終了マーカーは分を選んだ瞬間 (= 即 running) から出て固定。
  *    現在針がそこへ近づき、重なったら終了。短針 (時針) はマーカーを出さない (分タイマーなので無視)。
  */
-
-/** PM 位置のグレー現在針 (長針 ghost) の黒本体の不透明度。黒い終了マーカー (不透明) との対比で薄く見せる。 */
-const NOW_HAND_OPACITY = 0.2;
-
-/** done 中のオーバーラン針 (live 現在時刻に追従する経過表示針) の色。脅かさず「もう過ぎている」と気づける
- *  程度の淡い赤に留める。盤面背景に opacity 0.8 の色扇が乗る sector では明るめの淡赤 #ffdada、それ以外
- *  (badge / monotone, 盤面が白) では白に溶けないよう少し濃いめの淡赤 #f3c8c8。 */
-const OVERRUN_COLOR_SECTOR = "#ffdada";
-const OVERRUN_COLOR_DEFAULT = "#f3c8c8";
 
 /** 完了時のバイブパターン (対応端末のみ。iOS Safari は Vibration API 非対応なので実質 Android 向け)。 */
 const ALARM_VIBRATE_PATTERN = [200, 100, 200];
@@ -131,9 +123,9 @@ const TimerLayout: Component = () => {
   const overrunMinutes = (): number | undefined =>
     timerPhase() === "done" ? refMinuteFloat() : undefined;
 
-  /** overrun 針の色。TimerWedge の nearColor() と同じ判定で揃える (扇の濃い端と同トーン)。 */
-  const overrunColor = () =>
-    colorMode() === "sector" && paletteId() !== "monotone" ? OVERRUN_COLOR_SECTOR : OVERRUN_COLOR_DEFAULT;
+  /** 盤面に色扇が乗る sector 表示か (非ものとーんのくぎり)。針の色を盤面背景に合わせて出し分けるための判定で、
+   *  色そのものの決定は timer-hand-style に委ねる (ここは渡す boolean を作るだけ)。 */
+  const isSectorBoard = () => colorMode() === "sector" && paletteId() !== "monotone";
 
   /** 残り秒。running=実時間で減る / paused=凍結した残り / done=0。 */
   const remainingSeconds = (): number | null => {
@@ -293,10 +285,10 @@ const TimerLayout: Component = () => {
               <HandsLayer
                 hours={boardHours()}
                 minutes={boardMinuteFloat()}
-                minuteHandOpacity={NOW_HAND_OPACITY}
+                minuteHandStyle={nowHandStyle(remainingSeconds() ?? 0, isSectorBoard())}
                 markerMinutes={markerMinutes()}
                 overrunMinutes={overrunMinutes()}
-                overrunColor={overrunColor()}
+                overrunColor={overrunHandColor(isSectorBoard())}
               />
             </div>
           </Show>

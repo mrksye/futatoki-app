@@ -22,6 +22,14 @@ import { clockMode } from "../../features/free-rotation/state";
  * 中心ネジの <circle> は <g> 外なので残り、書き込み学習帳 (盤面 + ネジを見て針を書き込む) として刷れる。
  */
 
+/** 分針 (長針) 本体の見た目 (色 + 不透明度)。色と濃さは「どう見せるか」として一体なので 1 つの値にまとめる。
+ *  白い縁取りは常に不透明のまま残るのでこれは黒本体ぶんだけに効き、timer の現在針 (grey ghost / 薄青) の
+ *  状態差を 1 つの値で渡せる。中身を決めるのは features/timer/timer-hand-style 側で、ここは型だけ持つ。 */
+export interface MinuteHandStyle {
+  color: string;
+  opacity: number;
+}
+
 interface HandsLayerProps {
   hours: number;
   minutes: number;
@@ -31,9 +39,9 @@ interface HandsLayerProps {
    *  使う。primary 分針と同じ geometry を重ねるだけで、shake / tick の WAAPI animation は乗らない静的な針。
    *  時針マーカーは描かない (分タイマーなので短針は無視)。未指定なら描画しない。 */
   markerMinutes?: number;
-  /** 分針 (長針) の黒い本体だけの不透明度。白い縁取りは常に不透明のまま残るので、timer モードの現在針は
-   *  輪郭がくっきりしたゴースト針になる。時針・中心ネジは常に不透明。未指定なら 1 (通常表示)。 */
-  minuteHandOpacity?: number;
+  /** 分針 (長針) 本体の見た目 (色 + 不透明度)。timer の現在針はこれで grey ghost / 薄青を切り替える。
+   *  未指定なら不透明の黒 = 通常の時計針。時針・中心ネジは常に不透明で影響を受けない。 */
+  minuteHandStyle?: MinuteHandStyle;
   /** 3 本目の分針 (経過オーバーラン針) を描く位置 (分)。timer の done 状態で「終了時刻から今どれだけ
    *  過ぎてるか」を示すために、live 現在時刻に追従する薄い色の長針として使う。marker (黒静止) と minute
    *  hand (grey ghost) の「裏」(= SVG 描画順で先) に置くため、JSX 上は時針の直後に描く。未指定なら描画しない。 */
@@ -187,8 +195,8 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
             <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
               stroke="#ffffff" stroke-width="6" stroke-linecap="round" />
             <line x1={CENTER} y1={CENTER + 13} x2={CENTER} y2={CENTER - R() * factors().minute}
-              stroke="#111111" stroke-width="3.5" stroke-linecap="round"
-              opacity={props.minuteHandOpacity ?? 1} />
+              stroke={props.minuteHandStyle?.color ?? "#111111"} stroke-width="3.5" stroke-linecap="round"
+              opacity={props.minuteHandStyle?.opacity ?? 1} />
           </g>
         </g>
 
