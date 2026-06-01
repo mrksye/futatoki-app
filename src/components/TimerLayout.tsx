@@ -2,7 +2,7 @@ import { createEffect, createMemo, createSignal, on, onCleanup, Show, type Compo
 import ClockFace from "./clockface-layers/ClockFace";
 import HandsLayer from "./clockface-layers/HandsLayer";
 import TimerWedge from "../features/timer/TimerWedge";
-import TimerInterruptionArc from "../features/timer/TimerInterruptionArc";
+import TimerStartLine from "../features/timer/TimerStartLine";
 import { useOrientation } from "../hooks/useOrientation";
 import { useViewport } from "../hooks/useViewport";
 import { useI18n } from "../i18n";
@@ -150,32 +150,27 @@ const TimerLayout: Component = () => {
   /** 残り分 (扇の角度幅のもと)。remainingSeconds と同じ真実を分換算しただけ。 */
   const remainingMinutes = (): number => (remainingSeconds() ?? 0) / 60;
 
-  /** 到達済み分 (開始点→現在針)。残り扇とちょうど隣り合うよう selectedMinutes から残り分を引いて出す
-   *  (独立計算だと丸めで現在針の継ぎ目に隙間/重なりが出る)。done では sel 全部 = 開始点から終了マーカー
-   *  までの全域が到達済み扇になる。 */
+  /** 到達済み分 (開始点 → 現在針)。現在針からこのぶん戻した位置にたいむ開始点の線を引く。selectedMinutes
+   *  から残り分を引いて出す (現在針位置と必ず整合する)。done では sel 全部 = 開始点が終了マーカーの sel 分手前。 */
   const elapsedMinutes = (): number => {
     const sel = selectedMinutes();
     if (sel === null) return 0;
     return Math.max(0, sel - remainingMinutes());
   };
 
-  /** 終了マーカーの分位置 (連続値, 60 超も可)。2 本の扇のグラデ濃端をここに揃えて 1 枚に見せる。
-   *  boardMinuteFloat は wrap した 0..60 だが、扇は分×6° で角度化するので連続値のまま渡してよい。 */
-  const markerMinuteContinuous = (): number => boardMinuteFloat() + remainingMinutes();
-
-  /** 中断 (一時停止) の積算を示すうっすい青の扇 (開始点側に覗く) の始端分位置と幅。selection のある全フェーズ
-   *  (running / paused / done) で出す。
+  /** 中断 (一時停止) を含めた真の開始点 (firstStartMs) の分位置。開始点に線 1 本で示す。selection のある
+   *  全フェーズ (running / paused / done) で、中断が積み上がっている (= 到達済みの開始点より手前にある) ときだけ。
    *
    *  積算中断 I = 経過実時間 − 実カウントダウン経過 = (boardNowMs − firstStartMs)/60000 − 到達済み分。
    *  firstStartMs はタイマーを最初に押した時刻で「さいかい」をまたいでも不変なので、再開を繰り返しても積算が
-   *  保たれる (runStartMs は再開でリベースされるので起点に使うと青が消える)。基準に盤の boardNowMs を使うこと
-   *  自体が done を完了時刻に凍結させ、完了後も進む現在時刻のぶんが中断量に混ざらない (青は完了時点の積算で
+   *  保たれる (runStartMs は再開でリベースされるので起点に使うと線が消える)。基準に盤の boardNowMs を使うこと
+   *  自体が done を完了時刻に凍結させ、完了後も進む現在時刻のぶんが中断量に混ざらない (線は完了時点の位置で
    *  止まり、完了 ✓ か end+30min 自動掃除で消えるまで残る) — done 専用の分岐は要らない。
    *
-   *  幅は盤の空き (60 − 選択分) に頭打ちして中断 + タイマーが盤 1 周を超えないようにする (時刻指定で選択分が
-   *  60 以上なら空きが無いので 0 = 出さない)。長時間放置で I が巨大化しても頭打ち + 単一 pie で DOM は膨らまない。
-   *  始端は赤い到達済み扇の後端から幅ぶん戻した有界値にして、巨大 timestamp を角度化せず精度を保つ。 */
-  const interruptionArc = (): { from: number; span: number } | null => {
+   *  位置は盤の空き (60 − 選択分) に頭打ちして 1 周を超えないようにする (時刻指定で選択分が 60 以上なら空きが
+   *  無いので出さない)。線の分位置は到達済みの開始点から積算ぶん手前に戻した有界値にして、巨大 timestamp を
+   *  角度化せず精度を保つ。{minute} で包むのは <Show> が 0 を falsy 扱いしないため。 */
+  const interruptionStartMinute = (): { minute: number } | null => {
     if (!hasSelection()) return null;
     const first = firstStartMs();
     const sel = selectedMinutes();
@@ -183,8 +178,7 @@ const TimerLayout: Component = () => {
     const accumulated = (boardNowMs() - first) / 60000 - elapsedMinutes();
     const span = Math.max(0, Math.min(accumulated, 60 - sel));
     if (span <= 0) return null;
-    // 赤い到達済み扇の後端にぴったり接するよう、そこから幅ぶん手前を始端にする。
-    return { from: boardMinuteFloat() - elapsedMinutes() - span, span };
+    return { minute: boardMinuteFloat() - elapsedMinutes() - span };
   };
 
   /** ロケール数字で 2 桁ゼロ埋め (formatNumeral は桁数を保たないので 1 桁は zero glyph を前置)。 */
@@ -303,10 +297,10 @@ const TimerLayout: Component = () => {
           </Show>
         </div>
 
-        {/* PM 位置: タイマー盤。グレーの現在針 (ghost) + 黒い終了マーカー針 + その間を塗るタイマー扇。
-            扇は ClockFace の children = ベースと数字の間に入り、現在針から残り時間ぶん塗る。
-            入室/退室で盤が L 盤の裏へスライドする (下の createEffect)。左へのはみ出しは寄せ量 (1.5rem 戻し)
-            で L 盤の内側に収めて防ぐ (overflow クリップだと中央に切り口の線が出るため使わない)。 */}
+        {/* PM 位置: タイマー盤。グレーの現在針 (ghost) + 黒い終了マーカー針 + 現在針から残りぶんを塗る扇。
+            扇・線は ClockFace の children = ベースと数字の間に入る。入室/退室で盤が L 盤の裏へスライドする
+            (下の createEffect)。左へのはみ出しは寄せ量 (1.5rem 戻し) で L 盤の内側に収めて防ぐ (overflow
+            クリップだと中央に切り口の線が出るため使わない)。 */}
         <div
           class="timer-face-cell relative flex-1 flex flex-col items-center justify-center min-h-0 min-w-0"
           classList={{ "-ml-3": isLandscape(), "-mt-3": !isLandscape() }}
@@ -318,25 +312,17 @@ const TimerLayout: Component = () => {
               style={{ width: `${timerBoardSize()}px`, height: `${timerBoardSize()}px`, "transform-origin": "center" }}
             >
               <ClockFace period="merged" hours={boardHours()} bezel="gold">
-                {/* 中断 (一時停止) の積算をうっすい青で最背面に。赤い弧が実時刻で前へドリフトした後ろに覗く。
-                    開始点 (firstStartMs) 起点なので再開をまたいで積算が保たれる。盤の空きに頭打ち + 単一 pie。 */}
-                <Show when={interruptionArc()}>
-                  {(arc) => <TimerInterruptionArc fromMinute={arc().from} spanMinutes={arc().span} />}
+                {/* 残り扇 (現在針 → 終了マーカー) の塗り。到達済み・中断は塗らず開始点に線 1 本で示す。 */}
+                <TimerWedge fromMinute={boardMinuteFloat()} spanMinutes={remainingMinutes()} />
+                {/* 中断込みの真の開始点 (firstStartMs) の線。中断が積み上がっているときだけ開始点より手前に出る。
+                    先に描いて、重なったとき たいむ開始点 (赤) を上に乗せる。 */}
+                <Show when={interruptionStartMinute()}>
+                  {(mark) => <TimerStartLine minute={mark().minute} variant="interruption" />}
                 </Show>
-                {/* 到達済み扇 (開始点→現在針, 目盛なしの素グラデ) を先に敷き、残り扇 (現在針→終了マーカー,
-                    1 分目盛つき) を上に。2 本は終了マーカーをグラデ濃端に共有して継ぎ目なく 1 枚に見せる。 */}
-                <TimerWedge
-                  fromMinute={boardMinuteFloat() - elapsedMinutes()}
-                  spanMinutes={elapsedMinutes()}
-                  gradientEndMinute={markerMinuteContinuous()}
-                />
-                <TimerWedge
-                  fromMinute={boardMinuteFloat()}
-                  spanMinutes={remainingMinutes()}
-                  gradientEndMinute={markerMinuteContinuous()}
-                  showTicks
-                  deeper
-                />
+                {/* たいむ開始点 (現在針から到達済みぶん戻した位置) の線。青より上。 */}
+                <Show when={elapsedMinutes() > 0}>
+                  <TimerStartLine minute={boardMinuteFloat() - elapsedMinutes()} variant="timerStart" />
+                </Show>
               </ClockFace>
               <HandsLayer
                 hours={boardHours()}
