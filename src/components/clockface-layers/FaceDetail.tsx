@@ -78,6 +78,11 @@ const PULSE_SCALE_KEYFRAMES: Keyframe[] = [
   { transform: "scale(1)",    offset: 1 },
 ];
 
+/** 時計盤数字を viewBox 1 単位だけ下へ押す微調整。dominant-baseline="central" はフォントの
+ *  ascent/descent 中点に揃えるが、数字は descender を持たないぶん光学的な重心より上に乗って
+ *  見えるので、時数・分計とも一律に押し戻して盤面の中央に座らせる。 */
+const NUMERAL_BASELINE_NUDGE = 1;
+
 /** 時間の数字 font-size。ばっじ×すっきり×ものとーんだけバッジの円が白で消えるので数字を少し大きく。
  *  ばっじモードでも すっきり/くわしく で差別化 (くぎりモードと同じ流儀)。
  *  monotone × badge × cardinal (12/3/6/9 と PM 24h の 12/15/18/21) は「文字盤自体がバッジ化」する
@@ -316,6 +321,7 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
               <text
                 x={x()}
                 y={y()}
+                dy={NUMERAL_BASELINE_NUDGE}
                 text-anchor="middle"
                 dominant-baseline="central"
                 font-size={is5() ? "11" : "8"}
@@ -379,6 +385,7 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                 ref={textRef}
                 x={x()}
                 y={y()}
+                dy={NUMERAL_BASELINE_NUDGE}
                 text-anchor="middle"
                 dominant-baseline="central"
                 font-size={numberFontSize(colorMode(), paletteId(), isKuwashiku(), num(), isCardinal)}
