@@ -143,6 +143,22 @@ const TimerLayout: Component = () => {
     return null;
   };
 
+  /** 残り分 (扇の角度幅のもと)。remainingSeconds と同じ真実を分換算しただけ。 */
+  const remainingMinutes = (): number => (remainingSeconds() ?? 0) / 60;
+
+  /** 到達済み分 (開始点→現在針)。残り扇とちょうど隣り合うよう selectedMinutes から残り分を引いて出す
+   *  (独立計算だと丸めで現在針の継ぎ目に隙間/重なりが出る)。done では sel 全部 = 開始点から終了マーカー
+   *  までの全域が到達済み扇になる。 */
+  const elapsedMinutes = (): number => {
+    const sel = selectedMinutes();
+    if (sel === null) return 0;
+    return Math.max(0, sel - remainingMinutes());
+  };
+
+  /** 終了マーカーの分位置 (連続値, 60 超も可)。2 本の扇のグラデ濃端をここに揃えて 1 枚に見せる。
+   *  boardMinuteFloat は wrap した 0..60 だが、扇は分×6° で角度化するので連続値のまま渡してよい。 */
+  const markerMinuteContinuous = (): number => boardMinuteFloat() + remainingMinutes();
+
   /** ロケール数字で 2 桁ゼロ埋め (formatNumeral は桁数を保たないので 1 桁は zero glyph を前置)。 */
   const pad2 = (v: number) => (v < 10 ? formatNumeral(0) + formatNumeral(v) : formatNumeral(v));
   const digital = (): string | null => {
@@ -280,7 +296,20 @@ const TimerLayout: Component = () => {
               style={{ width: `${timerBoardSize()}px`, height: `${timerBoardSize()}px`, "transform-origin": "center" }}
             >
               <ClockFace period="merged" hours={boardHours()} bezel="gold">
-                <TimerWedge fromMinute={boardMinuteFloat()} spanMinutes={(remainingSeconds() ?? 0) / 60} />
+                {/* 到達済み扇 (開始点→現在針, 目盛なしの素グラデ) を先に敷き、残り扇 (現在針→終了マーカー,
+                    1 分目盛つき) を上に。2 本は終了マーカーをグラデ濃端に共有して継ぎ目なく 1 枚に見せる。 */}
+                <TimerWedge
+                  fromMinute={boardMinuteFloat() - elapsedMinutes()}
+                  spanMinutes={elapsedMinutes()}
+                  gradientEndMinute={markerMinuteContinuous()}
+                />
+                <TimerWedge
+                  fromMinute={boardMinuteFloat()}
+                  spanMinutes={remainingMinutes()}
+                  gradientEndMinute={markerMinuteContinuous()}
+                  showTicks
+                  deeper
+                />
               </ClockFace>
               <HandsLayer
                 hours={boardHours()}
