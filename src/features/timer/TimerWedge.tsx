@@ -5,21 +5,19 @@ import { CENTER, clockRadius, pieSectorPath } from "../../components/clockface-l
 import { lerpColor } from "../../lib/color";
 
 /**
- * タイマー扇レイヤー。timer 盤の中心から盤面縁までを淡い色の扇 (pie) で塗る。ClockFace の children として
+ * タイマー扇レイヤー。timer 盤の中心から盤面縁までを淡赤の扇 (pie) で塗る。ClockFace の children として
  * BaseFace と FaceDetail の間に差し込まれ、背景色の上・色扇/バッジ/数字の下に乗る (数字は扇の上で読める)。
- * 本コンポーネントは扇 1 本ぶんで、TimerLayout が用途別に複数枚を重ねる:
- *  - 残り (現在針 → 終了マーカー, tone=red): showTicks=true で 1 分ごとの目盛線を乗せ「あと何分」を数える扇。
- *  - 到達済み (開始点 → 現在針, tone=red): showTicks=false の素のグラデ扇 (今まで通りの見た目)。
- *  - 一時停止のドリフト (取り残された原点側, tone=blue): 一時停止中だけ出すうっすい青のフラット扇。残り時間が
- *    凍る一方で現在針・終了マーカーは実時刻で進むので原点が盤上に取り残される、その「停止中に過ぎた実時間」を見せる。
- * 赤の 2 本は gradientEndMinute を共有 (= 終了マーカー位置) することで濃→薄が継ぎ目なくつながり、1 枚の扇に
- * 残りぶんだけ目盛が入ったように見える。
+ * 開始点〜終了マーカーの全域を 2 本の扇で塗り分ける想定で、本コンポーネントは扇 1 本ぶん:
+ *  - 残り (現在針 → 終了マーカー): showTicks=true で 1 分ごとの目盛線を乗せ「あと何分」を数えられる扇に。
+ *  - 到達済み (開始点 → 現在針): showTicks=false の素のグラデ扇 (今まで通りの見た目)。
+ * 2 本は gradientEndMinute を共有 (= 終了マーカー位置) することで濃→薄が継ぎ目なくつながり、1 枚の扇に
+ * 残りぶんだけ目盛が入ったように見える。中断 (一時停止) の積算を示すうっすい青は、際限なく積み上がり得るため
+ * バンド分割しない単一 pie の別レイヤー (TimerInterruptionArc) が担う。
  *
- * 色 (tone=red): 終了マーカー (終了点) を一番濃く、そこから離れるほど薄くしたグラデーション。濃い端は盤面の
- * 背景で見え方が変わるので 2 段に出し分ける。非ものとーんのくぎり (盤面に opacity 0.8 の色扇が乗る) では、その
+ * 色: 終了マーカー (終了点) を一番濃く、そこから離れるほど薄くしたグラデーション。濃い端は盤面の背景で
+ * 見え方が変わるので 2 段に出し分ける。非ものとーんのくぎり (盤面に opacity 0.8 の色扇が乗る) では、その
  * 色扇を明るく抜くために明るめの淡赤 #ffdada。ばっじ / ものとーん (盤面が白) では白に溶けないよう少し濃いめの
- * 淡赤 #f3c8c8。薄い端はそれぞれをさらに白寄りへ薄めた色。tone=blue はグラデを張らずフラットな淡青 1 色
- * (near=far) で、赤い弧とは別物 (停止中の実時間) だと一目で分かるようにする。
+ * 淡赤 #f3c8c8。薄い端はそれぞれをさらに白寄りへ薄めた色。
  *
  * 帯の割り方: 色のくぎりは時計盤の 1 分目盛 (絶対角度 = 分 × 6°) にそろえる。扇の両端 (fromMinute と
  * fromMinute + spanMinutes) は秒まで含む端数位置なので両端は端数ぶんの細い帯として残し、内側だけ整数分で
@@ -56,8 +54,6 @@ interface TimerWedgeProps {
   fromMinute: number;
   /** 扇の角度幅のもとになる分幅 (0..60 小数)。幅 = これ × 6°。0 以下なら描かない。 */
   spanMinutes: number;
-  /** 扇の色味。red = 残り/到達済みの淡赤 (既定)。blue = 一時停止中のドリフトを示すうっすい青 (フラット)。 */
-  tone?: "red" | "blue";
   /** 1 分ごとの目盛線 (放射線) を乗せるか。残り扇のみ true。 */
   showTicks?: boolean;
   /** 濃いめの淡赤ペアを使うか。残り扇 (目盛つき) を到達済み扇よりひとまわり濃くして差をつける用。
@@ -78,14 +74,12 @@ function rimPoint(minute: number): { x: number; y: number } {
 const TimerWedge: Component<TimerWedgeProps> = (props) => {
   const isSector = () => colorMode() === "sector" && paletteId() !== "monotone";
   // 濃い端 (終了マーカー) は単色時代と同じ色。薄い端はそれをさらに白寄りへ薄めた色。deeper はその両端を
-  // ひとまわり濃くした残り扇用ペア (到達済み扇と差をつける)。tone=blue は near=far のフラットな淡青。
+  // ひとまわり濃くした残り扇用ペア (到達済み扇と差をつける)。
   const nearColor = () => {
-    if (props.tone === "blue") return isSector() ? "#dcdce8" : "#d3d3e0";
     if (isSector()) return props.deeper ? "#ffd2d2" : "#ffdada";
     return props.deeper ? "#f1c0c0" : "#f3c8c8";
   };
   const farColor = () => {
-    if (props.tone === "blue") return isSector() ? "#dcdce8" : "#d3d3e0";
     if (isSector()) return props.deeper ? "#ffeded" : "#fff4f4";
     return props.deeper ? "#f9e3e3" : "#fbeaea";
   };

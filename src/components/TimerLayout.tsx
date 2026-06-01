@@ -2,6 +2,7 @@ import { createEffect, createMemo, createSignal, on, onCleanup, Show, type Compo
 import ClockFace from "./clockface-layers/ClockFace";
 import HandsLayer from "./clockface-layers/HandsLayer";
 import TimerWedge from "../features/timer/TimerWedge";
+import TimerInterruptionArc from "../features/timer/TimerInterruptionArc";
 import { useOrientation } from "../hooks/useOrientation";
 import { useViewport } from "../hooks/useViewport";
 import { useI18n } from "../i18n";
@@ -12,6 +13,7 @@ import {
   selectedMinutes,
   runStartMs,
   pausedRemainingMs,
+  firstStartMs,
   completeTimer,
 } from "../features/timer/state";
 import { timerAlarm } from "../features/timer/timer-alarm";
@@ -159,20 +161,27 @@ const TimerLayout: Component = () => {
    *  boardMinuteFloat は wrap した 0..60 だが、扇は分×6° で角度化するので連続値のまま渡してよい。 */
   const markerMinuteContinuous = (): number => boardMinuteFloat() + remainingMinutes();
 
-  /** 一時停止のドリフトを示す青背景 (開始基準の分位置 + 選択分)。一時停止中だけ出す。
-   *  仕組み: 開始 (runStartMs) から選択分ぶんの青扇を盤の最背面に固定で敷く。一時停止は残り時間を凍らせるが
-   *  現在針も終了マーカーも実時刻で進み続ける = 不透明な赤い弧 (到達済み+残り) ごと盤上を前へドリフトする。
-   *  青は固定なので、赤がどいた後端 (開始側) に青が覗く = それが停止中に過ぎた実時間。動的計算は要らず
-   *  幾何で出る。背景は runStartMs(= 保存 endMs から逆算、復元後も正しい) と選択分だけで決まるので、アプリ
-   *  再起動をまたいでも now 依存で膨らまない。分位置ベース + バンド分割なので幅は自然に 1 周 (60 分) で頭打ち
-   *  (時刻指定で 60 分超の選択も、フラット青の重ね塗りになるだけで破綻しない)。 */
-  const pauseDrift = (): { from: number; span: number } | null => {
-    if (timerPhase() !== "paused") return null;
-    const start = runStartMs();
+  /** 中断 (一時停止) の積算扇 (開始点側に覗くうっすい青) の始端分位置と幅。running / paused で出す。
+   *  積算中断 I = (now − firstStartMs)/60000 − 実カウントダウン経過。不変条件「now − firstStartMs = 実経過
+   *  + 中断合計」から中断合計に等しい。firstStartMs は「さいかい」でリベースされないので積算が再開をまたいで
+   *  保たれる (runStartMs だと再開で起点が動いて消えてしまう)。running 中は一定 (貯金)、paused 中は増える。
+   *
+   *  破綻防止: 幅は盤の空き (60 − 選択分) に頭打ちして中断+タイマーが 1 周を超えないようにする。選択分が
+   *  60 以上 (時刻指定の 63 分など) なら空きが無いので 0 = 出さない。アプリを開いたまま長時間放置して I が
+   *  巨大化しても、頭打ち + 単一 pie (TimerInterruptionArc) なので DOM は膨らまない。閉じて 40 日などは endMs の
+   *  30 分自動掃除で復元時に破棄される (= そもそも出ない)。始端は赤い到達済み扇の後端 (boardMinuteFloat −
+   *  到達済み) から幅ぶん戻した有界値にして、巨大 timestamp を角度化せず精度を保つ。 */
+  const interruptionArc = (): { from: number; span: number } | null => {
+    const phase = timerPhase();
+    if (phase !== "running" && phase !== "paused") return null;
+    const first = firstStartMs();
     const sel = selectedMinutes();
-    if (start === null || sel === null) return null;
-    const d = new Date(start);
-    return { from: d.getMinutes() + d.getSeconds() / 60, span: sel };
+    if (first === null || sel === null) return null;
+    const accumulated = (nowMs() - first) / 60000 - elapsedMinutes();
+    const span = Math.max(0, Math.min(accumulated, 60 - sel));
+    if (span <= 0) return null;
+    // 赤い到達済み扇の後端にぴったり接するよう、そこから幅ぶん手前を始端にする。
+    return { from: boardMinuteFloat() - elapsedMinutes() - span, span };
   };
 
   /** ロケール数字で 2 桁ゼロ埋め (formatNumeral は桁数を保たないので 1 桁は zero glyph を前置)。 */
@@ -312,10 +321,10 @@ const TimerLayout: Component = () => {
               style={{ width: `${timerBoardSize()}px`, height: `${timerBoardSize()}px`, "transform-origin": "center" }}
             >
               <ClockFace period="merged" hours={boardHours()} bezel="gold">
-                {/* 一時停止のドリフト背景 (うっすい青) を最背面に固定で敷く。開始基準から選択分ぶん。
-                    赤い弧が実時刻で前へドリフトし、どいた後端に青が覗く = 停止中に過ぎた実時間。停止中のみ。 */}
-                <Show when={pauseDrift()}>
-                  {(drift) => <TimerWedge tone="blue" fromMinute={drift().from} spanMinutes={drift().span} />}
+                {/* 中断 (一時停止) の積算をうっすい青で最背面に。赤い弧が実時刻で前へドリフトした後ろに覗く。
+                    開始点 (firstStartMs) 起点なので再開をまたいで積算が保たれる。盤の空きに頭打ち + 単一 pie。 */}
+                <Show when={interruptionArc()}>
+                  {(arc) => <TimerInterruptionArc fromMinute={arc().from} spanMinutes={arc().span} />}
                 </Show>
                 {/* 到達済み扇 (開始点→現在針, 目盛なしの素グラデ) を先に敷き、残り扇 (現在針→終了マーカー,
                     1 分目盛つき) を上に。2 本は終了マーカーをグラデ濃端に共有して継ぎ目なく 1 枚に見せる。 */}

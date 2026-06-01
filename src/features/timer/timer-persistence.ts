@@ -32,6 +32,9 @@ export interface StoredTimer {
   /** 締切 epoch(ms)。running/done は runStartMs + selectedMinutes*60000、paused は arbitrary
    *  (pauseTimer 時点での「もし時間が止まらなかったら鳴っていた時刻」と等価)。 */
   endMs: number;
+  /** タイマーを最初に開始した epoch(ms)。runStartMs (= endMs から逆算) と違い「さいかい」でリベース
+   *  されない不動の起点で、中断 (一時停止) の積算時間の表示に使う。endMs から逆算できない独立値なので保存する。 */
+  firstStartMs: number;
   /** paused のとき凍結した残り (ms)、それ以外は null。 */
   pausedRemainingMs: number | null;
 }
@@ -115,10 +118,18 @@ export const readStoredTimer = (): StoredTimer | null => {
     pausedRemainingMs = null;
   }
 
+  // firstStartMs は後追いで足したフィールド。旧データ (未保存) は「中断ゼロ」とみなして runStart 逆算値に
+  // 倒す = endMs - selectedMinutes*60000 (= 一度も止めていない場合の真の開始点)。
+  const firstStartMs =
+    typeof candidate.firstStartMs === "number" && Number.isFinite(candidate.firstStartMs)
+      ? candidate.firstStartMs
+      : candidate.endMs - candidate.selectedMinutes * 60000;
+
   return {
     phase: candidate.phase,
     selectedMinutes: candidate.selectedMinutes,
     endMs: candidate.endMs,
+    firstStartMs,
     pausedRemainingMs,
   };
 };

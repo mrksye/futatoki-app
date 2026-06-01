@@ -48,10 +48,13 @@ const [selectedMinutes, setSelectedMinutesRaw] = createSignal<number | null>(nul
 const [runStartMs, setRunStartMsRaw] = createSignal<number | null>(null);
 /** 一時停止時に凍結した残り時間 (ms)。paused 以外では null。 */
 const [pausedRemainingMs, setPausedRemainingMsRaw] = createSignal<number | null>(null);
+/** タイマーを最初に開始した epoch(ms)。runStartMs と違い「さいかい」でリベースされず、とりけしまで不変。
+ *  中断 (一時停止) の積算時間 = (now − firstStartMs)/60000 − 実カウントダウン経過 を出すための不動の起点。 */
+const [firstStartMs, setFirstStartMsRaw] = createSignal<number | null>(null);
 /** リングメニューの bloom 起点。null なら画面中央から開く。 */
 const [pickerOrigin, setPickerOriginRaw] = createSignal<RingOrigin | null>(null);
 
-export { timerPhase, selectedMinutes, runStartMs, pausedRemainingMs, pickerOrigin };
+export { timerPhase, selectedMinutes, runStartMs, pausedRemainingMs, firstStartMs, pickerOrigin };
 
 /** 「せっと」を押してリングメニューを開く。origin = せっとボタン中心 (bloom 起点)。 */
 export const openPicker = (origin?: RingOrigin) => {
@@ -73,11 +76,13 @@ const snapshotForStorage = (): StoredTimer | null => {
   if (!isPersistedPhase(phase)) return null;
   const sel = selectedMinutes();
   const start = runStartMs();
-  if (sel === null || start === null) return null;
+  const first = firstStartMs();
+  if (sel === null || start === null || first === null) return null;
   return {
     phase,
     selectedMinutes: sel,
     endMs: start + sel * 60000,
+    firstStartMs: first,
     pausedRemainingMs: phase === "paused" ? pausedRemainingMs() : null,
   };
 };
@@ -92,8 +97,10 @@ const persistCurrentState = (): void => {
 /** リングメニューで分を選択 → 即 running 開始 (armed を挟まず、選んだ瞬間にカウントダウン)。現在時刻を
  *  開始基準に固定する。 */
 export const selectMinutes = (m: number) => {
+  const now = Date.now();
   setSelectedMinutesRaw(m);
-  setRunStartMsRaw(Date.now());
+  setRunStartMsRaw(now);
+  setFirstStartMsRaw(now);
   setPhaseRaw("running");
   persistCurrentState();
 };
@@ -106,6 +113,7 @@ export const selectTargetTime = (targetMs: number) => {
   const now = Date.now();
   setSelectedMinutesRaw((targetMs - now) / 60000);
   setRunStartMsRaw(now);
+  setFirstStartMsRaw(now);
   setPhaseRaw("running");
   persistCurrentState();
 };
@@ -153,6 +161,7 @@ export const cancelTimer = () => {
   setSelectedMinutesRaw(null);
   setRunStartMsRaw(null);
   setPausedRemainingMsRaw(null);
+  setFirstStartMsRaw(null);
   setPhaseRaw("unset");
   clearStoredTimer();
 };
@@ -172,6 +181,7 @@ export const restoreFromStorage = (snapshot: StoredTimer): void => {
   const runStartMsValue = snapshot.endMs - snapshot.selectedMinutes * 60000;
   setSelectedMinutesRaw(snapshot.selectedMinutes);
   setRunStartMsRaw(runStartMsValue);
+  setFirstStartMsRaw(snapshot.firstStartMs);
   setPausedRemainingMsRaw(effectivePhase === "paused" ? snapshot.pausedRemainingMs : null);
   setPhaseRaw(effectivePhase);
 };
