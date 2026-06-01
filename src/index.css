@@ -11,14 +11,21 @@
    直接 import すると訪問者の IP が Google に渡るので privacy 配慮で self-host、ライセンス本文
    は public/fonts/OFL-nunito.txt に同梱。旧 Nunito 3 subset (latin/latin-ext/cyrillic ~95KB)
    は UI 全般での使用を止めて時計盤数字専用に集約したので破棄、必要だった 0-9 だけ
-   ~1.4KB × 2 weight (合計 ~2.9KB) に圧縮した。 */
+   ~1.4KB × 2 weight (合計 ~2.9KB) に圧縮した。
+
+   unicode-range はあえて付けない (看板コメント)。U+0030-0039 のような数字限定 range を
+   足すと Chrome がこの font を当該 <text> の primary font と見なさなくなり、
+   dominant-baseline="central" の中点計算が fallback の sans-serif metrics 基準にすり替わって
+   数字が約 0.1em 下にズレる (FaceDetail.tsx の時数 / 分計が全部これに乗る)。glyph coverage
+   だけで Latin 数字 0-9 はこの font に、Bengali 数字 ০-৯ は Clockface Bengali に正しく振り
+   分かれるので range は不要。lazy load 用に range を再追加したくなっても、それは数字を下に
+   ズラす取引になる。 */
 @font-face {
   font-family: 'Clockface Western';
   font-style: normal;
   font-weight: 700;
   font-display: swap;
   src: url('/fonts/clockface-western-bold.woff2') format('woff2');
-  unicode-range: U+0030-0039;
 }
 @font-face {
   font-family: 'Clockface Western';
@@ -26,15 +33,16 @@
   font-weight: 900;
   font-display: swap;
   src: url('/fonts/clockface-western-black.woff2') format('woff2');
-  unicode-range: U+0030-0039;
 }
 
 /* Clockface Bengali SemiBold / Regular: Baloo Da 2 Variable Font (wght axis) から
    wght=600 (SemiBold) / wght=400 (Regular) の 2 static instance を抜き出し、U+09E6-09EF
    (Bengali 数字 ০-৯) だけ pyftsubset したもの。OS 標準の Bengali フォント (Vrinda /
    Nirmala UI 等) は欧文 UI と並べると線が痩せて時計盤の白フチ stroke で削られると
-   視認性が落ちるので self-host。bn locale 以外はこの codepoint range の文字が出ないので
-   unicode-range で自動 lazy load される。name table は 'Clockface Bengali
+   視認性が落ちるので self-host。Western 側と同じ理由で unicode-range は付けない
+   (U+09E6-09EF の数字限定 range を付けると bn locale で Bengali 数字が同じく約 0.1em 下に
+   ズレる)。本来は bn locale 以外で lazy load させたかった range だが、数字の縦位置を正す方を
+   優先して捨てた (代償は非 bn locale でも ~1.8KB の先読み 1 回のみ)。name table は 'Clockface Bengali
    SemiBold/Regular' に rename 済 (Baloo の SIL OFL 1.1 は RFN 宣言が無いので技術的には
    不要だが、modified subset と原本の混同を防ぐ意図)。ライセンス本文は
    public/fonts/OFL-balooda2.txt に同梱。
@@ -51,7 +59,6 @@
   font-weight: 900;
   font-display: swap;
   src: url('/fonts/clockface-bengali-semibold.woff2') format('woff2');
-  unicode-range: U+09E6-09EF;
 }
 @font-face {
   font-family: 'Clockface Bengali';
@@ -59,7 +66,6 @@
   font-weight: 700;
   font-display: swap;
   src: url('/fonts/clockface-bengali-regular.woff2') format('woff2');
-  unicode-range: U+09E6-09EF;
 }
 
 /* per-lang font stack の優先順位ルール (全 stack 共通):
@@ -75,7 +81,9 @@
    (ClockFace.tsx の <text font-family="Clockface Bengali, Clockface Western, sans-serif">)。
    Latin 数字 0-9 を Western Digits (Nunito を 0-9 だけ subset rename した自作 font) の丸
    ゴシックに、Bengali 数字 ০-৯ (U+09E6-09EF) を Bengali Digits (Baloo Da 2 を ০-৯ だけ
-   subset rename した自作 font) にそれぞれ unicode-range 経由でヒットさせる。 */
+   subset rename した自作 font) にそれぞれ振り分ける。各 font は該当数字の glyph しか持たない
+   ので、unicode-range なしの glyph coverage マッチだけで Bengali 先頭 → Western の順に
+   正しくヒットする (range を付けない理由は上の @font-face コメント参照)。 */
 @theme {
   --font-sans:
     'Noto Sans', 'Noto Sans JP', 'Noto Sans CJK JP',
