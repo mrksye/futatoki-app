@@ -116,14 +116,18 @@ export const playShakeNo = (el: Element, amplitudePx = 8): Animation | null =>
 /** クエイク (ググググーッ): center → peak → center の discrete pulse を左右交互 + 線形成長振幅で 6 発。
  *  translate を左右に shift しつつ rotate を逆方向にひねって「ぐねっ」とした物理感を重ねる。pulse ごとに
  *  中央へ戻る瞬間があり「グッ (戻る) グッ (戻る) グッ」と数えられる脈動感。はつかいき splash の起動演出と、
- *  たいむ盤の産み出し時の震えで共通使用。transform-origin: center を呼び出し側で確保すること。 */
+ *  たいむ盤の産み出し時の震えで共通使用。支点は playQuake が transform-origin: center を要素へ直接セットして
+ *  確保する (リンリンの 50% 0% を当てた後の要素でも中央支点で回る)。 */
 export const QUAKE_DURATION_MS = 500;
 /** amplitudeScale: 振れ幅倍率。splash は全画面 container に当てるので 1 (4.5px/1.1deg) で十分だが、
  *  時計サイズの要素に当てる時は埋もれるので大きめに指定する。 */
 const buildQuakeKeyframes = (amplitudeScale = 1): Keyframe[] => {
   const PULSES = 6;
-  const MAX_TRANSLATE_PX = 4.5 * amplitudeScale;
-  const MAX_ROTATE_DEG = 1.1 * amplitudeScale;
+  // rotate を主役にして中央支点で 12 と 6 を逆方向に振る。translate は「左右にちょっと揺れる」程度の
+  // サブ成分に留める。translate を rotate と同等以上に取ると上端側で両者が相殺して下端だけが振れ、中央
+  // 支点なのに上部支点 (リンリン) のように見えてしまうため、translate < rotate 寄与に保つ。
+  const MAX_TRANSLATE_PX = 1.5 * amplitudeScale;
+  const MAX_ROTATE_DEG = 2.0 * amplitudeScale;
   const REST = "translate(0px, 0px) rotate(0deg)";
   const frames: Keyframe[] = [{ transform: REST, offset: 0 }];
   for (let i = 0; i < PULSES; i++) {
@@ -145,10 +149,14 @@ export const playQuake = (
   durationMs = QUAKE_DURATION_MS,
   delayMs = 0,
   amplitudeScale = 1,
-): Animation | null =>
-  animateMotion(el, buildQuakeKeyframes(amplitudeScale), {
+): Animation | null => {
+  // rotate 成分を時計の中央支点で回す。inline style で持つ (transform-origin を keyframe に混ぜると
+  // 合成スレッドから外れて弱 GPU でカクつくため)。
+  (el as HTMLElement).style.transformOrigin = "center";
+  return animateMotion(el, buildQuakeKeyframes(amplitudeScale), {
     duration: durationMs,
     delay: delayMs,
     easing: "linear",
     fill: "none",
   });
+};

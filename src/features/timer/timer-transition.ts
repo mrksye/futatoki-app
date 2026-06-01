@@ -209,11 +209,9 @@ export const playMergeAnticipation = (el: Element): Animation | null => {
  *  そのまま分離 = PM 盤の生み出しへ繋がる) ため delay を入れる。すげ替えられるよう実装点はこの 1 関数に閉じる。
  *  はつかいき splash の「ググググーッ」(playQuake) を共通利用 (時計サイズ向けに振幅を上げる)。 */
 const SPLIT_QUAKE_AMPLITUDE_SCALE = 2.6;
-export const playSplitAnticipation = (el: Element): Animation | null => {
-  // playQuake は中心支点前提。同じ merged 左顔に入りのリンリン (支点 50% 0%) を当てているので中心へ戻す。
-  (el as HTMLElement).style.transformOrigin = "center";
-  return playQuake(el, EXIT_ANTICIPATION_MS, WAVE_GOODBYE_MS - EXIT_ANTICIPATION_MS, SPLIT_QUAKE_AMPLITUDE_SCALE);
-};
+export const playSplitAnticipation = (el: Element): Animation | null =>
+  // 支点は playQuake が center に戻す (入りのリンリンが 50% 0% を残していてもクエイクは中央支点で回る)。
+  playQuake(el, EXIT_ANTICIPATION_MS, WAVE_GOODBYE_MS - EXIT_ANTICIPATION_MS, SPLIT_QUAKE_AMPLITUDE_SCALE);
 
 /** 退室で timer 盤が去るときの「バイバイッ」(両 kind 共通)。右下を支点 (transform-origin: 100% 100%) に
  *  弧を描いて素早く 2 回振り、最後にフェード+縮小で消える。回転モードには連れて行かれず、とけいでも合体時計
