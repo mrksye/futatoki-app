@@ -314,14 +314,13 @@ const TimerLayout: Component = () => {
               <ClockFace period="merged" hours={boardHours()} bezel="gold">
                 {/* 残り扇 (現在針 → 終了マーカー) の塗り。到達済み・中断は塗らず開始点に線 1 本で示す。 */}
                 <TimerWedge fromMinute={boardMinuteFloat()} spanMinutes={remainingMinutes()} />
-                {/* 中断込みの真の開始点 (firstStartMs) の線。中断が積み上がっているときだけ開始点より手前に出る。
-                    先に描いて、重なったとき たいむ開始点 (赤) を上に乗せる。 */}
-                <Show when={interruptionStartMinute()}>
-                  {(mark) => <TimerStartLine minute={mark().minute} variant="interruption" />}
-                </Show>
-                {/* たいむ開始点 (現在針から到達済みぶん戻した位置) の線。青より上。 */}
+                {/* たいむ開始点 (現在針から到達済みぶん戻した位置) の線。先に描いて、重なったとき中断 (青) を上に乗せる。 */}
                 <Show when={elapsedMinutes() > 0}>
                   <TimerStartLine minute={boardMinuteFloat() - elapsedMinutes()} variant="timerStart" />
+                </Show>
+                {/* 中断込みの真の開始点 (firstStartMs) の線。中断が積み上がっているときだけ開始点より手前に出る。赤より上。 */}
+                <Show when={interruptionStartMinute()}>
+                  {(mark) => <TimerStartLine minute={mark().minute} variant="interruption" />}
                 </Show>
               </ClockFace>
               <HandsLayer
