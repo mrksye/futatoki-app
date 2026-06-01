@@ -40,9 +40,9 @@ if ("serviceWorker" in navigator) {
 // 1 回だけ撃つために detectLocale() を直叩きする (I18nProvider 側でも同じ pure 関数を呼ぶが副作用なし)。
 reportAppOpen(detectLocale());
 
-// LP / Worker から渡ってきた ?lang=xx は、上の detectLocale() が localStorage に取り込んだ後に
-// URL から消す。残すと iOS / Android のホーム画面追加で起動 URL に焼き付き、毎起動その値が保存済み
-// 言語を上書きしてアプリ内の言語切り替えが効かなくなる。
+// LP / Worker から渡ってきた言語クエリ (?setlang / ?lang) は、上の detectLocale() が ?setlang を
+// localStorage に取り込んだ後に URL から消す。残すと iOS / Android のホーム画面追加で起動 URL に
+// 焼き付き、毎起動その値が効いてアプリ内の言語切り替え体験を乱す。
 stripLangParamFromUrl();
 
 render(() => <App />, root);

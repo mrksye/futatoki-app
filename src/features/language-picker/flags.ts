@@ -34,17 +34,20 @@ export const LANGUAGE_FLAG: Readonly<Record<string, string>> = {
   id: "🇮🇩",
 };
 
-/** ?lang=xx に書き換えて navigation を replace で行う (i18n/detect.ts が起動時に URL から拾い、
- *  同 key で localStorage 永続化)。location.href 代入は history に新エントリを積むので戻るボタン
- *  で言語切替前に戻れてしまう = 子供向け UI として不適切。replace で現エントリを上書きする。
- *  数字系 signal を 2 本ともクリアするのは、過去の locale で選んだ「alternate 体系」や「時数を
- *  隠す」状態が新 locale の default 表示を上書きするのを防ぐため (例: bn で western にしていた、
- *  あるいは時数を隠していた状態のまま en へ切り替えたら、en の文字盤がいきなり消えてる体験に
- *  なってしまう)。 */
+/** ?lang=xx (Worker / 初期 HTML 選択用) と ?setlang=xx (明示選択シグナル) を付けて replace で
+ *  reload する。?setlang は i18n/detect.ts が起動時に拾って localStorage に焼き、以後 Worker の
+ *  Accept-Language 推測 (?lang) より優先される = アプリ内で選んだ言語が永続する。Worker は有効な
+ *  ?lang を見て該当 locale の HTML を redirect なしで返すので ?setlang はそのまま残り、起動後に
+ *  detect 側で消える。location.href 代入は history に新エントリを積むので戻るボタンで言語切替前に
+ *  戻れてしまう = 子供向け UI として不適切。replace で現エントリを上書きする。数字系 signal を 2 本
+ *  ともクリアするのは、過去の locale で選んだ「alternate 体系」や「時数を隠す」状態が新 locale の
+ *  default 表示を上書きするのを防ぐため (例: bn で western にしていた、あるいは時数を隠していた状態の
+ *  まま en へ切り替えたら、en の文字盤がいきなり消えてる体験になってしまう)。 */
 export const switchLanguageByReload = (code: string): void => {
   resetNumeralSystemChoice();
   setHourNumeralsHidden(false);
   const url = new URL(window.location.href);
   url.searchParams.set("lang", code);
+  url.searchParams.set("setlang", code);
   window.location.replace(url.toString());
 };
