@@ -67,13 +67,15 @@ const TimerLayout: Component = () => {
   const viewport = useViewport();
   const { formatNumeral } = useI18n();
 
-  // timer モード中ずっと 250ms ごとに更新する現在時刻。両盤面の針はこれを基準に live で進む。
+  /** timer モード中 250ms ごとに取り直す現在時刻。両盤面の針はこれを基準に live で進む。 */
   const [nowMs, setNowMs] = createSignal(Date.now());
+
+  /** Date を分 (小数) に。秒を混ぜることで running 中の現在針がカクつかず滑らかに進む。 */
+  const minuteFloatOf = (d: Date) => d.getMinutes() + d.getSeconds() / 60;
 
   const refDate = createMemo(() => new Date(nowMs()));
   const refHours = () => refDate().getHours();
-  /** 秒も混ぜた分 (小数) → running 中の現在針がカクつかず滑らかに進む。 */
-  const refMinuteFloat = () => refDate().getMinutes() + refDate().getSeconds() / 60;
+  const refMinuteFloat = () => minuteFloatOf(refDate());
 
   const hasSelection = () =>
     timerPhase() === "running" || timerPhase() === "paused" || timerPhase() === "done";
@@ -97,26 +99,26 @@ const TimerLayout: Component = () => {
     return null;
   };
 
-  /** タイマー盤 (PM 位置) の基準時刻。running / paused は live の現在時刻、done は終了時刻で凍結する。
-   *  左の合体時計 (AM 位置) は refDate (live の nowMs) のまま進み続けるが、タイマー盤の針・扇だけは
-   *  この boardDate を読むことで終了位置にとどまる (鳴り終わりに現在針が終了マーカーへ重なって止まる)。 */
-  const boardDate = createMemo(() => {
+  /** タイマー盤 (PM 位置) の基準時刻 (ms)。running / paused は live の現在時刻、done は終了時刻で凍結する。
+   *  左の合体時計 (AM 位置) は live の nowMs のまま進み続けるが、タイマー盤の針・扇はこの凍結時刻を読むことで
+   *  終了位置にとどまる (鳴り終わりに現在針が終了マーカーへ重なって止まる)。done で終了時刻が未確定のときだけ
+   *  live にフォールバックする。盤の時刻参照はすべてこの 1 関数に集約する (done 凍結の判断を散らさない)。 */
+  const boardNowMs = (): number => {
     if (timerPhase() === "done") {
       const e = endMs();
-      if (e !== null) return new Date(e);
+      if (e !== null) return e;
     }
-    return refDate();
-  });
+    return nowMs();
+  };
+  const boardDate = createMemo(() => new Date(boardNowMs()));
   const boardHours = () => boardDate().getHours();
-  const boardMinuteFloat = () => boardDate().getMinutes() + boardDate().getSeconds() / 60;
+  const boardMinuteFloat = () => minuteFloatOf(boardDate());
 
-  /** 終了マーカー針の位置 (分, 小数)。選択済み (running / paused / done) のときだけ値を返す。 */
+  /** 終了マーカー針の位置 (分, 小数)。selection が無ければ undefined。 */
   const markerMinutes = (): number | undefined => {
     if (!hasSelection()) return undefined;
     const e = endMs();
-    if (e === null) return undefined;
-    const d = new Date(e);
-    return d.getMinutes() + d.getSeconds() / 60;
+    return e === null ? undefined : minuteFloatOf(new Date(e));
   };
 
   /** done のとき live 現在時刻に追従して動く「経過オーバーラン針」の位置 (分, 小数)。終了時刻で凍る
@@ -161,30 +163,24 @@ const TimerLayout: Component = () => {
    *  boardMinuteFloat は wrap した 0..60 だが、扇は分×6° で角度化するので連続値のまま渡してよい。 */
   const markerMinuteContinuous = (): number => boardMinuteFloat() + remainingMinutes();
 
-  /** 中断 (一時停止) の積算扇 (開始点側に覗くうっすい青) の始端分位置と幅。running / paused / done で出す。
-   *  積算中断 I = (基準時刻 − firstStartMs)/60000 − 実カウントダウン経過。不変条件「経過 = 実カウントダウン経過
-   *  + 中断合計」から中断合計に等しい。firstStartMs は「さいかい」でリベースされないので積算が再開をまたいで
-   *  保たれる (runStartMs だと再開で起点が動いて消えてしまう)。running 中は一定 (貯金)、paused 中は増える。
+  /** 中断 (一時停止) の積算を示すうっすい青の扇 (開始点側に覗く) の始端分位置と幅。selection のある全フェーズ
+   *  (running / paused / done) で出す。
    *
-   *  基準時刻: running / paused は live の現在時刻 (nowMs)。done は終了時刻 (endMs) で凍結する。done でも nowMs は
-   *  進み続ける (左の合体時計は止めない) ので、そのまま使うと完了後のオーバーラン時間まで中断ぶんに混ざって青が
-   *  膨らみ続ける。done は完了時点の中断量で固定したいので基準を endMs に切り替える (= boardDate と同じ凍結)。
-   *  これで終了の瞬間に青が消えず、完了 (✓) ボタンを押すか end+30min 自動掃除で cancelTimer に合流するまで残る。
+   *  積算中断 I = 経過実時間 − 実カウントダウン経過 = (boardNowMs − firstStartMs)/60000 − 到達済み分。
+   *  firstStartMs はタイマーを最初に押した時刻で「さいかい」をまたいでも不変なので、再開を繰り返しても積算が
+   *  保たれる (runStartMs は再開でリベースされるので起点に使うと青が消える)。基準に盤の boardNowMs を使うこと
+   *  自体が done を完了時刻に凍結させ、完了後も進む現在時刻のぶんが中断量に混ざらない (青は完了時点の積算で
+   *  止まり、完了 ✓ か end+30min 自動掃除で消えるまで残る) — done 専用の分岐は要らない。
    *
-   *  破綻防止: 幅は盤の空き (60 − 選択分) に頭打ちして中断+タイマーが 1 周を超えないようにする。選択分が
-   *  60 以上 (時刻指定の 63 分など) なら空きが無いので 0 = 出さない。アプリを開いたまま長時間放置して I が
-   *  巨大化しても、頭打ち + 単一 pie (TimerInterruptionArc) なので DOM は膨らまない。閉じて 40 日などは endMs の
-   *  30 分自動掃除で復元時に破棄される (= そもそも出ない)。始端は赤い到達済み扇の後端 (boardMinuteFloat −
-   *  到達済み) から幅ぶん戻した有界値にして、巨大 timestamp を角度化せず精度を保つ。 */
+   *  幅は盤の空き (60 − 選択分) に頭打ちして中断 + タイマーが盤 1 周を超えないようにする (時刻指定で選択分が
+   *  60 以上なら空きが無いので 0 = 出さない)。長時間放置で I が巨大化しても頭打ち + 単一 pie で DOM は膨らまない。
+   *  始端は赤い到達済み扇の後端から幅ぶん戻した有界値にして、巨大 timestamp を角度化せず精度を保つ。 */
   const interruptionArc = (): { from: number; span: number } | null => {
-    const phase = timerPhase();
-    if (phase !== "running" && phase !== "paused" && phase !== "done") return null;
+    if (!hasSelection()) return null;
     const first = firstStartMs();
     const sel = selectedMinutes();
     if (first === null || sel === null) return null;
-    const reference = phase === "done" ? endMs() : nowMs();
-    if (reference === null) return null;
-    const accumulated = (reference - first) / 60000 - elapsedMinutes();
+    const accumulated = (boardNowMs() - first) / 60000 - elapsedMinutes();
     const span = Math.max(0, Math.min(accumulated, 60 - sel));
     if (span <= 0) return null;
     // 赤い到達済み扇の後端にぴったり接するよう、そこから幅ぶん手前を始端にする。
@@ -199,19 +195,15 @@ const TimerLayout: Component = () => {
     return `${pad2(Math.floor(r / 60))}:${pad2(r % 60)}`;
   };
 
-  // timer モード中は全フェーズで requestAnimationFrame を回し、現在時刻 (nowMs) を取り直して左の合体時計を
-  // live で進める。setInterval ではなく rAF なのは、背景タブでは自動的に止まり計時を無駄に進めないため。
-  // 計時の真実は endMs - Date.now() のままで、rAF は表示専用 (値の積算はしない)。running 中に終了時刻へ
-  // 達したら done へ遷移してアラームを鳴らす (フォアグラウンド発火経路)。画面消灯下の発火と復帰時の
-  // 取りこぼし回収は timer-alarm 側の setInterval 監視 (keepalive がページを生かす) と visibilitychange
-  // 照合が担当する。done でも nowMs は進み続け左の合体時計は止めない。終了位置で凍るのはタイマー盤だけで、
-  // それは boardDate が done のとき終了時刻を返すことで実現する (この effect は時刻ソースを止めない)。
+  // 全フェーズで rAF を回し現在時刻 (nowMs) を取り直して左の合体時計を live で進める。setInterval でなく rAF
+  // なのは背景タブで自動停止して計時を無駄に進めないため (計時の真実は endMs − Date.now()、rAF は表示専用)。
+  // running 中に終了時刻へ達したら done へ遷移してアラームを鳴らす (フォアグラウンド発火経路)。画面消灯下の
+  // 発火と復帰時の取りこぼし回収は timer-alarm 側が担当する。done でも nowMs は止めず、盤の凍結は boardNowMs に任せる。
   createEffect(() => {
     const phase = timerPhase();
     let animationFrameId = 0;
-    // 表示の commit (setNowMs → 針 SVG 再描画) は 4fps に間引く。針はゆっくり動くので 60fps は不要で、
-    // 毎フレーム再描画すると弱 GPU を圧迫する。rAF ループ自体は前景のみで回り (背景タブで自動停止)、
-    // running の完了判定は毎フレーム精度のまま (now >= endMs を間引かず見る)。
+    // 表示 commit (setNowMs → 針再描画) は 4fps に間引く (針は遅く、毎フレーム再描画は弱 GPU を圧迫するだけ)。
+    // 完了判定だけは間引かず毎フレーム精度のまま見る (now >= endMs)。
     let lastCommitMs = 0;
     const tick = () => {
       const now = Date.now();
@@ -251,10 +243,8 @@ const TimerLayout: Component = () => {
   /** タイマー盤の実寸。AM 位置の合体時計 (clockSize) より一回り小さくする。 */
   const timerBoardSize = createMemo(() => clockSize() * TIMER_BOARD_SCALE);
 
-  // たいむ遷移の WAAPI 群。入室 (enterBoing): merged 左顔 (AM 位置) を L で「リンリン」と魅せ、
-  // MERGE_ANTICIPATION_MS 後に merged をクエイクさせつつ timer 盤 (PM 位置) を裏からスライドで生み出す。
-  // 退室 (exitBoing): timer 盤を裏へ退ける。fill 付き WAAPI が timeline に溜まると弱 GPU でアニメが drop
-  // するので、前回分を必ず cancel + onCleanup で解放する (残骸ゼロ)。
+  // たいむ遷移の WAAPI 群 (入室 enterBoing / 退室 exitBoing、各演出は下の分岐に併記)。fill 付き WAAPI が
+  // timeline に溜まると弱 GPU でアニメが drop するので、前回分を必ず cancel + onCleanup で解放する (残骸ゼロ)。
   let timerBoardRef: HTMLDivElement | undefined;
   let leftFaceRef: HTMLDivElement | undefined;
   let boardAnimation: Animation | null = null;
@@ -291,7 +281,7 @@ const TimerLayout: Component = () => {
 
   return (
     <>
-      {/* 集中向けの静的背景 (中央に光だまり)。盤面の後ろに敷く decorative レイヤー。 */}
+      {/* 集中向けの静的背景 (中央に光だまり)。 */}
       <div class="timer-background absolute inset-0 pointer-events-none" />
       <div class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}>
         {/* AM 位置: 現在時刻の合体時計 (通常の黒針)。z-10 は ClockLayout の split と揃える。
