@@ -161,10 +161,15 @@ const TimerLayout: Component = () => {
    *  boardMinuteFloat は wrap した 0..60 だが、扇は分×6° で角度化するので連続値のまま渡してよい。 */
   const markerMinuteContinuous = (): number => boardMinuteFloat() + remainingMinutes();
 
-  /** 中断 (一時停止) の積算扇 (開始点側に覗くうっすい青) の始端分位置と幅。running / paused で出す。
-   *  積算中断 I = (now − firstStartMs)/60000 − 実カウントダウン経過。不変条件「now − firstStartMs = 実経過
+  /** 中断 (一時停止) の積算扇 (開始点側に覗くうっすい青) の始端分位置と幅。running / paused / done で出す。
+   *  積算中断 I = (基準時刻 − firstStartMs)/60000 − 実カウントダウン経過。不変条件「経過 = 実カウントダウン経過
    *  + 中断合計」から中断合計に等しい。firstStartMs は「さいかい」でリベースされないので積算が再開をまたいで
    *  保たれる (runStartMs だと再開で起点が動いて消えてしまう)。running 中は一定 (貯金)、paused 中は増える。
+   *
+   *  基準時刻: running / paused は live の現在時刻 (nowMs)。done は終了時刻 (endMs) で凍結する。done でも nowMs は
+   *  進み続ける (左の合体時計は止めない) ので、そのまま使うと完了後のオーバーラン時間まで中断ぶんに混ざって青が
+   *  膨らみ続ける。done は完了時点の中断量で固定したいので基準を endMs に切り替える (= boardDate と同じ凍結)。
+   *  これで終了の瞬間に青が消えず、完了 (✓) ボタンを押すか end+30min 自動掃除で cancelTimer に合流するまで残る。
    *
    *  破綻防止: 幅は盤の空き (60 − 選択分) に頭打ちして中断+タイマーが 1 周を超えないようにする。選択分が
    *  60 以上 (時刻指定の 63 分など) なら空きが無いので 0 = 出さない。アプリを開いたまま長時間放置して I が
@@ -173,11 +178,13 @@ const TimerLayout: Component = () => {
    *  到達済み) から幅ぶん戻した有界値にして、巨大 timestamp を角度化せず精度を保つ。 */
   const interruptionArc = (): { from: number; span: number } | null => {
     const phase = timerPhase();
-    if (phase !== "running" && phase !== "paused") return null;
+    if (phase !== "running" && phase !== "paused" && phase !== "done") return null;
     const first = firstStartMs();
     const sel = selectedMinutes();
     if (first === null || sel === null) return null;
-    const accumulated = (nowMs() - first) / 60000 - elapsedMinutes();
+    const reference = phase === "done" ? endMs() : nowMs();
+    if (reference === null) return null;
+    const accumulated = (reference - first) / 60000 - elapsedMinutes();
     const span = Math.max(0, Math.min(accumulated, 60 - sel));
     if (span <= 0) return null;
     // 赤い到達済み扇の後端にぴったり接するよう、そこから幅ぶん手前を始端にする。
