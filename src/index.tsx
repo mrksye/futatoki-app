@@ -11,7 +11,7 @@ import "./lib/motion-bootstrap";
 // 呼ばれ Top hero 動画の「12 種できごと scatter」を録画する。本番 bundle では空。
 import "./lib/demo-seam";
 import { reportAppOpen } from "./lib/beacon";
-import { detectLocale } from "./i18n/detect";
+import { detectLocale, stripLangParamFromUrl } from "./i18n/detect";
 import App from "./App";
 
 const root = document.getElementById("root");
@@ -39,5 +39,10 @@ if ("serviceWorker" in navigator) {
 // 起動ビーコンを 1 発。i18n context や component lifecycle に依存させず、ブート時点で確実に
 // 1 回だけ撃つために detectLocale() を直叩きする (I18nProvider 側でも同じ pure 関数を呼ぶが副作用なし)。
 reportAppOpen(detectLocale());
+
+// LP / Worker から渡ってきた ?lang=xx は、上の detectLocale() が localStorage に取り込んだ後に
+// URL から消す。残すと iOS / Android のホーム画面追加で起動 URL に焼き付き、毎起動その値が保存済み
+// 言語を上書きしてアプリ内の言語切り替えが効かなくなる。
+stripLangParamFromUrl();
 
 render(() => <App />, root);
