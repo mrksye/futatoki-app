@@ -159,6 +159,22 @@ const TimerLayout: Component = () => {
    *  boardMinuteFloat は wrap した 0..60 だが、扇は分×6° で角度化するので連続値のまま渡してよい。 */
   const markerMinuteContinuous = (): number => boardMinuteFloat() + remainingMinutes();
 
+  /** 一時停止のドリフトを示す青背景 (開始基準の分位置 + 選択分)。一時停止中だけ出す。
+   *  仕組み: 開始 (runStartMs) から選択分ぶんの青扇を盤の最背面に固定で敷く。一時停止は残り時間を凍らせるが
+   *  現在針も終了マーカーも実時刻で進み続ける = 不透明な赤い弧 (到達済み+残り) ごと盤上を前へドリフトする。
+   *  青は固定なので、赤がどいた後端 (開始側) に青が覗く = それが停止中に過ぎた実時間。動的計算は要らず
+   *  幾何で出る。背景は runStartMs(= 保存 endMs から逆算、復元後も正しい) と選択分だけで決まるので、アプリ
+   *  再起動をまたいでも now 依存で膨らまない。分位置ベース + バンド分割なので幅は自然に 1 周 (60 分) で頭打ち
+   *  (時刻指定で 60 分超の選択も、フラット青の重ね塗りになるだけで破綻しない)。 */
+  const pauseDrift = (): { from: number; span: number } | null => {
+    if (timerPhase() !== "paused") return null;
+    const start = runStartMs();
+    const sel = selectedMinutes();
+    if (start === null || sel === null) return null;
+    const d = new Date(start);
+    return { from: d.getMinutes() + d.getSeconds() / 60, span: sel };
+  };
+
   /** ロケール数字で 2 桁ゼロ埋め (formatNumeral は桁数を保たないので 1 桁は zero glyph を前置)。 */
   const pad2 = (v: number) => (v < 10 ? formatNumeral(0) + formatNumeral(v) : formatNumeral(v));
   const digital = (): string | null => {
@@ -296,6 +312,11 @@ const TimerLayout: Component = () => {
               style={{ width: `${timerBoardSize()}px`, height: `${timerBoardSize()}px`, "transform-origin": "center" }}
             >
               <ClockFace period="merged" hours={boardHours()} bezel="gold">
+                {/* 一時停止のドリフト背景 (うっすい青) を最背面に固定で敷く。開始基準から選択分ぶん。
+                    赤い弧が実時刻で前へドリフトし、どいた後端に青が覗く = 停止中に過ぎた実時間。停止中のみ。 */}
+                <Show when={pauseDrift()}>
+                  {(drift) => <TimerWedge tone="blue" fromMinute={drift().from} spanMinutes={drift().span} />}
+                </Show>
                 {/* 到達済み扇 (開始点→現在針, 目盛なしの素グラデ) を先に敷き、残り扇 (現在針→終了マーカー,
                     1 分目盛つき) を上に。2 本は終了マーカーをグラデ濃端に共有して継ぎ目なく 1 枚に見せる。 */}
                 <TimerWedge
