@@ -30,8 +30,10 @@ interface TimerStartLineProps {
 const TimerStartLine: Component<TimerStartLineProps> = (props) => {
   const isSector = () => colorMode() === "sector" && paletteId() !== "monotone";
   const color = () => {
-    if (props.variant === "interruption") return isSector() ? "#dcdce8" : "#d3d3e0";
-    return isSector() ? "#ffdada" : "#f3c8c8";
+    // くぎり (ものとーん除く) は盤面に opacity 0.8 の色扇が乗りグレー寄りに沈むので、その上で読めるよう
+    // 両方とも純白にして視認性を最大化する。青赤の区別はここでは捨てる。
+    if (props.variant === "interruption") return isSector() ? "#ffffff" : "#d3d3e0";
+    return isSector() ? "#ffffff" : "#f3c8c8";
   };
   // 中心側 (inner) は針まわりを避けるため START_LINE_INNER_RADIUS だけ離し、外周側 (rim) は盤面縁まで。
   const segment = () => {
