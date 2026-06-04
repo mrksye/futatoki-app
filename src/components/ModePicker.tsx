@@ -9,8 +9,8 @@ import {
   togglePopover,
 } from "../lib/exclusive-popover";
 
-/** clock からは freeRotate にしか transition できない FSM ルール (state.ts の ALLOWED_TRANSITIONS)
- *  を満たすため、autoRotate を選んだ時は freeRotate を経由する。 */
+/** clock から autoRotate へは直接遷移できない FSM ルール (state.ts の ALLOWED_TRANSITIONS) を
+ *  満たすため、autoRotate を選んだ時は freeRotate を経由する。 */
 const goMode = (target: ClockMode) => {
   const current = clockMode();
   if (current === target) return;
