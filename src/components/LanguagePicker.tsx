@@ -91,9 +91,17 @@ const LanguageRingMenu: Component<{ origin: LanguagePickerOrigin }> = (props) =>
   const ringH = () => ringShort();
   const cornerR = () => ringShort() * CORNER_RATIO;
 
-  /** ring center を origin から x 方向に push して画面外に押し出し、可視範囲を縦の細い帯に絞る。 */
+  /** 起点 (popover 内の 🌏) は LTR で画面右上・RTL で画面左上に出る。ring の回転と spread は時計と
+   *  同じく常に右回り (CW) で固定し、ミラーはしない (path / drag / wheel は LTR と完全共通)。崩れの
+   *  原因は dir による CSS 反転ではなく、幾何が「起点は右」前提で組まれていること自体なので、locale で
+   *  変えるのは次の 2 点だけにとどめる: (1) ring を起点のどちら側に寄せるか (outset の向き)、(2) 現在
+   *  locale を可視キャップ (LTR=左キャップ=9 時 / RTL=右キャップ=3 時) のどちらに anchor するか。 */
+  const originOnRight = () => locale().dir !== "rtl";
+
+  /** ring center を起点から x 方向に push して画面外に押し出し、可視範囲を縦の細い帯に絞る。起点が右
+   *  (LTR) なら ring を右へ寄せて左キャップを画面内に、起点が左 (RTL) なら左へ寄せて右キャップを画面内に。 */
   const outsetPx = () => ringLong() * RING_CENTER_OUTSET_RATIO;
-  const ringCx = () => props.origin.x - outsetPx();
+  const ringCx = () => props.origin.x + (originOnRight() ? -outsetPx() : outsetPx());
   const ringCy = () => props.origin.y;
 
   /** path-local 座標 (0,0)-(W,H) で CW 順に描く stadium path。length 0 = 左上 corner 角丸の終点
@@ -147,19 +155,24 @@ const LanguageRingMenu: Component<{ origin: LanguagePickerOrigin }> = (props) =>
     ? -1
     : orderedLocales.findIndex(l => l.code === locale().code);
 
-  /** 現在 locale を ring の「9 時方向」(= 左半円中点 = 視覚的に origin と対角の visible 弧中央)
-   *  に揃える length offset を setup phase で set する。stadium path は CW で 上辺 → 右半円 →
-   *  下辺 → 左半円 → 始点 と進むので、左半円中点 = 上辺長 (=short*0.5) + 右半円 (=π*short/2)
-   *  + 下辺 (=short*0.5) + 左半円の半分 (=π*short/4) = short*(1 + 3π/4)。総周長 L = short*(1+π)
-   *  なので length 比は (1 + 3π/4) / (1 + π) ≈ 0.811 (longRatio=1.5 固定での値)。
-   *  子 LocaleIcon の onMount より前に確定させないと、出現アニメの end keyframe が古い position
-   *  で固定されてしまう (Solid の onMount で rotate しても間に合わない)。 */
+  /** 現在 locale を可視キャップ中点に揃える length offset を setup phase で set する。stadium path は
+   *  CW で 上辺 → 右半円 → 下辺 → 左半円 → 始点 と進む (上辺=下辺=short*0.5、各半円=π*short/2、
+   *  総周長 L=short*(1+π))。
+   *  - 9 時 (左半円中点, 起点が右=LTR の可視キャップ): 上辺 + 右半円 + 下辺 + 左半円の半分
+   *    = short*(1 + 3π/4) → 比 (1 + 3π/4)/(1+π) ≈ 0.811。
+   *  - 3 時 (右半円中点, 起点が左=RTL の可視キャップ): 上辺 + 右半円の半分
+   *    = short*(0.5 + π/4) → 比 (0.5 + π/4)/(1+π) ≈ 0.310。
+   *  起点側に応じて anchor を選ぶことで、回転は CW 固定のまま現在 locale が常に画面内の弧中央に出る。
+   *  子 LocaleIcon の onMount より前に確定させないと、出現アニメの end keyframe が古い position で
+   *  固定されてしまう (Solid の onMount で rotate しても間に合わない)。 */
   const NINE_OCLOCK_RATIO = (1 + 3 * Math.PI / 4) / (1 + Math.PI);
+  const THREE_OCLOCK_RATIO = (0.5 + Math.PI / 4) / (1 + Math.PI);
+  const anchorRatio = originOnRight() ? NINE_OCLOCK_RATIO : THREE_OCLOCK_RATIO;
   if (currentLocaleIndex >= 0) {
     const L = totalLength();
     if (L > 0) {
       const stepLength = L / orderedLocales.length;
-      setLanguagePickerLengthOffset(L * NINE_OCLOCK_RATIO - currentLocaleIndex * stepLength);
+      setLanguagePickerLengthOffset(L * anchorRatio - currentLocaleIndex * stepLength);
     }
   }
 
@@ -231,7 +244,8 @@ const LanguageRingMenu: Component<{ origin: LanguagePickerOrigin }> = (props) =>
 
   /** pointer の displacement を、ring 中心から pointer へのベクトル v の CCW 接線方向
    *  (-vy, vx)/|v| に投影して length 増分に変換する。chain conveyor を「指を引いた方向に流す」
-   *  直感に揃えるため CCW 接線を選んでいる (CW にすると見た目逆に動く)。 */
+   *  直感に揃えるため CCW 接線を選んでいる (CW にすると見た目逆に動く)。ring はミラーしないので
+   *  RTL でも回転の利き手・指追従は LTR と共通 (ringCx は起点側に応じた実描画中心)。 */
   const pointerDeltaToLength = (px: number, py: number, dx: number, dy: number): number => {
     const vx = px - ringCx();
     const vy = py - ringCy();
