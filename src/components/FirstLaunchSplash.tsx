@@ -86,8 +86,11 @@ const FirstLaunchSplash: Component = () => {
         "will-change": "opacity",
       }}
     >
+      {/* splash の合体アニメも時計ジオメトリ。AM/PM の寄せは translateX (物理) なので、
+          flex-row が RTL で反転すると盤と寄せ方向が食い違う。dir=ltr で固定して LTR と同一挙動に。 */}
       <div
         ref={(el) => (centerRef = el)}
+        dir="ltr"
         class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}
         style={{ "transform-origin": "center", "will-change": "transform" }}
       >

@@ -677,7 +677,12 @@ export const ClockLayout: Component = () => {
             隠す (重い盤 SVG を毎サイクル作り直さず使い回す = 生成/破棄とラスタ再生成の churn を断つ)。遷移の
             boing フェーズ中は TimerLayout が L 盤を引き継ぐのでここも display:none。背景はこの外側。
             display:contents は wrapper 自身の box を消し、子の absolute 配置を root 基準のまま保つ。 */}
-        <div style={{ display: clockTreeShowsClocks() ? "contents" : "none" }}>
+        {/* 時計ジオメトリは dir 非依存 (=常に LTR) でピン留めする。時計は右回りという物理に
+            紐づくので、AM 盤は左 / PM 盤は右が朝→夜の clockwise 進行と一致する。RTL でも
+            盤面・数字をミラーしないのと同じ理由で、半盤の左右順 (flex-row の主軸) も読み方向で
+            入れ替えてはいけない。chrome (ModePicker/Settings/RotationActions 隅) は root 側で
+            dir=rtl を継承したままミラーさせる ので、ピンはこの clock subtree に閉じる。 */}
+        <div dir="ltr" style={{ display: clockTreeShowsClocks() ? "contents" : "none" }}>
         <div
           ref={containerRef}
           class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}

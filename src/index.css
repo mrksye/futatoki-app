@@ -110,6 +110,22 @@
   --safe-edge-right: max(0.5rem, env(safe-area-inset-right));
   --safe-edge-bottom: max(0.5rem, env(safe-area-inset-bottom));
   --safe-edge-left: max(0.5rem, env(safe-area-inset-left));
+  /* 読み方向に追従する chrome (ModePicker / Settings / 回転操作ボタン) は physical な
+     left/right ではなく inset-inline-start/end (Tailwind の start- / end- ユーティリティ) で
+     配置する。env(safe-area-inset-*) は方向に関係なく物理的な左右を指すので、論理側の inset と
+     ノッチの inset がずれないよう start/end を方向ごとにマップする。time/digit など時計
+     ジオメトリは方向非依存なので従来どおり physical な top/left/right を直接使う。 */
+  --safe-edge-start: var(--safe-edge-left);
+  --safe-edge-end: var(--safe-edge-right);
+  /* end 側に置く chrome (Settings popover) の scale 支点。trigger が居る側へ寄せるため
+     方向に追従させる。transform-origin に inline-end キーワードが無いので物理値を var で flip。 */
+  --chrome-end-origin-x: right;
+}
+
+[dir="rtl"] {
+  --safe-edge-start: var(--safe-edge-right);
+  --safe-edge-end: var(--safe-edge-left);
+  --chrome-end-origin-x: left;
 }
 
 /* position: fixed / inset: 0 / overflow: hidden / touch-action / overscroll-behavior の

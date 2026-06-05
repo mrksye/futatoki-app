@@ -85,7 +85,7 @@ const ModePicker: Component = () => {
           ので container 自身に onClick={close} を載せても発火するのは trigger 領域だけ。trigger
           ボタンと展開メニューの onClick は stopPropagation で各々の役割 (toggle / select) を保つ。 */}
       <div
-        class="fixed top-[var(--safe-edge-top)] left-[var(--safe-edge-left)] z-[60]"
+        class="fixed top-[var(--safe-edge-top)] start-[var(--safe-edge-start)] z-[60]"
         onClick={() => { if (expanded()) close(); }}
       >
         <button
@@ -103,7 +103,7 @@ const ModePicker: Component = () => {
             pointer-events 切替は staggered fade と同じく個別管理で残す (フェード途中で押せない/
             押せるの境界が visual と一致するように)。 */}
         <div
-          class="absolute top-full left-0 mt-2 flex flex-col gap-2 items-start"
+          class="absolute top-full start-0 mt-2 flex flex-col gap-2 items-start"
           style={{ "pointer-events": expanded() ? "auto" : "none" }}
           onClick={(e) => e.stopPropagation()}
         >

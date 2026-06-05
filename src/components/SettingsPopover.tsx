@@ -106,7 +106,7 @@ const SettingsPopover: Component = () => {
         役割 (toggle / 設定操作) を保つ。container 自身の onClick={close} は ModePicker と機構を
         揃える保険 (実際の外タップ close は overlay 経由で発火するので通常ここまで来ない)。 */}
     <div
-      class="fixed top-[var(--safe-edge-top)] right-[var(--safe-edge-right)] z-[60]"
+      class="fixed top-[var(--safe-edge-top)] end-[var(--safe-edge-end)] z-[60]"
       onClick={() => { if (open()) close(); }}
     >
       <button
@@ -122,7 +122,7 @@ const SettingsPopover: Component = () => {
           top right に置いて歯車から開いてくる感じを出す。closed 時は pointer-events: none で
           領域を実質的に消す (下層 overlay の close click が通るように)。 */}
         <div
-          class="absolute top-full right-0 mt-2 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-3 tablet:p-4 max-h-[80vh] overflow-y-auto min-w-[240px] max-w-[320px] tablet:min-w-[280px] tablet:max-w-[400px]"
+          class="absolute top-full end-0 mt-2 bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-3 tablet:p-4 max-h-[80vh] overflow-y-auto min-w-[240px] max-w-[320px] tablet:min-w-[280px] tablet:max-w-[400px]"
           style={{
             // absolute 配置だと width: auto = shrink-to-fit が containing block (= trigger サイズ
             // 数十 px) に引きずられて min-width 下限に張り付く。max-content にすると containing
@@ -137,7 +137,7 @@ const SettingsPopover: Component = () => {
             transition:
               "opacity 180ms ease-out, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1)",
             "pointer-events": open() ? "auto" : "none",
-            "transform-origin": "top right",
+            "transform-origin": "top var(--chrome-end-origin-x)",
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -287,9 +287,9 @@ const SettingsPopover: Component = () => {
               />
               {/* 言語選択 (🌏 のみ)。タップで言語ピッカー (リング) が開くが popover は閉じない:
                   ピッカーを閉じた直後に popover が消えてると「戻り先」が見えない違和感が出るため。
-                  ml-auto で行末右端に押し出し、じかんひょうきトグルと視覚的に分離する。 */}
+                  ms-auto で行末 (LTR は右端 / RTL は左端) に押し出し、じかんひょうきトグルと視覚的に分離する。 */}
               <button
-                class={`${pillBtn} ${pillInactive} ml-auto before:hidden`}
+                class={`${pillBtn} ${pillInactive} ms-auto before:hidden`}
                 aria-label={t("a11y.languagePicker")}
                 onClick={(e) => {
                   const btn = e.currentTarget as HTMLButtonElement;

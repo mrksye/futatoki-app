@@ -277,7 +277,9 @@ const TimerLayout: Component = () => {
     <>
       {/* 集中向けの静的背景 (中央に光だまり)。 */}
       <div class="timer-background absolute inset-0 pointer-events-none" />
-      <div class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}>
+      {/* clock subtree と同じく時計ジオメトリは dir=ltr に固定 (AM 盤=左 / PM 盤=右)。
+          たいむも時計の clockwise 物理に従う面なので読み方向で flex-row を反転させない。 */}
+      <div dir="ltr" class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}>
         {/* AM 位置: 現在時刻の合体時計 (通常の黒針)。z-10 は ClockLayout の split と揃える。
             たいむ遷移の収束/発散フェーズ中は ClockLayout の clock ツリーが同じ位置に同じ merged 盤を描く
             (継ぎ目を消す受け渡し) ので、ここでは隠す (timerShowsLeftFace)。 */}

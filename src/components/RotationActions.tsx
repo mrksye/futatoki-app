@@ -50,17 +50,17 @@ const RotationActions: Component = () => {
   return (
     <>
       <Show when={isRotating()}>
-        {/* 左下: かさねる/わける (表示は切替先、freeRotate 時のみ可視) */}
+        {/* 下手前 (start, LTR では左下 / RTL では右下): かさねる/わける (表示は切替先、freeRotate 時のみ可視) */}
         <Show when={clockMode() === "freeRotate"}>
           <button
-            class={`fixed bottom-[var(--safe-edge-bottom)] left-[var(--safe-edge-left)] z-50 ${btnClass}`}
+            class={`fixed bottom-[var(--safe-edge-bottom)] start-[var(--safe-edge-start)] z-50 ${btnClass}`}
             onPointerDown={toggleLayout}
             aria-label={mergedVisible() ? t("settings.splitToTwo") : t("settings.mergeToSingle")}
           />
 
-          {/* 右下: らんだむ (押すたびに 15 分刻みの別時刻へ) */}
+          {/* 下奥 (end, LTR では右下 / RTL では左下): らんだむ (押すたびに 15 分刻みの別時刻へ) */}
           <button
-            class={`fixed bottom-[var(--safe-edge-bottom)] right-[var(--safe-edge-right)] z-50 ${btnClass}`}
+            class={`fixed bottom-[var(--safe-edge-bottom)] end-[var(--safe-edge-end)] z-50 ${btnClass}`}
             onPointerDown={randomizeRotate}
             aria-label={t("settings.random")}
           />
