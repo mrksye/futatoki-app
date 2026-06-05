@@ -156,7 +156,12 @@ const SettingsPopover: Component = () => {
                     aria-label={t(`palette.${p.id}` as never)}
                     onClick={() => { selectPalette(p.id); knockingOnPilotModesDoor(p.id); }}
                   >
-                    <span class="flex">
+                    {/* 三色 (wheel のみ四色) のミニ色見本。dot は負の margin-left で重ねており、これは
+                        物理プロパティなので RTL の flex 主軸 (右→左) では重なりが逆辺に効いて間隔が
+                        広がってしまう。色見本は方向非依存のサンプルなので dir=ltr に固定し、LTR と同一の
+                        重なりで描画する。ボタン内での左右配置 (label との並び) は外側の flex が読み方向に
+                        従うのでこの span 単位の固定で十分。 */}
+                    <span dir="ltr" class="flex">
                       <For each={indices}>
                         {(i, idx) => (
                           <span
