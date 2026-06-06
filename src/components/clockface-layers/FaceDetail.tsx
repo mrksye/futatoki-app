@@ -228,6 +228,16 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
             />
           )}
         </For>
+        {/* ものとーんは扇 path の stroke が内周の円弧も同じグレーで描くので、内周だけさらに薄いグレーで
+            1 枚上描きして放射の区切り線と差をつける (annular path は 1 stroke 色なので内周を別色にできない)。 */}
+        <Show when={paletteId() === "monotone"}>
+          <circle
+            cx={CENTER} cy={CENTER} r={bandInner()}
+            fill="none"
+            stroke="#eeeeee"
+            stroke-width="2"
+          />
+        </Show>
         {/* 12, 3, 6, 9 の境界線を太く (ものとーんは太線を出さず細い境界線だけで他の区切りと揃える) */}
         <Show when={paletteId() !== "monotone"}>
           <For each={[0, 3, 6, 9]}>
