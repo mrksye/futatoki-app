@@ -208,9 +208,10 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
 
   return (
     <>
-      {/* 色扇 + 区切り線。ものとーんは白盤面に白の扇/線で「境目が消える」設計＝完全に不可視なので
-          描かない (軽量化 + 下層に敷かれた層を白で覆い隠さずに済む)。 */}
-      <Show when={colorMode() === "sector" && paletteId() !== "monotone"}>
+      {/* 色扇 + 区切り線。ものとーんは白盤に色扇を描かず (扇 fill は白＝盤と同化)、グレーの区切り線だけで
+          時間帯を仕切る。他パレットは白線＋12/3/6/9 を太線で強調するが、ものとーんは太線を出さず全ての
+          区切り線を同じ細さに揃える。 */}
+      <Show when={colorMode() === "sector"}>
         <For each={colors()}>
           {(color, i) => (
             <path
@@ -221,37 +222,37 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                 hourToAngle(i() + 1),
               )}
               fill={color.bg}
-              opacity={0.8}
-              stroke="#ffffff"
+              opacity={paletteId() === "monotone" ? 1 : 0.8}
+              stroke={paletteId() === "monotone" ? "#999999" : "#ffffff"}
               stroke-width="2"
             />
           )}
         </For>
-        {/* 12, 3, 6, 9 の境界線を太く */}
-        <For each={[0, 3, 6, 9]}>
-          {(h) => {
-            const angle = () => (h * 30 * Math.PI) / 180 - Math.PI / 2;
-            return (
-              <line
-                x1={CENTER + bandInner() * Math.cos(angle())}
-                y1={CENTER + bandInner() * Math.sin(angle())}
-                x2={CENTER + (bandOuter() - 1.1) * Math.cos(angle())}
-                y2={CENTER + (bandOuter() - 1.1) * Math.sin(angle())}
-                stroke="#ffffff"
-                stroke-width="4"
-              />
-            );
-          }}
-        </For>
+        {/* 12, 3, 6, 9 の境界線を太く (ものとーんは太線を出さず細い境界線だけで他の区切りと揃える) */}
+        <Show when={paletteId() !== "monotone"}>
+          <For each={[0, 3, 6, 9]}>
+            {(h) => {
+              const angle = () => (h * 30 * Math.PI) / 180 - Math.PI / 2;
+              return (
+                <line
+                  x1={CENTER + bandInner() * Math.cos(angle())}
+                  y1={CENTER + bandInner() * Math.sin(angle())}
+                  x2={CENTER + (bandOuter() - 1.1) * Math.cos(angle())}
+                  y2={CENTER + (bandOuter() - 1.1) * Math.sin(angle())}
+                  stroke="#ffffff"
+                  stroke-width="4"
+                />
+              );
+            }}
+          </For>
+        </Show>
       </Show>
 
       {/* くぎりモードの分メモリ。monotone-badge では円盤縁の専用メモリを別途描くので抑止。
        *  クォーター (12/3/6/9 = i%15===0) は sector モードの境界線と同じ太さ 4 で他の時メモリより
        *  さらに強調する (区切り/くわしく どちらでもクォーターが視覚的に同じ重みになる)。
-       *  ものとーんは線が白で盤面 (白) では内側部分が不可視、ベゼル (R〜R+3) でだけ見える。内側 R-8/R-3
-       *  まで引くと、下に敷かれるタイマー扇の上で白い内側が浮いて汚いので、内端を盤面縁 R に留めて
-       *  ベゼルの目盛りだけ残す。先端も round → butt (スクエア) にする (非ものとーんは色扇の上に乗せる
-       *  従来どおりの内側食い込み + round)。 */}
+       *  ものとーんは区切り線と同じくグレーで描く。白盤の上で内側まで見えるので、内端の食い込みも
+       *  先端 round も非ものとーんと同じにし、色だけ白→グレーに置き換える。 */}
       <Show when={isKuwashiku() && !isMonotoneBadge()}>
         <For each={Array.from({ length: 60 })}>
           {(_, i) => {
@@ -260,17 +261,20 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
             const isQuarter = () => i() % 15 === 0;
             const isMonotone = () => paletteId() === "monotone";
             const outer = () => outerRing();
-            const inner = () =>
-              isMonotone() ? clockRadius() : isHour() ? clockRadius() - 8 : clockRadius() - 3;
+            const inner = () => isHour() ? clockRadius() - 8 : clockRadius() - 3;
             return (
               <line
                 x1={CENTER + inner() * Math.cos(angle())}
                 y1={CENTER + inner() * Math.sin(angle())}
                 x2={CENTER + outer() * Math.cos(angle())}
                 y2={CENTER + outer() * Math.sin(angle())}
-                stroke={isHour() ? "#ffffff" : "#ffffff90"}
+                stroke={
+                  isMonotone()
+                    ? (isHour() ? "#999999" : "#99999990")
+                    : (isHour() ? "#ffffff" : "#ffffff90")
+                }
                 stroke-width={isQuarter() ? 4 : isHour() ? 2.5 : 1}
-                stroke-linecap={isMonotone() ? "butt" : "round"}
+                stroke-linecap="round"
               />
             );
           }}
