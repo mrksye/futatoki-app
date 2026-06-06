@@ -252,7 +252,8 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
        *  クォーター (12/3/6/9 = i%15===0) は sector モードの境界線と同じ太さ 4 で他の時メモリより
        *  さらに強調する (区切り/くわしく どちらでもクォーターが視覚的に同じ重みになる)。
        *  ものとーんは区切り線と同じくグレーで描く。白盤の上で内側まで見えるので、内端の食い込みも
-       *  先端 round も非ものとーんと同じにし、色だけ白→グレーに置き換える。 */}
+       *  先端 round も非ものとーんと同じにし、色だけ白→グレーに置き換える。クォーターの太線強調も
+       *  ものとーんでは出さず、全ての時メモリを同じ太さ (2.5) に揃える。 */}
       <Show when={isKuwashiku() && !isMonotoneBadge()}>
         <For each={Array.from({ length: 60 })}>
           {(_, i) => {
@@ -273,7 +274,11 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                     ? (isHour() ? "#999999" : "#99999990")
                     : (isHour() ? "#ffffff" : "#ffffff90")
                 }
-                stroke-width={isQuarter() ? 4 : isHour() ? 2.5 : 1}
+                stroke-width={
+                  isMonotone()
+                    ? (isHour() ? 2.5 : 1)
+                    : (isQuarter() ? 4 : isHour() ? 2.5 : 1)
+                }
                 stroke-linecap="round"
               />
             );
