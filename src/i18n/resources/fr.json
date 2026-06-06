@@ -66,13 +66,13 @@
     "pm": "🌙 PM"
   },
   "palette": {
-    "distinct12": "couleurs vives",
+    "distinct12": "vives",
     "vivid": "ciel du jour",
-    "ygb": "ciel soleil herbe",
+    "ygb": "plein air",
     "primary3": "3 primaires",
-    "wheel": "roue des couleurs",
+    "wheel": "arc-en-ciel",
     "cud12": "universel",
-    "monotone": "monochrome"
+    "monotone": "une couleur"
   },
   "a11y": {
     "clockFaceAm": "Horloge analogique du matin",
