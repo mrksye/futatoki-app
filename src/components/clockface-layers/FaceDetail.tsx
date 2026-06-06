@@ -223,7 +223,7 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
               )}
               fill={color.bg}
               opacity={paletteId() === "monotone" ? 1 : 0.8}
-              stroke={paletteId() === "monotone" ? "#999999" : "#ffffff"}
+              stroke={paletteId() === "monotone" ? "#bbbbbb" : "#ffffff"}
               stroke-width="2"
             />
           )}
@@ -271,7 +271,7 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                 y2={CENTER + outer() * Math.sin(angle())}
                 stroke={
                   isMonotone()
-                    ? (isHour() ? "#999999" : "#99999990")
+                    ? (isHour() ? "#bbbbbb" : "#bbbbbb90")
                     : (isHour() ? "#ffffff" : "#ffffff90")
                 }
                 stroke-width={
