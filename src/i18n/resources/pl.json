@@ -68,11 +68,11 @@
   "palette": {
     "distinct12": "wyraziste",
     "vivid": "barwy nieba",
-    "ygb": "niebo słońce łąka",
-    "primary3": "trzy podstawowe",
+    "ygb": "na dworze",
+    "primary3": "podstawowe",
     "wheel": "koło barw",
     "cud12": "uniwersalny",
-    "monotone": "monochromia"
+    "monotone": "jeden kolor"
   },
   "a11y": {
     "clockFaceAm": "Zegar analogowy rano",
