@@ -52,7 +52,7 @@ import {
   playMergedSlideToCenter,
   playMergedSlideFromCenter,
 } from "../features/timer/timer-transition";
-import { useAmPmPreviewHold } from "../features/debug/am-pm-preview-lock";
+import { useAmPmFlip } from "../features/am-pm-flip";
 import { computeVisibleMinutes, useReleaseSnap } from "../features/free-rotation/release-snap";
 import { useI18n } from "../i18n";
 import { dragStart, dragAdvance, type DragDragState } from "../features/free-rotation/drag";
@@ -250,10 +250,10 @@ export const ClockLayout: Component = () => {
   });
 
   const actualIsAm = createMemo(() => displayed().hours < 12);
-  const { isAm, startHold, clearHold } = useAmPmPreviewHold(actualIsAm);
-  /** AM/PM プレビュー長押しで反対側を表示している間 true。.selection-dim-instant 経由で
-   *  押下=即時切替, 離す=380ms フェード (詳細は index.css)。 */
-  const previewFlipped = createMemo(() => isAm() !== actualIsAm());
+  const { isAm, startPress, cancelPress } = useAmPmFlip(actualIsAm);
+  /** AM/PM を長押しトグルで実時刻と逆側に flip している間 true。.selection-dim-instant 経由で
+   *  flip 成立=即時切替, 解除=380ms フェード (詳細は index.css)。 */
+  const amPmFlipped = createMemo(() => isAm() !== actualIsAm());
 
   const amTime = createMemo(() => ({
     hours: displayed().hours % 12,
@@ -585,12 +585,12 @@ export const ClockLayout: Component = () => {
   const pmSelectionOpacity = createMemo(() => isAm() ? 0.3 : 1);
 
   /** wrapper への .selection-dim-instant 付与条件 (= 子の .fade-on-dim を 0ms 即時切替に上書き):
-   *    1. AM/PM プレビュー長押し中 (押下=即時, 離す=380ms フェード)
+   *    1. AM/PM 長押しトグルで flip 中 (flip 成立=即時, 解除=380ms フェード)
    *    2. 自由回転 split 中で merge transition 外 → 自動回転 / drag / wheel で 12:00 を跨ぐ瞬間の
    *       selection 切替がパッと
    *  merge transition 中 (transitioning) は smooth fade を維持。 */
   const selectionDimInstant = createMemo(
-    () => previewFlipped() || (isRotating() && !transitioning()),
+    () => amPmFlipped() || (isRotating() && !transitioning()),
   );
 
   /** AM/PM 各 wrapper の表示条件: merged 中 (transitioning 以外) は隠す。実ドラッグ進行中 (pointer 押下中
@@ -872,10 +872,10 @@ export const ClockLayout: Component = () => {
             opacity: amPmBadgeVisible() ? 1 : 0,
             "pointer-events": amPmBadgeVisible() ? "auto" : "none",
           }}
-          onPointerDown={startHold}
-          onPointerUp={clearHold}
-          onPointerLeave={clearHold}
-          onPointerCancel={clearHold}
+          onPointerDown={startPress}
+          onPointerUp={cancelPress}
+          onPointerLeave={cancelPress}
+          onPointerCancel={cancelPress}
         >
           {isAm() ? t("badge.am") : t("badge.pm")}
         </div>
