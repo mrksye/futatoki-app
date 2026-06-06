@@ -194,9 +194,14 @@ html, body, #root {
    するリスク。lang ごとに優先 font を指定して解消する。並び順は --font-sans と同じ
    「Noto → Apple → Microsoft」ルール。
    <html lang="..." dir="..."> は i18n/index.tsx が locale 検出時に設定する。
-   Web font 化していないので bundle 増加なし。 */
+   Web font 化していないので bundle 増加なし。
+
+   font-family を直接当てるのではなく --font-sans (theme 変数) を上書きする。body と #root は
+   font-family: var(--font-sans) を自前で宣言しているので、html に font-family を当てても body の
+   宣言に負けて可視テキストに届かない (html だけ変わって body 以下は JP stack のまま)。変数を
+   上書きすれば body 以下が継承して解決し直す。 */
 [lang="zh-TW"] {
-  font-family:
+  --font-sans:
     'Noto Sans TC', 'Noto Sans CJK TC', 'Noto Sans',
     'PingFang TC', 'Heiti TC',
     'Microsoft JhengHei',
@@ -204,7 +209,7 @@ html, body, #root {
 }
 
 [lang="zh-CN"] {
-  font-family:
+  --font-sans:
     'Noto Sans SC', 'Noto Sans CJK SC', 'Noto Sans',
     'PingFang SC', 'Heiti SC',
     'Microsoft YaHei',
@@ -212,7 +217,7 @@ html, body, #root {
 }
 
 [lang="ko"] {
-  font-family:
+  --font-sans:
     'Noto Sans KR', 'Noto Sans CJK KR', 'Noto Sans',
     'Apple SD Gothic Neo',
     'Malgun Gothic',
@@ -220,7 +225,7 @@ html, body, #root {
 }
 
 [dir="rtl"] {
-  font-family:
+  --font-sans:
     'Noto Sans Arabic', 'Noto Sans',
     'SF Arabic', 'Geeza Pro',
     'Segoe UI', 'Tahoma',
@@ -228,7 +233,7 @@ html, body, #root {
 }
 
 [lang="th"] {
-  font-family:
+  --font-sans:
     'Noto Sans Thai', 'Noto Sans',
     'Thonburi', 'Sukhumvit Set',
     'Leelawadee UI',
@@ -236,7 +241,7 @@ html, body, #root {
 }
 
 [lang="hi"] {
-  font-family:
+  --font-sans:
     'Noto Sans Devanagari', 'Noto Sans',
     'Kohinoor Devanagari', 'Devanagari Sangam MN',
     'Nirmala UI', 'Mangal',
@@ -244,7 +249,7 @@ html, body, #root {
 }
 
 [lang="bn"] {
-  font-family:
+  --font-sans:
     'Noto Sans Bengali', 'Noto Sans',
     'Kohinoor Bangla', 'Bangla Sangam MN',
     'Nirmala UI', 'Vrinda',
