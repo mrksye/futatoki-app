@@ -250,9 +250,9 @@ export const ClockLayout: Component = () => {
   });
 
   const actualIsAm = createMemo(() => displayed().hours < 12);
-  const { isAm, startPress, cancelPress } = useAmPmFlip(actualIsAm);
-  /** AM/PM を長押しトグルで実時刻と逆側に flip している間 true。.selection-dim-instant 経由で
-   *  flip 成立=即時切替, 解除=380ms フェード (詳細は index.css)。 */
+  const { isAm, showBoth, flipLocked, startPress, endPress } = useAmPmFlip(actualIsAm);
+  /** AM/PM が実時刻と逆側に flip 表示されている間 true (短押しプレビュー / 長押し固定の両方)。
+   *  .selection-dim-instant 経由で 押下=即時切替, 離す=380ms フェード (詳細は index.css)。 */
   const amPmFlipped = createMemo(() => isAm() !== actualIsAm());
 
   const amTime = createMemo(() => ({
@@ -580,9 +580,9 @@ export const ClockLayout: Component = () => {
    *    - merge dim (mergedVisible? 0 : 1): wrapper inline opacity で 380ms smooth fade
    *    - selection dim (これ): 内側 DimOverlay の .fade-on-dim、.selection-dim-instant 中だけ 0ms
    *  この分離で merge 切替時の transitioning timing race を構造的に防ぐ。 */
-  const amSelectionOpacity = createMemo(() => isAm() ? 1 : 0.3);
+  const amSelectionOpacity = createMemo(() => (showBoth() || isAm()) ? 1 : 0.3);
   /** PM 側 selection dim opacity (詳細は amSelectionOpacity の JSDoc 参照)。 */
-  const pmSelectionOpacity = createMemo(() => isAm() ? 0.3 : 1);
+  const pmSelectionOpacity = createMemo(() => (showBoth() || !isAm()) ? 1 : 0.3);
 
   /** wrapper への .selection-dim-instant 付与条件 (= 子の .fade-on-dim を 0ms 即時切替に上書き):
    *    1. AM/PM 長押しトグルで flip 中 (flip 成立=即時, 解除=380ms フェード)
@@ -673,6 +673,18 @@ export const ClockLayout: Component = () => {
           <SkyBackground totalMinutes={rotateMinutes()} />
         </Show>
 
+        {/* AM/PM の flip が長押しで固定されている間だけ盤の背後に出す「タイムマシン」背景。実時刻と逆の
+            半日へ時間移動している演出。固定 (= 長押し判定成立) のときだけ出すことで、背景の出現が長押し成立の
+            合図になり、短押しプレビューやダブルクリック時の一瞬の flip では出ない。z 指定なしで clock wrapper
+            (z-10/20) より背面に敷き、is-active の opacity フェードで出入りする。色・モーション・軽量化方針は
+            index.css の .timemachine-background 参照。 */}
+        <div
+          class="timemachine-background absolute inset-0 overflow-hidden pointer-events-none print:hidden"
+          classList={{ "is-active": flipLocked() }}
+        >
+          <div class="timemachine-aurora" />
+        </div>
+
         {/* 時計そのもの (split wrapper / merged 盤 / 秒バー / バッジ)。たいむ中は unmount せず display:none で
             隠す (重い盤 SVG を毎サイクル作り直さず使い回す = 生成/破棄とラスタ再生成の churn を断つ)。遷移の
             boing フェーズ中は TimerLayout が L 盤を引き継ぐのでここも display:none。背景はこの外側。
@@ -725,7 +737,7 @@ export const ClockLayout: Component = () => {
                 <Show when={!transitioning() && !timerTransitioning() && clockMode() !== "autoRotate"}>
                   <ActivityLayer
                     period="am"
-                    dimmed={!isAm()}
+                    dimmed={!isAm() && !showBoth()}
                     displayedMinutes={displayedMinutesTotal()}
                   />
                 </Show>
@@ -763,7 +775,7 @@ export const ClockLayout: Component = () => {
                 <Show when={!transitioning() && !timerTransitioning() && clockMode() !== "autoRotate"}>
                   <ActivityLayer
                     period="pm"
-                    dimmed={isAm()}
+                    dimmed={isAm() && !showBoth()}
                     displayedMinutes={displayedMinutesTotal()}
                   />
                 </Show>
@@ -873,9 +885,9 @@ export const ClockLayout: Component = () => {
             "pointer-events": amPmBadgeVisible() ? "auto" : "none",
           }}
           onPointerDown={startPress}
-          onPointerUp={cancelPress}
-          onPointerLeave={cancelPress}
-          onPointerCancel={cancelPress}
+          onPointerUp={endPress}
+          onPointerLeave={endPress}
+          onPointerCancel={endPress}
         >
           {isAm() ? t("badge.am") : t("badge.pm")}
         </div>

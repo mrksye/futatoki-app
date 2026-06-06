@@ -186,6 +186,48 @@ html, body, #root {
     linear-gradient(160deg, #e8e6f1 0%, #dfe1ee 40%, #d9e4ec 72%, #e0ebee 100%);
 }
 
+/* AM/PM バッジを長押しして実時刻と逆の半日へ flip している間だけ盤の背後に出す「タイムマシン」背景。
+   時空トンネル風のオーロラグラデで「時間移動している」感を出す。
+
+   軽量化方針 (画像アセットは使わず CSS グラデのみ):
+   - 不透明ベース 1 枚 (静的 paint) ＋ 半透明オーロラ 1 枚の計 2 層に固定。重ねる半透明 layer を 1 枚に
+     絞ることで弱 GPU の fillrate を抑える。
+   - オーロラの動きは transform: rotate のみ (composite only / repaint なし)。background-position 等の
+     毎フレーム repaint は使わない。
+   - 出入りは opacity フェード = 遷移中だけ 1 層がベースとクロスフェードする transient なもので、定常状態は
+     不透明ベースが覆う 1 枚 paint。常時クロスフェードは持たせない。
+   - 非アクティブ時 (.is-active なし) は animation を一切付けないのでアイドルコストはゼロ。 */
+.timemachine-background {
+  background: linear-gradient(145deg,
+    #1736c8 0%, #1f7fe6 20%, #1ec9d6 42%, #36d2a6 56%, #7c84e6 78%, #c27ad6 100%);
+  opacity: 0;
+  transition: opacity 0.42s ease;
+}
+.timemachine-background.is-active {
+  opacity: 1;
+}
+/* rotate で四隅が抜けないよう viewport より大きく取る (180% = 対角線が回転しても画面を覆う)。 */
+.timemachine-aurora {
+  position: absolute;
+  inset: -40%;
+  background:
+    radial-gradient(38% 30% at 32% 38%, rgba(140, 255, 238, 0.55) 0%, rgba(140, 255, 238, 0) 60%),
+    radial-gradient(40% 34% at 78% 32%, rgba(120, 230, 255, 0.40) 0%, rgba(120, 230, 255, 0) 60%),
+    radial-gradient(34% 30% at 70% 70%, rgba(180, 150, 255, 0.50) 0%, rgba(180, 150, 255, 0) 62%),
+    radial-gradient(30% 26% at 55% 22%, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 58%);
+}
+.timemachine-background.is-active .timemachine-aurora {
+  will-change: transform;
+  animation: timemachine-drift 26s linear infinite;
+}
+@keyframes timemachine-drift {
+  from { transform: rotate(0deg) scale(1.05); }
+  to   { transform: rotate(360deg) scale(1.05); }
+}
+body.motion-reduce .timemachine-background.is-active .timemachine-aurora {
+  animation: none;
+}
+
 /* per-lang font stack。lang 別に「Noto → Apple → Microsoft」の地域 OS ネイティブを優先指定する。
    既存の --font-sans は JP 系 (Hiragino Maru Gothic 等) 主体で、zh-TW / zh-CN / ko でも JP
    フォントが Han 字に当たってしまう。その結果「。」等の punctuation 位置が JP 流 (左下) で
