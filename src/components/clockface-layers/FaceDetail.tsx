@@ -249,6 +249,13 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
         {/* ものとーん: 色扇も放射の区切り線も描かず、ふつうの時計のような外周の目盛りで時間を示す。
             5 分ごと (時の位置) は長め・太め、その間の分は短め・細め。すっきり・くわしく共通。 */}
         <Show when={paletteId() === "monotone"}>
+          {/* 外周円 (他パレットの扇の外周円弧に相当)。盤縁にぐるっと 1 本グレーで引く。 */}
+          <circle
+            cx={CENTER} cy={CENTER} r={clockRadius()}
+            fill="none"
+            stroke="#bbbbbb"
+            stroke-width="2"
+          />
           <For each={Array.from({ length: 60 })}>
             {(_, i) => {
               const angle = () => (i() * 6 * Math.PI) / 180 - Math.PI / 2;
