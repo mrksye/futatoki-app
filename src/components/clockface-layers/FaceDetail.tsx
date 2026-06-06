@@ -208,8 +208,8 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
 
   return (
     <>
-      {/* 色扇 + 区切り線。ものとーんは色扇 (円弧) を描かず、放射の区切り線だけグレーで時間帯を仕切る。
-          他パレットは色扇＋白線＋12/3/6/9 太線。 */}
+      {/* 色扇 + 区切り線。ものとーんは色扇も放射の区切り線も描かず、外周の目盛り (下の monotone Show) で
+          ふつうの時計のように時間を示す。他パレットは色扇＋白線＋12/3/6/9 太線。 */}
       <Show when={colorMode() === "sector"}>
         {/* 他パレット: 色扇 (白の円弧 stroke) + 12/3/6/9 の太線 */}
         <Show when={paletteId() !== "monotone"}>
@@ -246,19 +246,24 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
             }}
           </For>
         </Show>
-        {/* ものとーん: 内外の円弧は描かず、各時間の境界の放射線だけグレーで 12 本引く。 */}
+        {/* ものとーん: 色扇も放射の区切り線も描かず、ふつうの時計のような外周の目盛りで時間を示す。
+            5 分ごと (時の位置) は長め・太め、その間の分は短め・細め。すっきり・くわしく共通。 */}
         <Show when={paletteId() === "monotone"}>
-          <For each={Array.from({ length: 12 })}>
+          <For each={Array.from({ length: 60 })}>
             {(_, i) => {
-              const angle = () => (hourToAngle(i()) * Math.PI) / 180;
+              const angle = () => (i() * 6 * Math.PI) / 180 - Math.PI / 2;
+              const isHour = () => i() % 5 === 0;
+              const outer = () => clockRadius();
+              const inner = () => isHour() ? clockRadius() - 12 : clockRadius() - 6;
               return (
                 <line
-                  x1={CENTER + bandInner() * Math.cos(angle())}
-                  y1={CENTER + bandInner() * Math.sin(angle())}
-                  x2={CENTER + bandOuter() * Math.cos(angle())}
-                  y2={CENTER + bandOuter() * Math.sin(angle())}
-                  stroke="#bbbbbb"
-                  stroke-width="2"
+                  x1={CENTER + inner() * Math.cos(angle())}
+                  y1={CENTER + inner() * Math.sin(angle())}
+                  x2={CENTER + outer() * Math.cos(angle())}
+                  y2={CENTER + outer() * Math.sin(angle())}
+                  stroke={isHour() ? "#bbbbbb" : "#bbbbbb90"}
+                  stroke-width={isHour() ? 2.5 : 1}
+                  stroke-linecap="round"
                 />
               );
             }}
@@ -266,19 +271,15 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
         </Show>
       </Show>
 
-      {/* くぎりモードの分メモリ。monotone-badge では円盤縁の専用メモリを別途描くので抑止。
-       *  クォーター (12/3/6/9 = i%15===0) は sector モードの境界線と同じ太さ 4 で他の時メモリより
-       *  さらに強調する (区切り/くわしく どちらでもクォーターが視覚的に同じ重みになる)。
-       *  ものとーんは区切り線と同じくグレーで描く。白盤の上で内側まで見えるので、内端の食い込みも
-       *  先端 round も非ものとーんと同じにし、色だけ白→グレーに置き換える。クォーターの太線強調も
-       *  ものとーんでは出さず、全ての時メモリを同じ太さ (2.5) に揃える。 */}
-      <Show when={isKuwashiku() && !isMonotoneBadge()}>
+      {/* くぎりモードの分メモリ (色付きパレット専用)。monotone-badge は円盤縁の専用メモリ、ものとーん×
+       *  くぎりは外周の目盛りをそれぞれ別途描くのでどちらもここでは抑止する。クォーター (12/3/6/9 =
+       *  i%15===0) は sector モードの境界線と同じ太さ 4 で他の時メモリよりさらに強調する。 */}
+      <Show when={isKuwashiku() && !isMonotoneBadge() && paletteId() !== "monotone"}>
         <For each={Array.from({ length: 60 })}>
           {(_, i) => {
             const angle = () => (i() * 6 * Math.PI) / 180 - Math.PI / 2;
             const isHour = () => i() % 5 === 0;
             const isQuarter = () => i() % 15 === 0;
-            const isMonotone = () => paletteId() === "monotone";
             const outer = () => outerRing();
             const inner = () => isHour() ? clockRadius() - 8 : clockRadius() - 3;
             return (
@@ -287,16 +288,8 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                 y1={CENTER + inner() * Math.sin(angle())}
                 x2={CENTER + outer() * Math.cos(angle())}
                 y2={CENTER + outer() * Math.sin(angle())}
-                stroke={
-                  isMonotone()
-                    ? (isHour() ? "#bbbbbb" : "#bbbbbb90")
-                    : (isHour() ? "#ffffff" : "#ffffff90")
-                }
-                stroke-width={
-                  isMonotone()
-                    ? (isHour() ? 2.5 : 1)
-                    : (isQuarter() ? 4 : isHour() ? 2.5 : 1)
-                }
+                stroke={isHour() ? "#ffffff" : "#ffffff90"}
+                stroke-width={isQuarter() ? 4 : isHour() ? 2.5 : 1}
                 stroke-linecap="round"
               />
             );
