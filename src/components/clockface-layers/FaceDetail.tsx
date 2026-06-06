@@ -208,38 +208,28 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
 
   return (
     <>
-      {/* 色扇 + 区切り線。ものとーんは白盤に色扇を描かず (扇 fill は白＝盤と同化)、グレーの区切り線だけで
-          時間帯を仕切る。他パレットは白線＋12/3/6/9 を太線で強調するが、ものとーんは太線を出さず全ての
-          区切り線を同じ細さに揃える。 */}
+      {/* 色扇 + 区切り線。ものとーんは色扇 (円弧) を描かず、放射の区切り線だけグレーで時間帯を仕切る。
+          他パレットは色扇＋白線＋12/3/6/9 太線。 */}
       <Show when={colorMode() === "sector"}>
-        <For each={colors()}>
-          {(color, i) => (
-            <path
-              d={annularSectorPath(
-                CENTER, CENTER,
-                bandInner(), bandOuter(),
-                hourToAngle(i()),
-                hourToAngle(i() + 1),
-              )}
-              fill={color.bg}
-              opacity={paletteId() === "monotone" ? 1 : 0.8}
-              stroke={paletteId() === "monotone" ? "#bbbbbb" : "#ffffff"}
-              stroke-width="2"
-            />
-          )}
-        </For>
-        {/* ものとーんは扇 path の stroke が内周の円弧も同じグレーで描くので、内周だけさらに薄いグレーで
-            1 枚上描きして放射の区切り線と差をつける (annular path は 1 stroke 色なので内周を別色にできない)。 */}
-        <Show when={paletteId() === "monotone"}>
-          <circle
-            cx={CENTER} cy={CENTER} r={bandInner()}
-            fill="none"
-            stroke="#eeeeee"
-            stroke-width="2"
-          />
-        </Show>
-        {/* 12, 3, 6, 9 の境界線を太く (ものとーんは太線を出さず細い境界線だけで他の区切りと揃える) */}
+        {/* 他パレット: 色扇 (白の円弧 stroke) + 12/3/6/9 の太線 */}
         <Show when={paletteId() !== "monotone"}>
+          <For each={colors()}>
+            {(color, i) => (
+              <path
+                d={annularSectorPath(
+                  CENTER, CENTER,
+                  bandInner(), bandOuter(),
+                  hourToAngle(i()),
+                  hourToAngle(i() + 1),
+                )}
+                fill={color.bg}
+                opacity={0.8}
+                stroke="#ffffff"
+                stroke-width="2"
+              />
+            )}
+          </For>
+          {/* 12, 3, 6, 9 の境界線を太く */}
           <For each={[0, 3, 6, 9]}>
             {(h) => {
               const angle = () => (h * 30 * Math.PI) / 180 - Math.PI / 2;
@@ -251,6 +241,24 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                   y2={CENTER + (bandOuter() - 1.1) * Math.sin(angle())}
                   stroke="#ffffff"
                   stroke-width="4"
+                />
+              );
+            }}
+          </For>
+        </Show>
+        {/* ものとーん: 内外の円弧は描かず、各時間の境界の放射線だけグレーで 12 本引く。 */}
+        <Show when={paletteId() === "monotone"}>
+          <For each={Array.from({ length: 12 })}>
+            {(_, i) => {
+              const angle = () => (hourToAngle(i()) * Math.PI) / 180;
+              return (
+                <line
+                  x1={CENTER + bandInner() * Math.cos(angle())}
+                  y1={CENTER + bandInner() * Math.sin(angle())}
+                  x2={CENTER + bandOuter() * Math.cos(angle())}
+                  y2={CENTER + bandOuter() * Math.sin(angle())}
+                  stroke="#bbbbbb"
+                  stroke-width="2"
                 />
               );
             }}
