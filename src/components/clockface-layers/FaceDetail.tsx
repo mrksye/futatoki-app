@@ -208,60 +208,89 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
 
   return (
     <>
-      {/* 色扇 + 区切り線。ものとーんは白盤面に白の扇/線で「境目が消える」設計＝完全に不可視なので
-          描かない (軽量化 + 下層に敷かれた層を白で覆い隠さずに済む)。 */}
-      <Show when={colorMode() === "sector" && paletteId() !== "monotone"}>
-        <For each={colors()}>
-          {(color, i) => (
-            <path
-              d={annularSectorPath(
-                CENTER, CENTER,
-                bandInner(), bandOuter(),
-                hourToAngle(i()),
-                hourToAngle(i() + 1),
-              )}
-              fill={color.bg}
-              opacity={0.8}
-              stroke="#ffffff"
-              stroke-width="2"
-            />
-          )}
-        </For>
-        {/* 12, 3, 6, 9 の境界線を太く */}
-        <For each={[0, 3, 6, 9]}>
-          {(h) => {
-            const angle = () => (h * 30 * Math.PI) / 180 - Math.PI / 2;
-            return (
-              <line
-                x1={CENTER + bandInner() * Math.cos(angle())}
-                y1={CENTER + bandInner() * Math.sin(angle())}
-                x2={CENTER + (bandOuter() - 1.1) * Math.cos(angle())}
-                y2={CENTER + (bandOuter() - 1.1) * Math.sin(angle())}
+      {/* 色扇 + 区切り線。ものとーんは色扇も放射の区切り線も描かず、外周の目盛り (下の monotone Show) で
+          ふつうの時計のように時間を示す。他パレットは色扇＋白線＋12/3/6/9 太線。 */}
+      <Show when={colorMode() === "sector"}>
+        {/* 他パレット: 色扇 (白の円弧 stroke) + 12/3/6/9 の太線 */}
+        <Show when={paletteId() !== "monotone"}>
+          <For each={colors()}>
+            {(color, i) => (
+              <path
+                d={annularSectorPath(
+                  CENTER, CENTER,
+                  bandInner(), bandOuter(),
+                  hourToAngle(i()),
+                  hourToAngle(i() + 1),
+                )}
+                fill={color.bg}
+                opacity={0.8}
                 stroke="#ffffff"
-                stroke-width="4"
+                stroke-width="2"
               />
-            );
-          }}
-        </For>
+            )}
+          </For>
+          {/* 12, 3, 6, 9 の境界線を太く */}
+          <For each={[0, 3, 6, 9]}>
+            {(h) => {
+              const angle = () => (h * 30 * Math.PI) / 180 - Math.PI / 2;
+              return (
+                <line
+                  x1={CENTER + bandInner() * Math.cos(angle())}
+                  y1={CENTER + bandInner() * Math.sin(angle())}
+                  x2={CENTER + (bandOuter() - 1.1) * Math.cos(angle())}
+                  y2={CENTER + (bandOuter() - 1.1) * Math.sin(angle())}
+                  stroke="#ffffff"
+                  stroke-width="4"
+                />
+              );
+            }}
+          </For>
+        </Show>
+        {/* ものとーん: 色扇も放射の区切り線も描かず、ふつうの時計のような外周の目盛りで時間を示す。
+            5 分ごと (時の位置) は長め・太め、その間の分は短め・細め。外端は他パレットの分メモリと同じ
+            outerRing。白盤の上でグレー線が薄く見えにくいので、内端だけ他より少し内側へ伸ばして補う。
+            すっきり・くわしく共通。 */}
+        <Show when={paletteId() === "monotone"}>
+          {/* 外周円 (他パレットの扇の外周円弧に相当)。盤縁にぐるっと 1 本グレーで引く。 */}
+          <circle
+            cx={CENTER} cy={CENTER} r={clockRadius()}
+            fill="none"
+            stroke="#bbbbbb"
+            stroke-width="2"
+          />
+          <For each={Array.from({ length: 60 })}>
+            {(_, i) => {
+              const angle = () => (i() * 6 * Math.PI) / 180 - Math.PI / 2;
+              const isHour = () => i() % 5 === 0;
+              const outer = () => outerRing();
+              const inner = () => isHour() ? clockRadius() - 12 : clockRadius() - 7;
+              return (
+                <line
+                  x1={CENTER + inner() * Math.cos(angle())}
+                  y1={CENTER + inner() * Math.sin(angle())}
+                  x2={CENTER + outer() * Math.cos(angle())}
+                  y2={CENTER + outer() * Math.sin(angle())}
+                  stroke={isHour() ? "#bbbbbb" : "#bbbbbb90"}
+                  stroke-width={isHour() ? 2.5 : 1}
+                  stroke-linecap="round"
+                />
+              );
+            }}
+          </For>
+        </Show>
       </Show>
 
-      {/* くぎりモードの分メモリ。monotone-badge では円盤縁の専用メモリを別途描くので抑止。
-       *  クォーター (12/3/6/9 = i%15===0) は sector モードの境界線と同じ太さ 4 で他の時メモリより
-       *  さらに強調する (区切り/くわしく どちらでもクォーターが視覚的に同じ重みになる)。
-       *  ものとーんは線が白で盤面 (白) では内側部分が不可視、ベゼル (R〜R+3) でだけ見える。内側 R-8/R-3
-       *  まで引くと、下に敷かれるタイマー扇の上で白い内側が浮いて汚いので、内端を盤面縁 R に留めて
-       *  ベゼルの目盛りだけ残す。先端も round → butt (スクエア) にする (非ものとーんは色扇の上に乗せる
-       *  従来どおりの内側食い込み + round)。 */}
-      <Show when={isKuwashiku() && !isMonotoneBadge()}>
+      {/* くぎりモードの分メモリ (色付きパレット専用)。monotone-badge は円盤縁の専用メモリ、ものとーん×
+       *  くぎりは外周の目盛りをそれぞれ別途描くのでどちらもここでは抑止する。クォーター (12/3/6/9 =
+       *  i%15===0) は sector モードの境界線と同じ太さ 4 で他の時メモリよりさらに強調する。 */}
+      <Show when={isKuwashiku() && !isMonotoneBadge() && paletteId() !== "monotone"}>
         <For each={Array.from({ length: 60 })}>
           {(_, i) => {
             const angle = () => (i() * 6 * Math.PI) / 180 - Math.PI / 2;
             const isHour = () => i() % 5 === 0;
             const isQuarter = () => i() % 15 === 0;
-            const isMonotone = () => paletteId() === "monotone";
             const outer = () => outerRing();
-            const inner = () =>
-              isMonotone() ? clockRadius() : isHour() ? clockRadius() - 8 : clockRadius() - 3;
+            const inner = () => isHour() ? clockRadius() - 8 : clockRadius() - 3;
             return (
               <line
                 x1={CENTER + inner() * Math.cos(angle())}
@@ -270,7 +299,7 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                 y2={CENTER + outer() * Math.sin(angle())}
                 stroke={isHour() ? "#ffffff" : "#ffffff90"}
                 stroke-width={isQuarter() ? 4 : isHour() ? 2.5 : 1}
-                stroke-linecap={isMonotone() ? "butt" : "round"}
+                stroke-linecap="round"
               />
             );
           }}
