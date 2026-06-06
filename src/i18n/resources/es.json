@@ -68,9 +68,9 @@
   "palette": {
     "distinct12": "colores vivos",
     "vivid": "cielo",
-    "ygb": "cielo sol hierba",
-    "primary3": "colores primarios",
-    "wheel": "rueda de colores",
+    "ygb": "aire libre",
+    "primary3": "3 primarios",
+    "wheel": "arcoíris",
     "cud12": "universal",
     "monotone": "monótono"
   },
