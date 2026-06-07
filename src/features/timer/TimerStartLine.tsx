@@ -1,13 +1,13 @@
 import { type Component } from "solid-js";
 import { colorMode } from "../settings/color-mode";
 import { paletteId } from "../settings/palette";
-import { CENTER, clockRadius, hourHandLength } from "../../components/clockface-layers/geometry";
+import { CENTER, hourHandLength, timerWedgeRadius } from "../../components/clockface-layers/geometry";
 
 /**
  * 開始点を示す放射状の線 1 本。塗りつぶしの扇の代わりに「ここから始まった」を細い線で示す。針・中心ネジで
- * 混む中心付近は空け、短針 (時針) の先のすぐ外 (hourHandLength + HOUR_HAND_CLEARANCE) から盤面縁までの外周側
- * だけ引く。短針長は mode で変わるので、内端も追従してどの mode でも短針にギリギリ触れない。
- * ClockFace の children として残り扇と同じ層 (ベースと数字の間) に乗る。
+ * 混む中心付近は空け、短針 (時針) の先のすぐ外 (hourHandLength + HOUR_HAND_CLEARANCE) から、扇と同じ外端
+ * (timerWedgeRadius) までの帯だけ引く。内端は短針長・外端は扇半径に追従するので、どの mode でも短針に触れず
+ * 外周からも扇と同じだけ引っ込む。ClockFace の children として残り扇と同じ層 (ベースと数字の間) に乗る。
  *  - variant "timerStart"  : たいむの開始点 (現在針から到達済みぶん戻した位置)。
  *  - variant "interruption": 中断 (一時停止) を含めた真の開始点 (firstStartMs)。
  * 色は盤面背景で見え方が変わるので 2 段に出し分けるが、variant では分けない: グレー盤 (くぎり) は両方とも白、
@@ -44,7 +44,7 @@ const TimerStartLine: Component<TimerStartLineProps> = (props) => {
     const angle = ((props.minute * 6 - 90) * Math.PI) / 180;
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
-    const outer = clockRadius();
+    const outer = timerWedgeRadius();
     const inner = hourHandLength() + HOUR_HAND_CLEARANCE;
     return {
       x1: CENTER + inner * cos,

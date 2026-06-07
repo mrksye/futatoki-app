@@ -24,9 +24,10 @@ export const isMonotoneBadge = () => colorMode() === "badge" && paletteId() === 
 export const clockRadius = () => (isKuwashiku() ? 130 : 148);
 
 /** 時間数字を置く半径。ばっじ×すっきりは badge 半径が膨らむので外周はみ出し回避で内側へ引き込む。
- *  monotone × badge は cardinal 数字を縁からさらに内側へ寄せて中央に呼吸を作る。 */
+ *  monotone × badge は cardinal 数字を縁からさらに内側へ寄せて中央に呼吸を作る (くわしくは盤が一回り小さく
+ *  詰まりやすいので、すっきりより外へ拡げる)。 */
 export const numberRadius = () => {
-  if (isMonotoneBadge()) return clockRadius() - 34;
+  if (isMonotoneBadge()) return clockRadius() - (isKuwashiku() ? 28 : 34);
   return clockRadius() - (colorMode() === "badge" && !isKuwashiku() ? BADGE_RADIUS_SUKKIRI : 18);
 };
 
@@ -49,24 +50,25 @@ const HAND_FACTORS: Record<HandModeKey, { hour: number; minute: number }> = {
   "sukkiri-badge":    { hour: 0.45, minute: 0.73 },
 };
 
-/** monotone × badge は「文字盤自体がバッジ化」する特別仕様で針長も別 (長針: 円盤縁の minute tick 内端ギリギリ /
- *  短針: cardinal 数字の inner edge に round linecap が触れる位置)。通常モードの hour:minute 比 (~0.61) にも自然に揃う。 */
-const MONOTONE_BADGE_HAND_FACTORS: Record<"kuwashiku" | "sukkiri", { hour: number; minute: number }> = {
-  "kuwashiku": { hour: 0.55, minute: 0.90 },
-  "sukkiri":   { hour: 0.57, minute: 0.91 },
-};
-
-/** 現在モードの針長 factor (hour / minute)。 */
-export const handFactors = (): { hour: number; minute: number } => {
-  if (isMonotoneBadge()) return MONOTONE_BADGE_HAND_FACTORS[detailMode()];
-  return HAND_FACTORS[`${detailMode()}-${colorMode()}` as HandModeKey];
-};
+/** 現在モードの針長 factor (hour / minute)。monotone × badge も針長は普通のばっじと同じ (HAND_FACTORS の
+ *  badge 行) を使う。 */
+export const handFactors = (): { hour: number; minute: number } =>
+  HAND_FACTORS[`${detailMode()}-${colorMode()}` as HandModeKey];
 
 /** 分針 (長針) の中心からの長さ (viewBox 単位)。タイマー扇はこれを基準に「気持ち短い」半径で描く。 */
 export const minuteHandLength = () => clockRadius() * handFactors().minute;
 
 /** 時針 (短針) の中心からの長さ (viewBox 単位)。開始点線はこの少し外側から引いて短針に触れないようにする。 */
 export const hourHandLength = () => clockRadius() * handFactors().hour;
+
+/** タイマー扇の半径 = 長針長 × 比。気持ち短くして弧の先から針先が覗くようにする。ものとーん (まる・くぎり
+ *  共通) は盤が白く扇が目立つので長針からもう少し離す。タイマー扇 (TimerWedge) と開始点線 (TimerStartLine) の
+ *  外端が共有し、開始点線も扇と同じだけ外周から内側へ引っ込める。 */
+const TIMER_WEDGE_RADIUS_RATIO = 0.98;
+const TIMER_WEDGE_RADIUS_RATIO_MONOTONE = 0.92;
+export const timerWedgeRadius = () =>
+  minuteHandLength() *
+  (paletteId() === "monotone" ? TIMER_WEDGE_RADIUS_RATIO_MONOTONE : TIMER_WEDGE_RADIUS_RATIO);
 
 export function hourToAngle(hour: number): number {
   return (hour / 12) * 360 - 90;
