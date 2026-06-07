@@ -1,8 +1,6 @@
 import { createEffect, onCleanup, Show, type Accessor, type Component } from "solid-js";
-import { detailMode } from "../../features/settings/detail-mode";
-import { colorMode } from "../../features/settings/color-mode";
-import { paletteId } from "../../features/settings/palette";
 import { clockMode } from "../../features/free-rotation/state";
+import { clockRadius, handFactors } from "./geometry";
 
 /**
  * 時計の針 (時針・分針・中心ネジ) を描画するレイヤー。ClockFace を包む div の中に絶対配置で重ね、
@@ -83,38 +81,10 @@ const MINUTE_TICK_TIMING: KeyframeAnimationOptions = {
   easing: "ease-out",
 };
 
-/**
- * 針長 factor (R との比) を detailMode × colorMode の 4 通りで個別に持つ。
- * くわしく/すっきり (R が 130 / 148) と くぎり/ばっじ (数字外端の幾何が違う) で
- * 「針 tip と数字/badge 内端の距離」が揃わないので、4 mode 個別に微調整する。Kawaii 担保用。
- */
-type ModeKey = "kuwashiku-sector" | "kuwashiku-badge" | "sukkiri-sector" | "sukkiri-badge";
-const HAND_FACTORS: Record<ModeKey, { hour: number; minute: number }> = {
-  "kuwashiku-sector": { hour: 0.49, minute: 0.79 },
-  "kuwashiku-badge":  { hour: 0.46, minute: 0.75 },
-  "sukkiri-sector":   { hour: 0.48, minute: 0.78 },
-  "sukkiri-badge":    { hour: 0.45, minute: 0.73 },
-};
-
-/** monotone × badge は「文字盤自体がバッジ化」する特別仕様。
- *  - 長針: 円盤縁の minute tick 内端ギリギリ。
- *  - 短針: cardinal 数字の inner edge に round linecap (stroke radius 5) がちょうど触れる位置。
- *    PM 24h の "15"/"21" を含む最も内側に来る "3"/"9" 位置の inner edge を基準に決める。
- *  通常モードの hour:minute 比 (~0.61) にも自然に揃う。 */
-const MONOTONE_BADGE_FACTORS: Record<"kuwashiku" | "sukkiri", { hour: number; minute: number }> = {
-  "kuwashiku": { hour: 0.58, minute: 0.94 },
-  "sukkiri":   { hour: 0.60, minute: 0.95 },
-};
-
 const HandsLayer: Component<HandsLayerProps> = (props) => {
-  const isKuwashiku = () => detailMode() === "kuwashiku";
-  const R = () => isKuwashiku() ? 130 : 148;
-  const factors = () => {
-    if (colorMode() === "badge" && paletteId() === "monotone") {
-      return MONOTONE_BADGE_FACTORS[detailMode()];
-    }
-    return HAND_FACTORS[`${detailMode()}-${colorMode()}` as ModeKey];
-  };
+  // 針長は detailMode × colorMode で決まる (geometry.handFactors)。タイマー扇も同じ helper を共有する。
+  const R = clockRadius;
+  const factors = handFactors;
 
   const hourAngle = () => {
     const h = props.hours % 12;

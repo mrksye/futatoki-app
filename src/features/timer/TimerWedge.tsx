@@ -1,12 +1,14 @@
 import { Index, Show, createMemo, type Component } from "solid-js";
 import { colorMode } from "../settings/color-mode";
 import { paletteId } from "../settings/palette";
-import { CENTER, clockRadius, pieSectorPath } from "../../components/clockface-layers/geometry";
+import { CENTER, minuteHandLength, pieSectorPath } from "../../components/clockface-layers/geometry";
 import { lerpColor } from "../../lib/color";
 
 /**
- * タイマー盤の扇レイヤー。timer 盤の中心から盤面縁までを扇 (pie) で塗る。ClockFace の children として
- * BaseFace と FaceDetail の間に差し込まれ、背景色の上・色扇/バッジ/数字の下に乗る (数字は扇の上で読める)。
+ * タイマー盤の扇レイヤー。timer 盤の中心から、長針 (分針) より気持ち短い半径まで扇 (pie) で塗る (扇の弧から
+ * 針先が少し覗いて「今ここ」が読める)。半径は針長 (geometry.minuteHandLength) を基準にするので、detailMode ×
+ * colorMode で針長が変わっても自動で追従する。ClockFace の children として BaseFace と FaceDetail の間に
+ * 差し込まれ、背景色の上・色扇/バッジ/数字の下に乗る (数字は扇の上で読める)。
  * 2 つの tone を同じ pie 幾何で描く:
  *   - "remaining" (既定): 現在針から終了マーカーまでの「あと何分」を淡赤で塗る。終了マーカーを一番濃く、
  *     離れるほど薄くしたグラデーション。これから消費する本番の時間。
@@ -31,6 +33,11 @@ const GRADIENT_SPAN_MINUTES = 60;
 /** 隣接する帯の継ぎ目に出るヘアライン (不透明塗りの境界の anti-alias) を消すための重ね角 (度)。
  *  各帯を始端側へわずかに伸ばし、次に描く帯がその継ぎ目を覆う。 */
 const SEAM_OVERLAP_DEG = 0.6;
+
+/** 扇の半径 = 長針の長さ × この比。気持ち短くして弧の先から針先が覗くようにする。
+ *  ものとーん (まる・くぎり共通) は盤が白く扇が目立つので、長針からもう少し離してすっきり見せる。 */
+const WEDGE_RADIUS_RATIO = 0.98;
+const WEDGE_RADIUS_RATIO_MONOTONE = 0.92;
 
 interface TimerWedgeProps {
   /** 扇の始端 (分, 0..60 小数)。remaining=現在針 / passed=終了マーカー。 */
@@ -67,6 +74,8 @@ const TimerWedge: Component<TimerWedgeProps> = (props) => {
 
     const near = nearColor();
     const far = farColor();
+    const ratio = paletteId() === "monotone" ? WEDGE_RADIUS_RATIO_MONOTONE : WEDGE_RADIUS_RATIO;
+    const radius = minuteHandLength() * ratio;
     const result: { d: string; fill: string }[] = [];
     for (let i = 0; i < edges.length - 1; i++) {
       const from = edges[i]!;
@@ -78,7 +87,7 @@ const TimerWedge: Component<TimerWedgeProps> = (props) => {
       const distanceFromMarker = gradientEnd - (from + to) / 2;
       const t = Math.min(1, distanceFromMarker / GRADIENT_SPAN_MINUTES);
       result.push({
-        d: pieSectorPath(CENTER, CENTER, clockRadius(), a1, a2),
+        d: pieSectorPath(CENTER, CENTER, radius, a1, a2),
         fill: lerpColor(near, far, t),
       });
     }
