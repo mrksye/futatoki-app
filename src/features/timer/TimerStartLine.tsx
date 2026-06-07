@@ -1,11 +1,12 @@
 import { type Component } from "solid-js";
 import { colorMode } from "../settings/color-mode";
 import { paletteId } from "../settings/palette";
-import { CENTER, clockRadius, isKuwashiku } from "../../components/clockface-layers/geometry";
+import { CENTER, clockRadius, hourHandLength } from "../../components/clockface-layers/geometry";
 
 /**
  * 開始点を示す放射状の線 1 本。塗りつぶしの扇の代わりに「ここから始まった」を細い線で示す。針・中心ネジで
- * 混む中心付近は空け、盤面半径の START_LINE_INNER_RATIO_* から盤面縁までの外周側だけ引く。
+ * 混む中心付近は空け、短針 (時針) の先のすぐ外 (hourHandLength + HOUR_HAND_CLEARANCE) から盤面縁までの外周側
+ * だけ引く。短針長は mode で変わるので、内端も追従してどの mode でも短針にギリギリ触れない。
  * ClockFace の children として残り扇と同じ層 (ベースと数字の間) に乗る。
  *  - variant "timerStart"  : たいむの開始点 (現在針から到達済みぶん戻した位置)。
  *  - variant "interruption": 中断 (一時停止) を含めた真の開始点 (firstStartMs)。
@@ -18,10 +19,9 @@ import { CENTER, clockRadius, isKuwashiku } from "../../components/clockface-lay
 const START_LINE_WIDTH = 1;
 /** 白盤 (ばっじ / ものとーん) で両開始点線に共通の薄いブルーグレー。白に溶けず黒ほど強くなく、ほんのり青み。 */
 const WHITE_BOARD_LINE_COLOR = "#cacdd6";
-/** 中心側を空ける割合 (盤面半径に対する比)。針・中心ネジで混む中央を空け、外周側だけ引く。
- *  すっきりは盤面が一回り大きく中央の余白も広いので、くわしくより少しだけ深く空けて見た目を揃える。 */
-const START_LINE_INNER_RATIO_KUWASHIKU = 0.4;
-const START_LINE_INNER_RATIO_SUKKIRI = 0.46;
+/** 線の内端を短針の先からどれだけ外へ離すか (viewBox 340 基準)。短針の丸キャップ半径 (5) ぶんを越えてから
+ *  ほんの少しだけ間を空け、どの mode でも短針にギリギリ触れない最短の隙間にする。 */
+const HOUR_HAND_CLEARANCE = 12;
 
 interface TimerStartLineProps {
   /** 線を引く分位置 (小数可)。中心 → 盤面縁の放射線。 */
@@ -45,7 +45,7 @@ const TimerStartLine: Component<TimerStartLineProps> = (props) => {
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
     const outer = clockRadius();
-    const inner = outer * (isKuwashiku() ? START_LINE_INNER_RATIO_KUWASHIKU : START_LINE_INNER_RATIO_SUKKIRI);
+    const inner = hourHandLength() + HOUR_HAND_CLEARANCE;
     return {
       x1: CENTER + inner * cos,
       y1: CENTER + inner * sin,

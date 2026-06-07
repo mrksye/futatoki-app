@@ -65,6 +65,9 @@ export const handFactors = (): { hour: number; minute: number } => {
 /** 分針 (長針) の中心からの長さ (viewBox 単位)。タイマー扇はこれを基準に「気持ち短い」半径で描く。 */
 export const minuteHandLength = () => clockRadius() * handFactors().minute;
 
+/** 時針 (短針) の中心からの長さ (viewBox 単位)。開始点線はこの少し外側から引いて短針に触れないようにする。 */
+export const hourHandLength = () => clockRadius() * handFactors().hour;
+
 export function hourToAngle(hour: number): number {
   return (hour / 12) * 360 - 90;
 }
