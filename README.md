@@ -2,6 +2,8 @@
 
 # Futatoki the Learning Clock App
 
+🌐 [Try it live](https://play.futatoki.app/?lang=en) · 📖 [Learn more](https://futatoki.app/en/) · 📚 [Usage guide](https://futatoki.app/en/guide)
+
 > [!IMPORTANT]
 > This README describes the **Futatoki** brand and project. Forks MUST
 > replace it — see [`branding/README.example.md`](./branding/README.example.md)
@@ -10,8 +12,6 @@
 <img src="./branding/screenshot.webp" alt="Two analog faces side by side — PM face in full color showing 20:00, AM face dimmed" />
 
 A free, open-source 24-hour analog clock app for kids learning to tell time. No install, no sign-up — runs in any browser. The app version of *Futatoki the Clock* — affectionately, just *Futatoki*.
-
-🌐 [Try it live](https://play.futatoki.app/?lang=en) · 📖 [Learn more](https://futatoki.app/en/) · 📚 [Usage guide](https://futatoki.app/en/guide)
 
 ## Why another clock app?
 
