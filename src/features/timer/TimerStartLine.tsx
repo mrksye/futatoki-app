@@ -7,14 +7,17 @@ import { CENTER, clockRadius, isKuwashiku } from "../../components/clockface-lay
  * 開始点を示す放射状の線 1 本。塗りつぶしの扇の代わりに「ここから始まった」を細い線で示す。針・中心ネジで
  * 混む中心付近は空け、盤面半径の START_LINE_INNER_RATIO_* から盤面縁までの外周側だけ引く。
  * ClockFace の children として残り扇と同じ層 (ベースと数字の間) に乗る。
- *  - variant "timerStart"  : たいむの開始点 (現在針から到達済みぶん戻した位置)。淡赤。
- *  - variant "interruption": 中断 (一時停止) を含めた真の開始点 (firstStartMs)。うっすい青。
- * 色は扇と同じく盤面背景で見え方が変わるので sector / 白盤面の 2 段に出し分ける。線は分位置に中央が乗る
+ *  - variant "timerStart"  : たいむの開始点 (現在針から到達済みぶん戻した位置)。
+ *  - variant "interruption": 中断 (一時停止) を含めた真の開始点 (firstStartMs)。
+ * 色は盤面背景で見え方が変わるので 2 段に出し分けるが、variant では分けない: グレー盤 (くぎり) は両方とも白、
+ * 白盤 (ばっじ / ものとーん) は両方とも落ち着いたグレーで引く。線は分位置に中央が乗る
  * 既定の中央ストロークで描く (片側に寄せない)。
  */
 
 /** 開始点線の太さ (viewBox 340 基準)。 */
 const START_LINE_WIDTH = 1;
+/** 白盤 (ばっじ / ものとーん) で両開始点線に共通の薄いブルーグレー。白に溶けず黒ほど強くなく、ほんのり青み。 */
+const WHITE_BOARD_LINE_COLOR = "#cacdd6";
 /** 中心側を空ける割合 (盤面半径に対する比)。針・中心ネジで混む中央を空け、外周側だけ引く。
  *  すっきりは盤面が一回り大きく中央の余白も広いので、くわしくより少しだけ深く空けて見た目を揃える。 */
 const START_LINE_INNER_RATIO_KUWASHIKU = 0.4;
@@ -30,10 +33,11 @@ interface TimerStartLineProps {
 const TimerStartLine: Component<TimerStartLineProps> = (props) => {
   const isSector = () => colorMode() === "sector" && paletteId() !== "monotone";
   const color = () => {
-    // くぎり (ものとーん除く) は盤面に opacity 0.8 の色扇が乗りグレー寄りに沈むので、その上で読めるよう
-    // 両方とも純白にして視認性を最大化する。青赤の区別はここでは捨てる。
-    if (props.variant === "interruption") return isSector() ? "#ffffff" : "#d3d3e0";
-    return isSector() ? "#ffffff" : "#f3c8c8";
+    // くぎり (ものとーん除く) は盤面に opacity 0.8 の色扇が乗りグレー寄りに沈むので、その上で読めるよう両方とも
+    // 純白にする (青赤の区別はここでは捨てる)。白盤 (ばっじ / ものとーん) では青 (中断) / 赤 (消費開始) で区別せず、
+    // 両方とも同じ落ち着いたグレーで引く (白に溶けず黒ほど強くない中間)。
+    if (isSector()) return "#ffffff";
+    return WHITE_BOARD_LINE_COLOR;
   };
   // 中心側 (inner) は針まわりを避けるため START_LINE_INNER_RADIUS だけ離し、外周側 (rim) は盤面縁まで。
   const segment = () => {

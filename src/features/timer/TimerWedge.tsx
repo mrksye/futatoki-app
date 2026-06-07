@@ -5,15 +5,18 @@ import { CENTER, clockRadius, pieSectorPath } from "../../components/clockface-l
 import { lerpColor } from "../../lib/color";
 
 /**
- * 残りタイマーの扇レイヤー。timer 盤の中心から盤面縁までを淡赤の扇 (pie) で塗る。ClockFace の children
- * として BaseFace と FaceDetail の間に差し込まれ、背景色の上・色扇/バッジ/数字の下に乗る (数字は扇の上で
- * 読める)。現在針から終了マーカーまでの「あと何分」を塗る。到達済み・中断は塗らず開始点に線で示す
- * (TimerStartLine) ので、本コンポーネントは残りの 1 本だけを担う。
+ * タイマー盤の扇レイヤー。timer 盤の中心から盤面縁までを扇 (pie) で塗る。ClockFace の children として
+ * BaseFace と FaceDetail の間に差し込まれ、背景色の上・色扇/バッジ/数字の下に乗る (数字は扇の上で読める)。
+ * 2 つの tone を同じ pie 幾何で描く:
+ *   - "remaining" (既定): 現在針から終了マーカーまでの「あと何分」を淡赤で塗る。終了マーカーを一番濃く、
+ *     離れるほど薄くしたグラデーション。これから消費する本番の時間。
+ *   - "passed": 終了マーカーから live 現在針までの「終了から何分過ぎたか」を淡青で塗る (done のオーバーラン
+ *     区間)。過ぎ去った時間は青、という色の約束。グラデは張らず一様 (薄い薄い青)。
+ * 到達済み・中断は塗らず開始点に線で示す (TimerStartLine) ので、本コンポーネントはこの 2 区間だけを担う。
  *
- * 色: 終了マーカー (終了点) を一番濃く、そこから離れるほど薄くしたグラデーション。濃い端は盤面の背景で
- * 見え方が変わるので 2 段に出し分ける。非ものとーんのくぎり (盤面に opacity 0.8 の色扇が乗る) では、その
- * 色扇を明るく抜くために明るめの淡赤 #ffd2d2。ばっじ / ものとーん (盤面が白) では白に溶けないよう少し
- * 濃いめの淡赤 #f1c0c0。薄い端はそれぞれをさらに白寄りへ薄めた色。
+ * 色: 盤面の背景で見え方が変わるので 2 段に出し分ける。非ものとーんのくぎり (盤面に opacity 0.8 の色扇が乗る)
+ * では、その色扇を明るく抜くために明るめ。ばっじ / ものとーん (盤面が白) では白に溶けないよう少し濃いめ。
+ * remaining の薄い端はそれぞれをさらに白寄りへ薄めた色。
  *
  * 帯の割り方: 色のくぎりは時計盤の 1 分目盛 (絶対角度 = 分 × 6°) にそろえる。扇の両端 (fromMinute と
  * fromMinute + spanMinutes) は秒まで含む端数位置なので両端は端数ぶんの細い帯として残し、内側だけ整数分で
@@ -30,17 +33,23 @@ const GRADIENT_SPAN_MINUTES = 60;
 const SEAM_OVERLAP_DEG = 0.6;
 
 interface TimerWedgeProps {
-  /** 扇の始端 (分, 0..60 小数) = 現在針。 */
+  /** 扇の始端 (分, 0..60 小数)。remaining=現在針 / passed=終了マーカー。 */
   fromMinute: number;
   /** 扇の角度幅のもとになる分幅 (0..60 小数)。幅 = これ × 6°。0 以下なら描かない。 */
   spanMinutes: number;
+  /** 塗り色の役割。remaining=これから消費する淡赤 (既定) / passed=過ぎ去った淡青。 */
+  tone?: "remaining" | "passed";
 }
 
 const TimerWedge: Component<TimerWedgeProps> = (props) => {
   const isSector = () => colorMode() === "sector" && paletteId() !== "monotone";
-  // 濃い端 (終了マーカー)。薄い端はそれをさらに白寄りへ薄めた色。
-  const nearColor = () => (isSector() ? "#ffd2d2" : "#f1c0c0");
-  const farColor = () => (isSector() ? "#ffeded" : "#f9e3e3");
+  const isPassed = () => props.tone === "passed";
+  // 濃い端 (remaining は終了マーカー)。薄い端はそれをさらに白寄りへ薄めた色。passed は一様な薄青なので
+  // near=far で同色 (グラデを張らない)。
+  const nearColor = () =>
+    isPassed() ? (isSector() ? "#dde8ff" : "#d6dcec") : isSector() ? "#ffd2d2" : "#f1c0c0";
+  const farColor = () =>
+    isPassed() ? (isSector() ? "#dde8ff" : "#d6dcec") : isSector() ? "#ffeded" : "#f9e3e3";
 
   const bands = createMemo(() => {
     const span = props.spanMinutes;

@@ -18,7 +18,7 @@ import {
 } from "../features/timer/state";
 import { timerAlarm } from "../features/timer/timer-alarm";
 import { timerChime } from "../features/timer/timer-chime";
-import { nowHandStyle, overrunHandColor } from "../features/timer/timer-hand-style";
+import { nowHandStyle, overrunHandStyle } from "../features/timer/timer-hand-style";
 import {
   timerTransitionPhase,
   timerTransitionKind,
@@ -126,6 +126,17 @@ const TimerLayout: Component = () => {
    *  視覚的に共有できる。done 以外は undefined で HandsLayer 側で描画スキップ。 */
   const overrunMinutes = (): number | undefined =>
     timerPhase() === "done" ? refMinuteFloat() : undefined;
+
+  /** done のオーバーラン分 (終了マーカー → live 現在針)。終了時刻からどれだけ過ぎたか = 過ぎ去った時間の扇幅。
+   *  done では盤が endMs に凍結する (boardMinuteFloat = 終了マーカー) ので、live の nowMs との差がそのまま
+   *  過ぎたぶん。1 周 (60 分) を超えると扇が巻き戻って意味が壊れるので頭打ち (done は end+30 分で自動掃除される
+   *  ので実害は無いが安全側)。done 以外は 0 で扇を描かない。 */
+  const overrunSpanMinutes = (): number => {
+    if (timerPhase() !== "done") return 0;
+    const e = endMs();
+    if (e === null) return 0;
+    return Math.min(60, Math.max(0, (nowMs() - e) / 60000));
+  };
 
   /** 盤面に色扇が乗る sector 表示か (非ものとーんのくぎり)。針の色を盤面背景に合わせて出し分けるための判定で、
    *  色そのものの決定は timer-hand-style に委ねる (ここは渡す boolean を作るだけ)。 */
@@ -314,6 +325,9 @@ const TimerLayout: Component = () => {
               style={{ width: `${timerBoardSize()}px`, height: `${timerBoardSize()}px`, "transform-origin": "center" }}
             >
               <ClockFace period="merged" hours={boardHours()} bezel="gold">
+                {/* 過ぎ去った扇 (終了マーカー → live 現在針) の淡青塗り。done で終了から過ぎたぶんを示す。残り扇
+                    (赤) とは別の区間で重ならないが、線より下に来るよう先に描く。 */}
+                <TimerWedge fromMinute={boardMinuteFloat()} spanMinutes={overrunSpanMinutes()} tone="passed" />
                 {/* 残り扇 (現在針 → 終了マーカー) の塗り。到達済み・中断は塗らず開始点に線 1 本で示す。 */}
                 <TimerWedge fromMinute={boardMinuteFloat()} spanMinutes={remainingMinutes()} />
                 {/* たいむ開始点 (現在針から到達済みぶん戻した位置) の線。先に描いて、重なったとき中断 (青) を上に乗せる。 */}
@@ -331,7 +345,7 @@ const TimerLayout: Component = () => {
                 minuteHandStyle={nowHandStyle(remainingSeconds() ?? 0, isSectorBoard())}
                 markerMinutes={markerMinutes()}
                 overrunMinutes={overrunMinutes()}
-                overrunColor={overrunHandColor(isSectorBoard())}
+                overrunStyle={overrunHandStyle}
               />
             </div>
           </Show>
