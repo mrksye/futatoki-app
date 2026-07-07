@@ -121,11 +121,8 @@ then `bun run deploy`.
 
 ## Contributing
 
-Contributions welcome — especially translations. See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
-
-- Officially maintained languages and how community translations work
-- How to add a new language
-- Code, bug reports, and feature suggestions
+Found a bug, or want a language added or improved? Please open an issue first.
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Forking — go ahead
 
