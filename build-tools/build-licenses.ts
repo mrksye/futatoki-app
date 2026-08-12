@@ -277,10 +277,12 @@ ${BUNDLED_MIT_WORKS.map(renderMitWork).join("\n")}
 
       <h2>Not third-party</h2>
       <p>
-        The interface icons are hand-drawn SVG paths in this repository, and the
-        countdown chimes are synthesized by a build script here. Activity icons
-        are emoji characters, drawn by the reader's own operating system rather
-        than bundled as artwork.
+        The interface icons are hand-drawn SVG paths in this repository. Every
+        sound the timer makes &mdash; the countdown chimes and the completion
+        alarm alike &mdash; is synthesized from scratch by a build script here,
+        so no recording, performance, or generated track by anyone else is
+        involved. Activity icons are emoji characters, drawn by the reader's own
+        operating system rather than bundled as artwork.
       </p>
     </main>
   </body>

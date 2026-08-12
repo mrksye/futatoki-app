@@ -12,7 +12,7 @@ import chime5Url from "./sounds/chime-5min.m4a";
  *   - 残り 10 分: ポーンポーーン (中くらいの「ポーン」のあと、間をあけて伸ばす「ポーーン」)
  *   - 残り  5 分: ポーーーーン   (いちばん長く伸ばした音を 1 つ。もうすぐ終わりの合図)
  *
- * 音は m4a アセット (build-tools/generate-chime-sounds.ts が合成して焼き込む。音色を変えたいときはそのスクリプトの
+ * 音は m4a アセット (build-tools/generate-timer-sounds.ts が合成して焼き込む。音色を変えたいときはそのスクリプトの
  * パラメータを変えて再生成し m4a をコミットする)。
  *
  * 計時はアラームと同じ哲学で「回すのは setInterval、測るのは Date.now()」。interval が発火した回数を積算すると、

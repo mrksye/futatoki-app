@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
-/** 完了アラーム音源。予告チャイム (build-tools/generate-chime-sounds.ts が合成) と違って生成
- *  スクリプトを持たず、Suno で作った音源をそのままコミットしてある。 */
+/** 完了アラーム音源。予告チャイムと同じく build-tools/generate-timer-sounds.ts が合成する
+ *  (音色は別系統: 予告は純サイン波の「ポーン」、完了は倍音を重ねたオルゴール風メロディ)。 */
 import timerEndM4a from "./sounds/timer-end.m4a";
 
 /**
