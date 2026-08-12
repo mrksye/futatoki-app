@@ -11,6 +11,7 @@ import { BRAND_CONFIG } from "./branding/brand.config";
 import { formatMetaString } from "./src/i18n/format-meta";
 import { buildAllManifests } from "./build-tools/build-manifests";
 import { buildRobotsTxt, buildSitemapXml } from "./build-tools/build-seo-static";
+import { buildLicensesHtml } from "./build-tools/build-licenses";
 
 const ROOT_DIR = fileURLToPath(new URL(".", import.meta.url));
 const BRANDING_DIR = resolve(ROOT_DIR, "branding");
@@ -59,7 +60,7 @@ const escapeHtmlAttr = (raw: string): string =>
 
 /**
  * branding/ 配下の visual asset (icon, og.png, screenshot.webp 等) と
- * brand-driven 生成物 (manifest 20 個 / robots.txt / sitemap.xml) を扱う
+ * brand-driven 生成物 (manifest 20 個 / robots.txt / sitemap.xml / licenses.html) を扱う
  * 単一 plugin。生成物は file system に永続させず、build 時は this.emitFile で
  * rollup virtual asset として dist/ に直接 emit、dev 時は configureServer
  * middleware で in-memory serve する (public/ には何も書かない)。
@@ -71,6 +72,7 @@ function brandingAssetsPlugin(): Plugin {
   let manifestCache: Map<string, string> | null = null;
   let robotsCache: string | null = null;
   let sitemapCache: string | null = null;
+  let licensesCache: string | null = null;
   let isBuild = false;
 
   return {
@@ -100,12 +102,18 @@ function brandingAssetsPlugin(): Plugin {
         fileName: "sitemap.xml",
         source: buildSitemapXml(),
       });
+      this.emitFile({
+        type: "asset",
+        fileName: "licenses.html",
+        source: buildLicensesHtml(),
+      });
     },
 
     async configureServer(server) {
       manifestCache = await buildAllManifests();
       robotsCache = buildRobotsTxt();
       sitemapCache = buildSitemapXml();
+      licensesCache = buildLicensesHtml();
 
       server.middlewares.use((req, res, next) => {
         if (!req.url) return next();
@@ -133,6 +141,12 @@ function brandingAssetsPlugin(): Plugin {
         if (pathOnly === "/sitemap.xml" && sitemapCache) {
           res.setHeader("Content-Type", "application/xml");
           res.end(sitemapCache);
+          return;
+        }
+
+        if (pathOnly === "/licenses.html" && licensesCache) {
+          res.setHeader("Content-Type", "text/html; charset=utf-8");
+          res.end(licensesCache);
           return;
         }
 

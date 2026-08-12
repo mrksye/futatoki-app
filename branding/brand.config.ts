@@ -46,6 +46,11 @@ export interface BrandConfig {
    *  and available to localized resources via placeholders. */
   readonly externalLinks: {
     readonly privacy: string;
+
+    /** Public source repository root (no trailing slash). /licenses.html links
+     *  its brand-terms note here; set to null if the fork publishes no repo,
+     *  and the link is omitted. */
+    readonly sourceCode: string | null;
   };
 }
 
@@ -59,5 +64,6 @@ export const BRAND_CONFIG: BrandConfig = {
   backgroundColor: "#f8f0e8",
   externalLinks: {
     privacy: "https://futatoki.app/privacy/",
+    sourceCode: "https://github.com/mrksye/futatoki-app",
   },
 };

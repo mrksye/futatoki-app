@@ -155,6 +155,19 @@ The names "Futatoki" / "Futatoki the Learning Clock App" /
 the visual design of the clock face when reproduced outside the screen-based
 app are not covered by the MIT License — see [NOTICE](./NOTICE) for details.
 
+### Third-party
+
+The app bundles SolidJS, @solid-primitives/i18n, Tailwind CSS, Workbox, and
+Vite (all MIT), plus two self-hosted fonts under the SIL Open Font License 1.1:
+Nunito and Baloo Da 2, each subset to the digits the clock face draws and
+renamed to "Clockface Western" / "Clockface Bengali".
+
+Their notices are served to users at `/licenses.html`, reachable from the
+bottom of the in-app settings panel. That page is generated at build time by
+[`build-tools/build-licenses.ts`](./build-tools/build-licenses.ts), which reads
+the root `LICENSE` verbatim for this project's own terms — add or drop an entry
+there whenever a dependency starts or stops shipping in `dist/`.
+
 ## About
 
 Built by [Mrksye](https://github.com/mrksye), a freelance developer based in Japan.

@@ -43,10 +43,14 @@ const SWATCH_DOT_PX = 12; // w-3
 const SWATCH_GAPS_DEFAULT = [8, 8] as const;
 const SWATCH_GAPS_WHEEL = [5, 5, 6] as const;
 
+/** ライセンス表記ページ。build-tools/build-licenses.ts が同一 origin に生成する。 */
+const LICENSES_PATH = "/licenses.html";
+
 /**
  * 右上の歯車トリガー + 展開パネル。
  *
- * - パネル内は はいしょく / ぶんけい / じすう / じかんひょうき / すうじ / 言語選択 を並べる。
+ * - パネル内は はいしょく / ぶんけい / じすう / じかんひょうき / すうじ / 言語選択 を並べ、
+ *   最下部に罫線で区切ってライセンス表記 (/licenses.html) へのリンクを置く。
  * - popover content は常時マウントし、open 切替時に opacity + transform を transition させて
  *   fade/scale in-out する (ModePicker 同型)。Show でアンマウントすると enter 時の補間が走らない。
  *   content は absolute 配置で trigger 直下に重ねるので、collapsed 時のレイアウト占有はゼロ。
@@ -304,6 +308,25 @@ const SettingsPopover: Component = () => {
                 🌏
               </button>
             </div>
+          </div>
+
+          {/* ライセンス表記への導線。self-host font と bundle 内の第三者ソフトウェアの著作権表示を
+              /licenses.html (build 時生成) に置き、そこへの 1 タップだけをここに出す。設定 section
+              群の外に罫線で切り離し、子どもが操作する対象ではない旨を視覚的に分ける。
+              ラベルは SPDX / OFL の識別子そのままで翻訳キーを持たない: 遷移先の本文が英語原文
+              単一 (訳を併記すると正文が曖昧になる) なので、ラベルだけ 20 locale 化しても
+              読める先が増えるわけではない。識別子は Latin 固定文字列なので RTL でも並びが
+              崩れないよう dir=ltr をピンする (色見本 dot と同じ扱い)。 */}
+          <div class="mt-3 pt-2 border-t border-gray-200 text-center">
+            <a
+              href={LICENSES_PATH}
+              target="_blank"
+              rel="noopener noreferrer"
+              dir="ltr"
+              class="text-[10px] tablet:text-xs text-gray-400 hover:text-gray-600 no-underline"
+            >
+              MIT &middot; SIL OFL 1.1
+            </a>
           </div>
         </div>
     </div>
