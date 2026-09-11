@@ -274,8 +274,8 @@ const TimerLayout: Component = () => {
         // どちらの行き先でも timer 盤は右下支点でバイバイッと振り、フェード+縮小で去る (回転にもとけいにも
         // 連れて行かれない盤のお別れ)。
         if (timerBoardRef) boardAnimation = playWaveGoodbye(timerBoardRef);
-        // splitSide (→とけい) だけ、バイバイから少しズラして merged が「勝手に」自己分裂のクエイクをする。
-        // centerSlide (→回転) は合体時計のまま中央へ行くので震わさない。
+        // splitSide (→とけい / 自動回転) だけ、バイバイから少しズラして merged が「勝手に」自己分裂のクエイクをする。
+        // centerSlide (→自由回転) は合体時計のまま中央へ行くので震わさない。
         if (timerTransitionKind() === "splitSide" && leftFaceRef) {
           leftFaceAnimation = playSplitAnticipation(leftFaceRef);
         }

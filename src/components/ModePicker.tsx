@@ -9,17 +9,6 @@ import {
   togglePopover,
 } from "../lib/exclusive-popover";
 
-/** clock から autoRotate へは直接遷移できない FSM ルール (state.ts の ALLOWED_TRANSITIONS) を
- *  満たすため、autoRotate を選んだ時は freeRotate を経由する。 */
-const goMode = (target: ClockMode) => {
-  const current = clockMode();
-  if (current === target) return;
-  if (target === "autoRotate" && current === "clock") {
-    transition("freeRotate");
-  }
-  transition(target);
-};
-
 type ModeItem = { mode: ClockMode; labelKey: TKey };
 const ITEMS: ModeItem[] = [
   { mode: "clock", labelKey: "mode.clock" },
@@ -65,7 +54,7 @@ const ModePicker: Component = () => {
     "w-10 h-10 tablet:w-12 tablet:h-12 rounded-full bg-white/80 shadow-md flex items-center justify-center active:scale-90 transition-all text-gray-700 before:hidden";
 
   const select = (target: ClockMode) => {
-    goMode(target);
+    transition(target);
     closeActivePopover();
   };
 

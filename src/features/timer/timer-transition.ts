@@ -1,5 +1,5 @@
 import { createComputed, createEffect, createSignal, on, onCleanup } from "solid-js";
-import { isTimerMode, isRotating, mergedVisible } from "../free-rotation/state";
+import { isTimerMode, mergedVisible } from "../free-rotation/state";
 import { animateMotion, playQuake } from "../../lib/motion";
 
 /**
@@ -51,10 +51,10 @@ const CONVERGE_MS = 560;
 /** たいむ盤の boing (びよっ) 時間。 */
 const BOING_MS = 440;
 /** 退室で合体時計が分離する前の「魅せ」演出 (クエイク) の長さ。timer 盤がバイバイで去っていく裏で
- *  merged がこの間ググッと震え、終わると分離 (PM 盤の生み出し) に入る。splitSide (→とけい) でのみ使う。 */
+ *  merged がこの間ググッと震え、終わると分離 (PM 盤の生み出し) に入る。splitSide (→とけい / 自動回転) でのみ使う。 */
 const EXIT_ANTICIPATION_MS = 360;
 /** 退室で timer 盤がバイバイッと振ってフェードで去る全長 (両 kind 共通)。盤がいなくなってから
- *  exitDiverge (とけい=分離 / 回転=中央スライド) に入る。 */
+ *  exitDiverge (とけい・自動回転=分離 / 自由回転=中央スライド) に入る。 */
 const WAVE_GOODBYE_MS = 650;
 /** 入りで合体時計が timer 盤を産み出す前の「魅せ」演出 (リンリン 1 回) の長さ。この間 merged が L に単独で
  *  居て鈴のように 1 回揺れ、終わると産み出し (盤の生み出しスライド) に入る。 */
@@ -204,7 +204,7 @@ export const playMergeAnticipation = (el: Element): Animation | null => {
   return animateMotion(el, RIN_RIN_KEYFRAMES, { duration: MERGE_ANTICIPATION_MS, easing: "ease-out", fill: "none" });
 };
 
-/** 退室 (たいむ→とけい) の「魅せ」: timer 盤がバイバイで去っていく裏で、merged が「勝手に」自己分裂する
+/** 退室 (たいむ→とけい / 自動回転) の「魅せ」: timer 盤がバイバイで去っていく裏で、merged が「勝手に」自己分裂する
  *  前にググッとクエイクする。バイバイから少しズラして始める (WAVE_GOODBYE_MS の末尾でクエイクが終わり、
  *  そのまま分離 = PM 盤の生み出しへ繋がる) ため delay を入れる。すげ替えられるよう実装点はこの 1 関数に閉じる。
  *  はつかいき splash の「ググググーッ」(playQuake) を共通利用 (時計サイズ向けに振幅を上げる)。 */
@@ -293,8 +293,9 @@ export const useTimerTransition = () => {
         // 盤の生み出しは MERGE_ANTICIPATION_MS だけ遅延して走る (下流 TimerLayout)。
         after(CONVERGE_MS + MERGE_ANTICIPATION_MS + BOING_MS, () => setPhase("idle"));
       } else {
-        // 退室先が回転モードなら中央 merged 着地 (centerSlide)、clock なら split 着地 (splitSide)。
-        const exitKind: TimerTransitionKind = isRotating() ? "centerSlide" : "splitSide";
+        // 退室先がかさね表示 (freeRotate) なら中央 merged 着地 (centerSlide)、split 表示 (clock / autoRotate)
+        // なら split 着地 (splitSide)。transition() が clockMode より先に layout を確定させているので読める。
+        const exitKind: TimerTransitionKind = mergedVisible() ? "centerSlide" : "splitSide";
         setKind(exitKind);
         setMergedRevealed(true);
         setPhase("exitBoing");

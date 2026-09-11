@@ -504,10 +504,10 @@ export const ClockLayout: Component = () => {
   useTimerTransition();
 
   // 入り収束 (enterConverge) / 出り発散 (exitDiverge) の merged 盤 WAAPI スライド。
-  //   - 入り centerSlide (回転→たいむ): merged を C→L へスライド (中央かさね → たいむ L 着地)。
-  //   - 出り centerSlide (たいむ→回転): merged を L→C へスライド (たいむ L → 中央かさね)。
-  //   - 出り splitSide (たいむ→とけい): PM 盤が L 盤の裏から R へ「びよッ」と生み出される。
-  // 入り splitSide (とけい→たいむ) の PM 収束と timer盤の retreat (exitBoing) は別経路 (CSS / TimerLayout)。
+  //   - 入り centerSlide (回転かさね→たいむ): merged を C→L へスライド (中央かさね → たいむ L 着地)。
+  //   - 出り centerSlide (たいむ→自由回転): merged を L→C へスライド (たいむ L → 中央かさね)。
+  //   - 出り splitSide (たいむ→とけい / 自動回転): PM 盤が L 盤の裏から R へ「びよッ」と生み出される。
+  // 入り splitSide (とけい / 回転わけ→たいむ) の PM 収束と timer盤の retreat (exitBoing) は別経路 (CSS / TimerLayout)。
   // CSS transition では回転からの reflow で baseline を奪われ盤がスナップするので merged スライドは WAAPI で明示。
   // fill 付き WAAPI は前回分を必ず cancel + onCleanup で解放 (timeline 蓄積による弱 GPU の drop を防ぐ)。
   let transitionSlideAnimation: Animation | null = null;
