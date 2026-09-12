@@ -61,14 +61,23 @@ function skyAtMinute(totalMinutes: number): SkyColor {
   };
 }
 
+/** 弧の平坦さ。1 で正弦そのままの弧、1 未満にすると天頂の高さは変えないまま両端寄りの肩が持ち上がる。
+ *  太陽を月より小さくして、太陽のほうがなだらかなルートを通るようにしている。 */
+const SUN_ARC_FLATNESS = 0.55;
+const MOON_ARC_FLATNESS = 0.7;
+
+/** 地平線 (50%) から昇って沈む天体の縦位置。 */
+function arcYPct(progress: number, arcHeight: number, flatness: number): number {
+  return 50 - Math.sin(progress * Math.PI) ** flatness * arcHeight;
+}
+
 /** 太陽: 6 時に東の地平、12 時に天頂、18 時に西の地平。 */
 function sunPosition(totalMinutes: number): { visible: boolean; xPct: number; yPct: number } {
   const progress = (totalMinutes - 360) / 720;
   if (progress < 0 || progress > 1) return { visible: false, xPct: 0, yPct: 0 };
   const xPct = progress * 100;
   const arcHeight = 45; // %
-  const yPct = 50 - Math.sin(progress * Math.PI) * arcHeight;
-  return { visible: true, xPct, yPct };
+  return { visible: true, xPct, yPct: arcYPct(progress, arcHeight, SUN_ARC_FLATNESS) };
 }
 
 /** 月: 18 時に東、24 時に天頂、6 時に西。 */
@@ -78,8 +87,7 @@ function moonPosition(totalMinutes: number): { visible: boolean; xPct: number; y
   if (progress < 0 || progress > 1) return { visible: false, xPct: 0, yPct: 0 };
   const xPct = progress * 100;
   const arcHeight = 40;
-  const yPct = 50 - Math.sin(progress * Math.PI) * arcHeight;
-  return { visible: true, xPct, yPct };
+  return { visible: true, xPct, yPct: arcYPct(progress, arcHeight, MOON_ARC_FLATNESS) };
 }
 
 function nightness(totalMinutes: number): number {
