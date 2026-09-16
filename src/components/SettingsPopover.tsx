@@ -23,6 +23,7 @@ import {
   setHourNumeralsHidden,
 } from "../features/settings/nothing-digits-font";
 import { openLanguagePickerAtElement } from "../features/language-picker/state";
+import { BRAND_CONFIG } from "../../branding/brand.config";
 import GearIcon from "./icons/GearIcon";
 
 /**
@@ -46,11 +47,16 @@ const SWATCH_GAPS_WHEEL = [5, 5, 6] as const;
 /** ライセンス表記ページ。build-tools/build-licenses.ts が同一 origin に生成する。 */
 const LICENSES_PATH = "/licenses.html";
 
+/** 使い方・教え方を載せている LP。app 本体とは別ドメインなので brand.config から引く。
+ *  LP を持たない fork では lpDomain が null になり、その場合は導線ごと出さない
+ *  (/licenses.html のソースコードリンクが sourceCode: null で消えるのと同じ扱い)。 */
+const GUIDE_URL = BRAND_CONFIG.lpDomain ? `https://${BRAND_CONFIG.lpDomain}/` : null;
+
 /**
  * 右上の歯車トリガー + 展開パネル。
  *
  * - パネル内は はいしょく / ぶんけい / じすう / じかんひょうき / すうじ / 言語選択 を並べ、
- *   最下部に罫線で区切ってライセンス表記 (/licenses.html) へのリンクを置く。
+ *   最下部に罫線で区切って大人向けの外部導線 (使い方・教え方 / ライセンス表記) を 2 つ並べる。
  * - popover content は常時マウントし、open 切替時に opacity + transform を transition させて
  *   fade/scale in-out する (ModePicker 同型)。Show でアンマウントすると enter 時の補間が走らない。
  *   content は absolute 配置で trigger 直下に重ねるので、collapsed 時のレイアウト占有はゼロ。
@@ -85,6 +91,9 @@ const SettingsPopover: Component = () => {
   const pillActive = "bg-gray-800 text-white";
 
   const sectionLabelClass = "text-xs tablet:text-sm font-bold text-gray-600 mb-1";
+
+  const footerLinkClass =
+    "text-[10px] tablet:text-xs text-gray-400 hover:text-gray-600 no-underline";
 
   const numeralSystemActive = (s: NumeralSystem) =>
     !hourNumeralsHidden() && resolveNumeralSystem(locale().code) === s;
@@ -310,22 +319,32 @@ const SettingsPopover: Component = () => {
             </div>
           </div>
 
-          {/* ライセンス表記への導線。self-host font と bundle 内の第三者ソフトウェアの著作権表示を
-              /licenses.html (build 時生成) に置き、そこへの 1 タップだけをここに出す。設定 section
-              群の外に罫線で切り離し、子どもが操作する対象ではない旨を視覚的に分ける。
-              ラベルは SPDX / OFL の識別子そのままで翻訳キーを持たない: 遷移先の本文が英語原文
-              単一 (訳を併記すると正文が曖昧になる) なので、ラベルだけ 20 locale 化しても
-              読める先が増えるわけではない。識別子は Latin 固定文字列なので RTL でも並びが
-              崩れないよう dir=ltr をピンする (色見本 dot と同じ扱い)。 */}
-          <div class="mt-3 pt-2 border-t border-gray-200 text-center">
+          {/* 大人向けの外部導線を 2 つ。使い方・教え方は別ドメインの LP、ライセンス表記は self-host
+              font と bundle 内の第三者ソフトウェアの著作権表示を載せた /licenses.html (build 時生成)。
+              どちらも子どもが操作する対象ではないので、設定 section 群の外に罫線で切り離し、小さく
+              淡い文字で視覚的に分ける。ラベルは各 locale の訳を描画する: 遷移先のライセンス本文は
+              英語原文単一だが、そこへ向かう導線の名前まで英語にする理由は無い。訳の長さは locale で
+              まちまちなので flex-wrap で折り返させる。 */}
+          <div class="mt-3 pt-2 border-t border-gray-200 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+            <Show when={GUIDE_URL}>
+              {(url) => (
+                <a
+                  href={url()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class={footerLinkClass}
+                >
+                  {t("settings.guide")}
+                </a>
+              )}
+            </Show>
             <a
               href={LICENSES_PATH}
               target="_blank"
               rel="noopener noreferrer"
-              dir="ltr"
-              class="text-[10px] tablet:text-xs text-gray-400 hover:text-gray-600 no-underline"
+              class={footerLinkClass}
             >
-              MIT &middot; SIL OFL 1.1
+              {t("settings.licenses")}
             </a>
           </div>
         </div>

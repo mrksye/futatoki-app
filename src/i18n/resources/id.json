@@ -14,7 +14,9 @@
     "splitToTwo": "pisah",
     "rewindMinute": "mundur {n} menit",
     "random": "acak",
-    "noNumerals": "Tidak ada"
+    "noNumerals": "Tidak ada",
+    "guide": "Cara pakai & mengajar",
+    "licenses": "Lisensi"
   },
   "mode": {
     "picker": "Mode",

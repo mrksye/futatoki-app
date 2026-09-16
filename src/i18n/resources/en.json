@@ -14,7 +14,9 @@
     "splitToTwo": "split",
     "rewindMinute": "back {n} min",
     "random": "random",
-    "noNumerals": "None"
+    "noNumerals": "None",
+    "guide": "How to use & teach",
+    "licenses": "Licenses"
   },
   "mode": {
     "picker": "Mode",

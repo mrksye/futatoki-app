@@ -14,7 +14,9 @@
     "splitToTwo": "отдельно",
     "rewindMinute": "-{n} минута",
     "random": "случайно",
-    "noNumerals": "Нет"
+    "noNumerals": "Нет",
+    "guide": "Как пользоваться и учить",
+    "licenses": "Лицензии"
   },
   "mode": {
     "picker": "Режим",

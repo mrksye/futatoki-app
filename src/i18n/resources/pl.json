@@ -14,7 +14,9 @@
     "splitToTwo": "rozdziel",
     "rewindMinute": "cofnij o {n} min",
     "random": "losowo",
-    "noNumerals": "Brak"
+    "noNumerals": "Brak",
+    "guide": "Poradnik i wskazówki",
+    "licenses": "Licencje"
   },
   "mode": {
     "picker": "Tryb",

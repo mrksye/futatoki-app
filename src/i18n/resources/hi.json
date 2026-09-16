@@ -14,7 +14,9 @@
     "splitToTwo": "अलग",
     "rewindMinute": "{n} मिनट पीछे",
     "random": "कोई भी",
-    "noNumerals": "कोई नहीं"
+    "noNumerals": "कोई नहीं",
+    "guide": "उपयोग और सिखाने का तरीका",
+    "licenses": "लाइसेंस"
   },
   "mode": {
     "picker": "मोड",

@@ -14,7 +14,9 @@
     "splitToTwo": "séparer",
     "rewindMinute": "{n} min avant",
     "random": "au hasard",
-    "noNumerals": "Aucun"
+    "noNumerals": "Aucun",
+    "guide": "Guide et conseils",
+    "licenses": "Licences"
   },
   "mode": {
     "picker": "Mode",

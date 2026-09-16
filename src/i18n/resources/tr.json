@@ -14,7 +14,9 @@
     "splitToTwo": "ayır",
     "rewindMinute": "{n} dk geri",
     "random": "rastgele",
-    "noNumerals": "Yok"
+    "noNumerals": "Yok",
+    "guide": "Kullanım ve öğretme",
+    "licenses": "Lisanslar"
   },
   "mode": {
     "picker": "Mod",

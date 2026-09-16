@@ -14,7 +14,9 @@
     "splitToTwo": "わける",
     "rewindMinute": "{n}ふんもどす",
     "random": "らんだむ",
-    "noNumerals": "なし"
+    "noNumerals": "なし",
+    "guide": "使い方・教え方",
+    "licenses": "ライセンス表記"
   },
   "mode": {
     "picker": "もーど",

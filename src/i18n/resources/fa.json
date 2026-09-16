@@ -14,7 +14,9 @@
     "splitToTwo": "جُدا",
     "rewindMinute": "{n} دَقیقه عَقَب",
     "random": "تَصادُفی",
-    "noNumerals": "هیچ"
+    "noNumerals": "هیچ",
+    "guide": "راهنَمایِ اِستِفاده و آموزِش",
+    "licenses": "مُجَوِّزها"
   },
   "mode": {
     "picker": "حالَت",
