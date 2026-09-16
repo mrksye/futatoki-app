@@ -16,12 +16,12 @@ import {
   type PopoverName,
 } from "../lib/exclusive-popover";
 import BoldIcon from "./icons/BoldIcon";
-import HiddenIcon from "./icons/HiddenIcon";
+import EyeIcon from "./icons/EyeIcon";
 
 /**
  * じどうかいてん (autoRotate) 中だけ下 2 隅に出る読み取り補助メニュー。
  *  - 下奥 (end, LTR では右下): B アイコン → 分数を大きく / 時数を大きく / なし
- *  - 下手前 (start, LTR では左下): 目に斜線のアイコン → ながいはり / みじかいはり / りょうほう
+ *  - 下手前 (start, LTR では左下): 目のアイコン → ながいはり / みじかいはり / りょうほう
  *
  * 同じ隅を じゆうかいてん の かさねる/らんだむ (RotationActions) と分け合うが、あちらは
  * freeRotate 中しか出ないので両者が同時に居ることはない。
@@ -168,7 +168,7 @@ const AutoRotateActions: Component = () => (
       side="start"
       popover="autoRotateHandFade"
       triggerLabelKey="autoRotate.visibleHand"
-      icon={<HiddenIcon class="w-5 h-5 tablet:w-6 tablet:h-6" />}
+      icon={<EyeIcon class="w-5 h-5 tablet:w-6 tablet:h-6" />}
       items={HAND_FADE_ITEMS}
       current={handFade}
       onSelect={selectHandFade}
