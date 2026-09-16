@@ -64,7 +64,12 @@ function skyAtMinute(totalMinutes: number): SkyColor {
 /** 弧の平坦さ。1 で正弦そのままの弧、1 未満にすると天頂の高さは変えないまま両端寄りの肩が持ち上がる。
  *  太陽を月より小さくして、太陽のほうがなだらかなルートを通るようにしている。 */
 const SUN_ARC_FLATNESS = 0.55;
-const MOON_ARC_FLATNESS = 0.7;
+const MOON_ARC_FLATNESS = 0.6;
+
+/** 月の天頂付近だけを下げる量 (%) と、その効き幅を決める鋭さ。鋭さの指数が大きいほど下げが頂点に集中し、
+ *  両端寄りの肩は弧のままの高さで残る。 */
+const MOON_APEX_DIP = 3.5;
+const MOON_APEX_DIP_SHARPNESS = 5;
 
 /** 地平線 (50%) から昇って沈む天体の縦位置。 */
 function arcYPct(progress: number, arcHeight: number, flatness: number): number {
@@ -86,8 +91,9 @@ function moonPosition(totalMinutes: number): { visible: boolean; xPct: number; y
   const progress = moonMin / 720;
   if (progress < 0 || progress > 1) return { visible: false, xPct: 0, yPct: 0 };
   const xPct = progress * 100;
-  const arcHeight = 40;
-  return { visible: true, xPct, yPct: arcYPct(progress, arcHeight, MOON_ARC_FLATNESS) };
+  const arcHeight = 47; // %
+  const apexDip = MOON_APEX_DIP * Math.sin(progress * Math.PI) ** MOON_APEX_DIP_SHARPNESS;
+  return { visible: true, xPct, yPct: arcYPct(progress, arcHeight, MOON_ARC_FLATNESS) + apexDip };
 }
 
 function nightness(totalMinutes: number): number {
