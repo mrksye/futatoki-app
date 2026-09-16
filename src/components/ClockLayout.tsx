@@ -25,7 +25,11 @@ import {
   computeMaxClockSize,
 } from "../features/layout/palette-clearance";
 import { clockMode, isRotating, isTimerMode, rotateMinutes, seekRotate, transition } from "../features/free-rotation/state";
-import { useAutoRotateTick } from "../features/free-rotation/auto-rotate";
+import {
+  useAutoRotateTick,
+  autoRotatePaused,
+  toggleAutoRotatePause,
+} from "../features/free-rotation/auto-rotate";
 import { useIdleExitTimer } from "../features/free-rotation/idle-exit";
 import {
   useMergeAnimation,
@@ -205,9 +209,13 @@ export const ClockLayout: Component = () => {
   });
 
   /** drag / autoRotate 中は rotateMinutes が連続的に動く状態。release-snap の snap 抑制と
-   *  display の float-vs-ceil 切替に使う。 */
+   *  display の float-vs-ceil 切替に使う。タップで止めた じどうかいてん は動いていないので、
+   *  止めた瞬間に release-snap が走って針が整数分に収まる (止まった盤はそのまま読み取りの
+   *  問題になるため、小数分のまま残さない)。 */
   const [dragging, setDragging] = createSignal(false);
-  const moving = createMemo(() => dragging() || clockMode() === "autoRotate");
+  const moving = createMemo(
+    () => dragging() || (clockMode() === "autoRotate" && !autoRotatePaused()),
+  );
   /** 実ドラッグが確定したか (pointerdown から閾値を超えて動いた)。静止長押し中は false のまま。
    *  反対側 split 盤の unmount (合成負荷軽減) はこの確定後だけに限定し、長押し中は薄い側の盤も残す。 */
   const [dragConfirmed, setDragConfirmed] = createSignal(false);
@@ -323,7 +331,10 @@ export const ClockLayout: Component = () => {
 
   /** pointer が pressOrigin から閾値を超えて動いたら実ドラッグと確定する。確定で反対側 split 盤の unmount を
    *  許可し (dragConfirmed)、静止前提の長押し warning も取り消す。閾値内に留まる長押し中は dragConfirmed が
-   *  false のまま = 薄い側の盤も見えたまま残る。 */
+   *  false のまま = 薄い側の盤も見えたまま残る。
+   *
+   *  じどうかいてん から じゆうかいてん へ移るのもこの確定が唯一の入口。タップと区別がつかないうちは
+   *  モードを動かさず、閾値を超えて初めて「触って直したい」と判断する。 */
   const confirmDragOnMove = (e: PointerEvent) => {
     if (dragConfirmed()) return;
     const dx = e.clientX - pressOriginX;
@@ -331,6 +342,12 @@ export const ClockLayout: Component = () => {
     if (Math.hypot(dx, dy) <= ROTATION_DRAG_CONFIRM_THRESHOLD_PX) return;
     setDragConfirmed(true);
     cancelLongPressWarning();
+    if (clockMode() === "autoRotate") {
+      transition("freeRotate");
+      // 閾値までの移動は捨てて指の現在地から握り直す。押下時点の rotateMinutes を基準にすると、
+      // 確定までの間に自動進行した分だけ盤が巻き戻って見える。
+      dragRef = dragStart(e, rotateMinutes());
+    }
   };
 
   const cancelLongPressWarning = () => {
@@ -343,16 +360,11 @@ export const ClockLayout: Component = () => {
 
   const onDragStart = (e: PointerEvent) => {
     if (!isRotating()) return;
-    // warning / resetWarning 中の周辺タップは drag や autoRotate 切替より先にキャンセルを優先。
+    // warning / resetWarning 中の周辺タップは drag より先にキャンセルを優先。
     // (ActivityLayer の透明 rect は SVG 領域だけ覆ってるので、地の余白タップはここで拾う)。
     const it = interaction().type;
     if (it === "warning" || it === "resetWarning") {
       cancelWarning();
-      return;
-    }
-    // autoRotate 中の背景タップは freeRotate へ切替て停止 (左下「すとっぷ」と同等の操作)。
-    if (clockMode() === "autoRotate") {
-      transition("freeRotate");
       return;
     }
     // 直前 release で release-snap の commit が pending だった場合は先に flush。これを
@@ -377,7 +389,12 @@ export const ClockLayout: Component = () => {
     // pressOrigin も更新しないため、ここを前に置くと clock モードの pointermove が古い pressOrigin
     // との距離で dragConfirmed を誤って latch し、反対側の盤が永久に消える。
     confirmDragOnMove(e);
-    queueSeek(dragAdvance(e, s));
+    // 確定時に じどうかいてん から握り直した場合 dragRef が差し替わっているので読み直す。
+    const current = dragRef;
+    if (!current) return;
+    const next = dragAdvance(e, current);
+    // じどうかいてん のままここへ来るのは「まだタップかもしれない」間だけ。盤は自動進行に任せる。
+    if (clockMode() === "freeRotate") queueSeek(next);
   };
 
   const onDragEnd = (e: PointerEvent) => {
@@ -386,6 +403,12 @@ export const ClockLayout: Component = () => {
     if (!s || e.pointerId !== s.pointerId) return;
     const el = e.currentTarget as HTMLElement;
     if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId);
+    // ドラッグに育たないまま指を離した = タップ。じどうかいてん の進行を止める / また動かす。
+    // pointercancel (browser にジェスチャを持って行かれた等) は本人の離す操作ではないので除く。
+    // setDragging(false) より先に倒すことで、止めた時だけ moving が落ちて release-snap が走る。
+    if (e.type === "pointerup" && !dragConfirmed() && clockMode() === "autoRotate") {
+      toggleAutoRotatePause();
+    }
     dragRef = null;
     setDragging(false);
     setDragConfirmed(false);
@@ -700,11 +723,8 @@ export const ClockLayout: Component = () => {
           ref={containerRef}
           class={"absolute inset-0 flex items-stretch " + (isLandscape() ? "flex-row" : "flex-col")}
           style={{
-            "touch-action": clockMode() === "freeRotate" ? "none" : "auto",
-            cursor:
-              clockMode() === "freeRotate"
-                ? (dragging() ? "grabbing" : "grab")
-                : "default",
+            "touch-action": isRotating() ? "none" : "auto",
+            cursor: isRotating() ? (dragging() ? "grabbing" : "grab") : "default",
           }}
           onPointerDown={onDragStart}
           onPointerMove={onDragMove}
@@ -794,7 +814,7 @@ export const ClockLayout: Component = () => {
             CSS transition が発火する。詳細は merge-animation.ts)。 */}
         <Show when={mergedVisible() || transitioning() || clockShowsMergedAtLeft()}>
           {/* pointer-events-none のままでも子 (icon 等) からの bubble は handler に届くので、merged β
-              内の icon ドラッグも autoRotate→freeRotate / drag に拾える。touch-action は icon 等の祖先を辿る
+              内の icon ドラッグも drag / じどうかいてん からの じゆうかいてん 入りに拾える。touch-action は icon 等の祖先を辿る
               ので、ここに none を置かないと browser が touch を panning に取られる (containerRef は
               別 subtree なので touch-action が継承されない)。 */}
           <div
@@ -811,7 +831,7 @@ export const ClockLayout: Component = () => {
                 : mergedTransform(mergedRevealed()),
               "transform-origin": "center",
               "will-change": transitioning() || timerTransitioning() ? "transform, opacity" : "auto",
-              "touch-action": clockMode() === "freeRotate" ? "none" : "auto",
+              "touch-action": isRotating() ? "none" : "auto",
             }}
             onPointerDown={onDragStart}
             onPointerMove={onDragMove}

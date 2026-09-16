@@ -26,7 +26,7 @@ Targets kids who read digital clocks fluently but can't yet parse analog ones. T
 
 * 🌓 **AM/PM stack & split** — one 12-hour face, or two parallel faces for both halves of the day
 * 🕛 **True 24-hour design** — AM face untouched (1–12); PM side adds 13–23
-* ☀️ **Visible clock-hand movement** — a full day in ~24 seconds; sun and moon arc across a shifting sky
+* ☀️ **Visible clock-hand movement** — a full day in ~24 seconds; sun and moon arc across a shifting sky; tap the face to freeze it and read the time, tap again to resume
 * 🔄 **Drag-anywhere spinning** — free rotation from any spot on screen; one-handed phone use works
 * 🔢 **Three reading stages** — *Badge × Simple* → *Slices × Detailed* (1–60 minute marks) → *Slices × Simple*
 * 🎨 **Color as helper lines** — six palettes (incl. colorblind-friendly), as temporary scaffolding
