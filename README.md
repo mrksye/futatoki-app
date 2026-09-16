@@ -31,7 +31,6 @@ Targets kids who read digital clocks fluently but can't yet parse analog ones. T
 * 🔢 **Three reading stages** — *Badge × Simple* → *Slices × Detailed* (1–60 minute marks) → *Slices × Simple*
 * 🎨 **Color as helper lines** — six palettes (incl. colorblind-friendly), as temporary scaffolding
 * 📌 **Activity drops** — icons on the dial as completed stamps or upcoming events that animate as the clock hand approaches
-* 🎲 **Random quiz** — random 15-minute interval, for reading practice
 * 📱 **PWA** — installable, offline-capable
 * 🌍 **Multilingual** — see [CONTRIBUTING.md](./CONTRIBUTING.md) for status
 * 🔒 **No ads, no tracking, no accounts** — fully client-side

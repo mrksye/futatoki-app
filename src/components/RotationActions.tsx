@@ -6,9 +6,9 @@ import {
   isRotating,
   mergedVisible,
   toggleLayout,
+  transition,
 } from "../features/free-rotation/state";
 import { useRewindHold } from "../features/free-rotation/rewind";
-import { randomizeRotate } from "../features/free-rotation/random-time";
 import { openPickerAtElement } from "../features/activity/picker";
 import { usePaletteClearance } from "../features/layout/palette-clearance";
 import RewindIcon from "./icons/RewindIcon";
@@ -18,7 +18,7 @@ import RewindIcon from "./icons/RewindIcon";
  *  - LEFT slot (中央上/中央左): できごと追加 (freeRotate)。AM/PM バッジと同位置で crossfade。
  *  - RIGHT slot (中央下/中央右): 1ふんもどす (freeRotate)。長押しで連続巻き戻し。
  *  - 左下: かさねる/わける (freeRotate)。
- *  - 右下: らんだむ (freeRotate)。
+ *  - 右下: じどうかいてん へ切替 (freeRotate)。
  *
  * AM/PM バッジは ClockLayout 側に居て同じ slot 位置を共有する (slot-crossfade で 100ms 入れ替え)。
  */
@@ -58,11 +58,15 @@ const RotationActions: Component = () => {
             aria-label={mergedVisible() ? t("settings.splitToTwo") : t("settings.mergeToSingle")}
           />
 
-          {/* 下奥 (end, LTR では右下 / RTL では左下): らんだむ (押すたびに 15 分刻みの別時刻へ) */}
+          {/* 下奥 (end, LTR では右下 / RTL では左下): じどうかいてん へ直行。もーど を開かずに
+              「触って直す」から「眺める」へ移れる。戻りは じどうかいてん の盤ドラッグなので
+              往復とも 1 アクションで閉じる。ラベルは ModePicker と同じ mode.auto を共有する
+              (同じモードは同じ言葉で呼ぶ)。モード遷移でこのボタン自身が消えるため、pointerdown では
+              なく click で遷移する (兄弟の かさねる は同モード内トグルなので pointerdown のまま)。 */}
           <button
             class={`fixed bottom-[var(--safe-edge-bottom)] end-[var(--safe-edge-end)] z-50 ${btnClass}`}
-            onPointerDown={randomizeRotate}
-            aria-label={t("settings.random")}
+            onClick={() => transition("autoRotate")}
+            aria-label={t("mode.auto")}
           />
         </Show>
       </Show>

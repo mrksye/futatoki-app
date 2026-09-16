@@ -13,7 +13,6 @@
     "mergeToSingle": "stack",
     "splitToTwo": "split",
     "rewindMinute": "back {n} min",
-    "random": "random",
     "noNumerals": "None",
     "guide": "How to use & teach",
     "licenses": "Licenses"
