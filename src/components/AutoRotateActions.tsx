@@ -21,7 +21,7 @@ import HiddenIcon from "./icons/HiddenIcon";
 /**
  * じどうかいてん (autoRotate) 中だけ下 2 隅に出る読み取り補助メニュー。
  *  - 下奥 (end, LTR では右下): B アイコン → 分数を大きく / 時数を大きく / なし
- *  - 下手前 (start, LTR では左下): 目に斜線のアイコン → 短針を薄く / 長針を薄く / なし
+ *  - 下手前 (start, LTR では左下): 目に斜線のアイコン → ながいはり / みじかいはり / りょうほう
  *
  * 同じ隅を じゆうかいてん の かさねる/らんだむ (RotationActions) と分け合うが、あちらは
  * freeRotate 中しか出ないので両者が同時に居ることはない。
@@ -39,10 +39,15 @@ const EMPHASIS_ITEMS: readonly MenuItem<NumeralEmphasis>[] = [
   { value: "none", labelKey: "autoRotate.normal" },
 ];
 
+/**
+ * 針のメニューだけはラベルと値が入れ替わる。ラベルは「読むために残す針」を名乗り、HandFade の値は
+ * 「薄める針」なので、ながいはりを選んだら短針 (hour) が薄くなる。子どもは残る針を選ぶのであって
+ * 消す針を選ぶのではない、という読み方に表示を合わせてある。
+ */
 const HAND_FADE_ITEMS: readonly MenuItem<HandFade>[] = [
-  { value: "hour", labelKey: "autoRotate.fadeHour" },
-  { value: "minute", labelKey: "autoRotate.fadeMinute" },
-  { value: "none", labelKey: "autoRotate.normal" },
+  { value: "hour", labelKey: "autoRotate.handLong" },
+  { value: "minute", labelKey: "autoRotate.handShort" },
+  { value: "none", labelKey: "autoRotate.handsBoth" },
 ];
 
 /** 1 ボタンあたりの stagger 間隔。ModePicker と揃える。 */
@@ -162,7 +167,7 @@ const AutoRotateActions: Component = () => (
     <CornerMenu
       side="start"
       popover="autoRotateHandFade"
-      triggerLabelKey="autoRotate.fade"
+      triggerLabelKey="autoRotate.visibleHand"
       icon={<HiddenIcon class="w-5 h-5 tablet:w-6 tablet:h-6" />}
       items={HAND_FADE_ITEMS}
       current={handFade}

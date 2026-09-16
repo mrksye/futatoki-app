@@ -49,9 +49,10 @@
     "emphasis": "Ingrandire i numeri",
     "emphasisMinute": "numeri dei minuti",
     "emphasisHour": "numeri delle ore",
-    "fade": "Sbiadire una lancetta",
-    "fadeHour": "lancetta corta",
-    "fadeMinute": "lancetta lunga",
+    "visibleHand": "Lancetta da leggere",
+    "handLong": "lancetta lunga",
+    "handShort": "lancetta corta",
+    "handsBoth": "le due lancette",
     "normal": "normale"
   },
   "activity": {

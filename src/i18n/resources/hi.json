@@ -49,9 +49,10 @@
     "emphasis": "अंक बड़े करो",
     "emphasisMinute": "मिनट के अंक",
     "emphasisHour": "घंटे के अंक",
-    "fade": "सुई हल्की करो",
-    "fadeHour": "छोटी सुई",
-    "fadeMinute": "बड़ी सुई",
+    "visibleHand": "कौन सी सुई देखें",
+    "handLong": "बड़ी सुई",
+    "handShort": "छोटी सुई",
+    "handsBoth": "दोनों सुइयाँ",
     "normal": "सामान्य"
   },
   "activity": {

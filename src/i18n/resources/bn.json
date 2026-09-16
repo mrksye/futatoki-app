@@ -49,9 +49,10 @@
     "emphasis": "সংখ্যা বড় করো",
     "emphasisMinute": "মিনিটের সংখ্যা",
     "emphasisHour": "ঘণ্টার সংখ্যা",
-    "fade": "কাঁটা হালকা করো",
-    "fadeHour": "ছোট কাঁটা",
-    "fadeMinute": "বড় কাঁটা",
+    "visibleHand": "কোন কাঁটা দেখব",
+    "handLong": "বড় কাঁটা",
+    "handShort": "ছোট কাঁটা",
+    "handsBoth": "দুটো কাঁটা",
     "normal": "স্বাভাবিক"
   },
   "activity": {

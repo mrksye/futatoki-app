@@ -49,9 +49,10 @@
     "emphasis": "بُزُرگ کَردَنِ عَددها",
     "emphasisMinute": "عَددهایِ دَقیقه",
     "emphasisHour": "عَددهایِ ساعَت",
-    "fade": "کَم‌رَنگ کَردَنِ عَقربه",
-    "fadeHour": "عَقربهٔ کوتاه",
-    "fadeMinute": "عَقربهٔ بُلَند",
+    "visibleHand": "کُدام عَقربه را بِخوانیم",
+    "handLong": "عَقربهٔ بُلَند",
+    "handShort": "عَقربهٔ کوتاه",
+    "handsBoth": "هَر دو عَقربه",
     "normal": "عادی"
   },
   "activity": {

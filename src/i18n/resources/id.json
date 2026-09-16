@@ -49,9 +49,10 @@
     "emphasis": "Perbesar angka",
     "emphasisMinute": "angka menit",
     "emphasisHour": "angka jam",
-    "fade": "Samarkan jarum",
-    "fadeHour": "jarum pendek",
-    "fadeMinute": "jarum panjang",
+    "visibleHand": "Jarum yang dibaca",
+    "handLong": "jarum panjang",
+    "handShort": "jarum pendek",
+    "handsBoth": "kedua jarum",
     "normal": "normal"
   },
   "activity": {

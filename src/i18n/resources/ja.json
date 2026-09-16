@@ -49,9 +49,10 @@
     "emphasis": "すうじをおおきく",
     "emphasisMinute": "ふんのすうじ",
     "emphasisHour": "じのすうじ",
-    "fade": "はりをうすく",
-    "fadeHour": "みじかいはり",
-    "fadeMinute": "ながいはり",
+    "visibleHand": "みるはり",
+    "handLong": "ながいはり",
+    "handShort": "みじかいはり",
+    "handsBoth": "りょうほう",
     "normal": "ふつう"
   },
   "activity": {

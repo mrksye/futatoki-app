@@ -49,9 +49,10 @@
     "emphasis": "Agrandar números",
     "emphasisMinute": "números de minutos",
     "emphasisHour": "números de horas",
-    "fade": "Aclarar manecilla",
-    "fadeHour": "manecilla corta",
-    "fadeMinute": "manecilla larga",
+    "visibleHand": "Manecilla para leer",
+    "handLong": "manecilla larga",
+    "handShort": "manecilla corta",
+    "handsBoth": "las dos manecillas",
     "normal": "normal"
   },
   "activity": {

@@ -49,9 +49,10 @@
     "emphasis": "Sayıları büyüt",
     "emphasisMinute": "dakika sayıları",
     "emphasisHour": "saat sayıları",
-    "fade": "İbreyi soluklaştır",
-    "fadeHour": "akrep",
-    "fadeMinute": "yelkovan",
+    "visibleHand": "Okunacak ibre",
+    "handLong": "yelkovan",
+    "handShort": "akrep",
+    "handsBoth": "ikisi de",
     "normal": "normal"
   },
   "activity": {

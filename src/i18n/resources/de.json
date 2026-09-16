@@ -49,9 +49,10 @@
     "emphasis": "Zahlen größer",
     "emphasisMinute": "Minutenzahlen",
     "emphasisHour": "Stundenzahlen",
-    "fade": "Zeiger blasser",
-    "fadeHour": "kleiner Zeiger",
-    "fadeMinute": "großer Zeiger",
+    "visibleHand": "Zeiger zum Ablesen",
+    "handLong": "großer Zeiger",
+    "handShort": "kleiner Zeiger",
+    "handsBoth": "beide Zeiger",
     "normal": "normal"
   },
   "activity": {

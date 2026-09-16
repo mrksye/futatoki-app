@@ -49,9 +49,10 @@
     "emphasis": "اَعداد بَڑے کَرو",
     "emphasisMinute": "مِنَٹ کے اَعداد",
     "emphasisHour": "گَھنٹے کے اَعداد",
-    "fade": "سُوئی ہَلکی کَرو",
-    "fadeHour": "چھوٹی سُوئی",
-    "fadeMinute": "بَڑی سُوئی",
+    "visibleHand": "کَون سی سُوئی دیکھیں",
+    "handLong": "بَڑی سُوئی",
+    "handShort": "چھوٹی سُوئی",
+    "handsBoth": "دونوں سُوئِیاں",
     "normal": "عام"
   },
   "activity": {

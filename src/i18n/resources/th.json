@@ -49,9 +49,10 @@
     "emphasis": "ขยายตัวเลข",
     "emphasisMinute": "ตัวเลขนาที",
     "emphasisHour": "ตัวเลขชั่วโมง",
-    "fade": "ทำให้เข็มจาง",
-    "fadeHour": "เข็มสั้น",
-    "fadeMinute": "เข็มยาว",
+    "visibleHand": "เข็มที่จะอ่าน",
+    "handLong": "เข็มยาว",
+    "handShort": "เข็มสั้น",
+    "handsBoth": "ทั้งสองเข็ม",
     "normal": "ปกติ"
   },
   "activity": {

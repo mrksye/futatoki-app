@@ -49,9 +49,10 @@
     "emphasis": "Enlarge numerals",
     "emphasisMinute": "minute numbers",
     "emphasisHour": "hour numbers",
-    "fade": "Fade a hand",
-    "fadeHour": "short hand",
-    "fadeMinute": "long hand",
+    "visibleHand": "Hand to read",
+    "handLong": "long hand",
+    "handShort": "short hand",
+    "handsBoth": "both hands",
     "normal": "normal"
   },
   "activity": {

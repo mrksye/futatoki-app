@@ -49,9 +49,10 @@
     "emphasis": "数字变大",
     "emphasisMinute": "分的数字",
     "emphasisHour": "时的数字",
-    "fade": "指针变淡",
-    "fadeHour": "短针",
-    "fadeMinute": "长针",
+    "visibleHand": "看哪根针",
+    "handLong": "长针",
+    "handShort": "短针",
+    "handsBoth": "两根针",
     "normal": "普通"
   },
   "activity": {

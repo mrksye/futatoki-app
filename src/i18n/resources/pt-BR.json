@@ -49,9 +49,10 @@
     "emphasis": "Aumentar os números",
     "emphasisMinute": "números dos minutos",
     "emphasisHour": "números das horas",
-    "fade": "Clarear um ponteiro",
-    "fadeHour": "ponteiro pequeno",
-    "fadeMinute": "ponteiro grande",
+    "visibleHand": "Ponteiro para ler",
+    "handLong": "ponteiro grande",
+    "handShort": "ponteiro pequeno",
+    "handsBoth": "os dois ponteiros",
     "normal": "normal"
   },
   "activity": {

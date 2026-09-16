@@ -49,9 +49,10 @@
     "emphasis": "숫자 크게",
     "emphasisMinute": "분 숫자",
     "emphasisHour": "시 숫자",
-    "fade": "바늘 흐리게",
-    "fadeHour": "짧은바늘",
-    "fadeMinute": "긴바늘",
+    "visibleHand": "읽을 바늘",
+    "handLong": "긴바늘",
+    "handShort": "짧은바늘",
+    "handsBoth": "두 바늘",
     "normal": "보통"
   },
   "activity": {
