@@ -43,6 +43,15 @@
     "timeFormat": "じかんひょうき",
     "numeral": "すうじ"
   },
+  "autoRotate": {
+    "emphasis": "すうじをおおきく",
+    "emphasisMinute": "ふんのすうじ",
+    "emphasisHour": "じのすうじ",
+    "fade": "はりをうすく",
+    "fadeHour": "みじかいはり",
+    "fadeMinute": "ながいはり",
+    "normal": "ふつう"
+  },
   "activity": {
     "add": "できごと",
     "reset": "りせっと",

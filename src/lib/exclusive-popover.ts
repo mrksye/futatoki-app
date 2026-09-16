@@ -1,14 +1,19 @@
 import { createSignal } from "solid-js";
 
 /**
- * 画面に同時に開ける popover/メニューを 1 つに制限する共有 signal。SettingsPopover (右上歯車) と
- * ModePicker (左上モードアイコン) のように同種 FAB が複数走るとき、両方を同時に開けてしまうと
- * UI が散らかる。両 popover は同じ z 階層 (overlay z-[55] / content z-[60]) で運用されているため
- * overlay の物理遮蔽では排他にならず、open 状態をここに一極集中で持つ。別 popover を toggle すると
+ * 画面に同時に開ける popover/メニューを 1 つに制限する共有 signal。SettingsPopover (右上歯車)、
+ * ModePicker (左上モードアイコン)、AutoRotateActions (下 2 隅) のように同種 FAB が複数走るとき、
+ * 複数を同時に開けてしまうと UI が散らかる。各 popover は同じ z 階層 (overlay z-[55] /
+ * content z-[60]) で運用されているため overlay の物理遮蔽では排他にならず、open 状態をここに
+ * 一極集中で持つ。別 popover を toggle すると
  * active が上書きされ、前に開いていた popover の派生 accessor (open() / expanded()) が false に倒れて
  * 勝手に閉じる仕組み。
  */
-export type PopoverName = "settings" | "mode";
+export type PopoverName =
+  | "settings"
+  | "mode"
+  | "autoRotateEmphasis"
+  | "autoRotateHandFade";
 
 const [active, setActive] = createSignal<PopoverName | null>(null);
 

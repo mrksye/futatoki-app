@@ -3,6 +3,10 @@ import { colorMode } from "../../features/settings/color-mode";
 import { displayedFormatAt } from "../../features/settings/time-format-animation";
 import { paletteId } from "../../features/settings/palette";
 import { applyNothingDigitsFont } from "../../features/settings/nothing-digits-font";
+import {
+  emphasizedHourPosition,
+  emphasizedMinuteNumber,
+} from "../../features/free-rotation/auto-rotate-view";
 import { getPalette, type HourColor } from "../../colors";
 import { animateMotion } from "../../lib/motion";
 import { prerollKey, PULSE_MS } from "../../features/settings/time-format-preroll";
@@ -82,6 +86,37 @@ const PULSE_SCALE_KEYFRAMES: Keyframe[] = [
  *  ascent/descent 中点に揃えるが、数字は descender を持たないぶん光学的な重心より上に乗って
  *  見えるので、時数・分計とも一律に押し戻して盤面の中央に座らせる。 */
 const NUMERAL_BASELINE_NUDGE = 1;
+
+/** じどうかいてん中の数字強調。分数と時数で倍率を変えるのは、分数のグリフ (font-size 8〜11) が
+ *  時数 (18〜42) よりずっと小さく、同じ倍率では「大きくなった」と読めないため。どちらも隣の数字と
+ *  比べてやっと分かる程度に留め、盤のリズムを崩さない。
+ *
+ *  transition は「強調が隣へ移る速さ」に対してほぼゼロでなければ強調にならない。じどうかいてんは
+ *  1 日 24 秒なので長針は毎秒 1 周、短針は毎秒 1 時間ぶん進む。つまり分数は 1 フレーム (≒16ms)、
+ *  時数は 1 秒ごとに隣へ移る。
+ *   - 分数: 1 フレームしか居座らないので transition を掛けると目標倍率に届く前に縮み始め、数個の
+ *     数字が中途半端に膨らんだ滲みになる。即時切替にして 1 フレームぶん確実に最大まで膨らませ、
+ *     長針と一緒に回る 1 つのコブとして見せる。
+ *   - 時数: 1 秒居座るので膨らむ間を取れるが、長さがそのまま「盤上で何分遅れて効くか」になる
+ *     (60 分/秒 なので 200ms = 12 分の遅れ)。遅れが読み取りの邪魔にならない範囲まで詰める。 */
+const MINUTE_NUMERAL_EMPHASIS_SCALE = 1.45;
+const MINUTE_NUMERAL_EMPHASIS_TRANSITION = "none";
+/** 強調中の分数字のインク。通常の分数字は盤の主役を時数に譲るためグレー (5 分刻み #444 / それ以外
+ *  #666) で置いているが、強調の 1 フレームだけ時数と同じ黒に振って前へ出す。倍率だけでは 1 フレーム
+ *  の点滅が小さなグレー文字の中に埋もれるので、大きさと濃さの 2 つで同時に押し出す。 */
+const MINUTE_NUMERAL_EMPHASIS_FILL = "#111111";
+const HOUR_NUMERAL_EMPHASIS_SCALE = 1.14;
+const HOUR_NUMERAL_EMPHASIS_TRANSITION = "transform 50ms ease-out";
+
+/** 強調中の数字に載せる SVG インライン style。拡大の支点はグリフ自身の中央 (fill-box) に取り、
+ *  盤上の座標 (x/y 属性) は動かさないので、時数の <g> バウンスや PM の 12 ドゥンドゥドゥンッと
+ *  transform を取り合わない (親 <g> と子 <text> で別々の transform が乗るだけ)。 */
+const numeralEmphasisStyle = (emphasized: boolean, scale: number, transition: string) => ({
+  "transform-box": "fill-box" as const,
+  "transform-origin": "center" as const,
+  transform: emphasized ? `scale(${scale})` : "scale(1)",
+  transition,
+});
 
 /** 時間の数字 font-size。ばっじ×すっきり×ものとーんだけバッジの円が白で消えるので数字を少し大きく。
  *  ばっじモードでも すっきり/くわしく で差別化 (くぎりモードと同じ流儀)。
@@ -182,6 +217,12 @@ interface FaceDetailProps {
 
 const FaceDetail: Component<FaceDetailProps> = (props) => {
   const { formatNumeral } = useI18n();
+
+  /** じどうかいてん中に強調する分数 / 時数ポジション。どちらも rotateMinutes 由来で毎フレーム
+   *  再計算されるので、60 個の分数字・12 個の時数それぞれに購読させず memo 1 つに畳む
+   *  (memo の値が変わるのは分/時が切り替わった瞬間だけなので、下流の DOM 更新もその時だけ)。 */
+  const emphasizedMinute = createMemo(emphasizedMinuteNumber);
+  const emphasizedHour = createMemo(emphasizedHourPosition);
 
   /** period × palette から 12 個の時間色を引く。merged 時、vivid は時刻で AM/PM 切替、それ以外は am 流用
    *  (vivid 以外は AM=PM の同色なので)。 */
@@ -346,17 +387,27 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
             const x = () => CENTER + minuteNumberRadius() * Math.cos(angle());
             const y = () => CENTER + minuteNumberRadius() * Math.sin(angle());
             const is5 = () => min() % 5 === 0;
+            const emphasized = () => emphasizedMinute() === min();
             return (
               <text
                 x={x()}
                 y={y()}
                 dy={NUMERAL_BASELINE_NUDGE}
+                style={numeralEmphasisStyle(
+                  emphasized(),
+                  MINUTE_NUMERAL_EMPHASIS_SCALE,
+                  MINUTE_NUMERAL_EMPHASIS_TRANSITION,
+                )}
                 text-anchor="middle"
                 dominant-baseline="central"
                 font-size={is5() ? "11" : "8"}
                 font-weight={is5() ? "900" : "700"}
                 font-family="Clockface Bengali, Clockface Western, sans-serif"
-                fill={is5() ? "#444444" : "#666666"}
+                fill={
+                  emphasized()
+                    ? MINUTE_NUMERAL_EMPHASIS_FILL
+                    : (is5() ? "#444444" : "#666666")
+                }
               >
                 {formatNumeral(min())}
               </text>
@@ -415,6 +466,11 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                 x={x()}
                 y={y()}
                 dy={NUMERAL_BASELINE_NUDGE}
+                style={numeralEmphasisStyle(
+                  emphasizedHour() === position,
+                  HOUR_NUMERAL_EMPHASIS_SCALE,
+                  HOUR_NUMERAL_EMPHASIS_TRANSITION,
+                )}
                 text-anchor="middle"
                 dominant-baseline="central"
                 font-size={numberFontSize(colorMode(), paletteId(), isKuwashiku(), num(), isCardinal)}

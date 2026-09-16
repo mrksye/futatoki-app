@@ -117,14 +117,17 @@
      ジオメトリは方向非依存なので従来どおり physical な top/left/right を直接使う。 */
   --safe-edge-start: var(--safe-edge-left);
   --safe-edge-end: var(--safe-edge-right);
-  /* end 側に置く chrome (Settings popover) の scale 支点。trigger が居る側へ寄せるため
-     方向に追従させる。transform-origin に inline-end キーワードが無いので物理値を var で flip。 */
+  /* start / end 側に置く chrome (Settings popover, じどうかいてんの下隅メニュー) の scale 支点。
+     trigger が居る側へ寄せるため方向に追従させる。transform-origin に inline-start /
+     inline-end キーワードが無いので物理値を var で flip。 */
+  --chrome-start-origin-x: left;
   --chrome-end-origin-x: right;
 }
 
 [dir="rtl"] {
   --safe-edge-start: var(--safe-edge-right);
   --safe-edge-end: var(--safe-edge-left);
+  --chrome-start-origin-x: right;
   --chrome-end-origin-x: left;
 }
 

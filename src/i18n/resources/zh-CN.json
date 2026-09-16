@@ -43,6 +43,15 @@
     "timeFormat": "时制",
     "numeral": "数字"
   },
+  "autoRotate": {
+    "emphasis": "数字变大",
+    "emphasisMinute": "分的数字",
+    "emphasisHour": "时的数字",
+    "fade": "指针变淡",
+    "fadeHour": "短针",
+    "fadeMinute": "长针",
+    "normal": "普通"
+  },
   "activity": {
     "add": "活动",
     "reset": "擦光",

@@ -43,6 +43,15 @@
     "timeFormat": "صِيغَة",
     "numeral": "أَرْقَام"
   },
+  "autoRotate": {
+    "emphasis": "تَكْبِير الْأَرْقَام",
+    "emphasisMinute": "أَرْقَام الدَّقَائِق",
+    "emphasisHour": "أَرْقَام السَّاعَات",
+    "fade": "إِخْفَاء عَقْرَب",
+    "fadeHour": "الْعَقْرَب الْقَصِير",
+    "fadeMinute": "الْعَقْرَب الطَّوِيل",
+    "normal": "عَادِيّ"
+  },
   "activity": {
     "add": "نَشَاط",
     "reset": "مَسْح",

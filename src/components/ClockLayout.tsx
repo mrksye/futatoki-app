@@ -4,6 +4,7 @@ import ClockFace from "./clockface-layers/ClockFace";
 import HandsLayer from "./clockface-layers/HandsLayer";
 import ActivityLayer from "./clockface-layers/ActivityLayer";
 import ActivityPicker from "./ActivityPicker";
+import AutoRotateActions from "./AutoRotateActions";
 import LanguagePicker from "./LanguagePicker";
 import ModePicker from "./ModePicker";
 import RotationActions from "./RotationActions";
@@ -899,6 +900,7 @@ export const ClockLayout: Component = () => {
       <SettingsPopover />
 
       <RotationActions />
+      <AutoRotateActions />
 
       <Show when={isTimerMode()}>
         <Suspense>

@@ -43,6 +43,15 @@
     "timeFormat": "รูปแบบ",
     "numeral": "ตัวเลข"
   },
+  "autoRotate": {
+    "emphasis": "ขยายตัวเลข",
+    "emphasisMinute": "ตัวเลขนาที",
+    "emphasisHour": "ตัวเลขชั่วโมง",
+    "fade": "ทำให้เข็มจาง",
+    "fadeHour": "เข็มสั้น",
+    "fadeMinute": "เข็มยาว",
+    "normal": "ปกติ"
+  },
   "activity": {
     "add": "กิจกรรม",
     "reset": "ล้าง",

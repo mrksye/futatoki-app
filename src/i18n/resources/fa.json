@@ -43,6 +43,15 @@
     "timeFormat": "قالِب",
     "numeral": "اَعداد"
   },
+  "autoRotate": {
+    "emphasis": "بُزُرگ کَردَنِ عَددها",
+    "emphasisMinute": "عَددهایِ دَقیقه",
+    "emphasisHour": "عَددهایِ ساعَت",
+    "fade": "کَم‌رَنگ کَردَنِ عَقربه",
+    "fadeHour": "عَقربهٔ کوتاه",
+    "fadeMinute": "عَقربهٔ بُلَند",
+    "normal": "عادی"
+  },
   "activity": {
     "add": "فَعّالیَّت",
     "reset": "پاک کُن",

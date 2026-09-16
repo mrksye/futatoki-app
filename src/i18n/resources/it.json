@@ -43,6 +43,15 @@
     "timeFormat": "Formato",
     "numeral": "Numeri"
   },
+  "autoRotate": {
+    "emphasis": "Ingrandire i numeri",
+    "emphasisMinute": "numeri dei minuti",
+    "emphasisHour": "numeri delle ore",
+    "fade": "Sbiadire una lancetta",
+    "fadeHour": "lancetta corta",
+    "fadeMinute": "lancetta lunga",
+    "normal": "normale"
+  },
   "activity": {
     "add": "attività",
     "reset": "pulisci",

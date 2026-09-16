@@ -43,6 +43,15 @@
     "timeFormat": "प्रारूप",
     "numeral": "अंक"
   },
+  "autoRotate": {
+    "emphasis": "अंक बड़े करो",
+    "emphasisMinute": "मिनट के अंक",
+    "emphasisHour": "घंटे के अंक",
+    "fade": "सुई हल्की करो",
+    "fadeHour": "छोटी सुई",
+    "fadeMinute": "बड़ी सुई",
+    "normal": "सामान्य"
+  },
   "activity": {
     "add": "गतिविधि",
     "reset": "रीसेट",

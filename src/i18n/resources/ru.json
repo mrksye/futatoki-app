@@ -43,6 +43,15 @@
     "timeFormat": "Формат",
     "numeral": "Цифры"
   },
+  "autoRotate": {
+    "emphasis": "Увеличить числа",
+    "emphasisMinute": "числа минут",
+    "emphasisHour": "числа часов",
+    "fade": "Приглушить стрелку",
+    "fadeHour": "маленькая стрелка",
+    "fadeMinute": "большая стрелка",
+    "normal": "обычно"
+  },
   "activity": {
     "add": "Занятие",
     "reset": "сброс",

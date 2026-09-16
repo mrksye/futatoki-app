@@ -43,6 +43,15 @@
     "timeFormat": "표기",
     "numeral": "숫자"
   },
+  "autoRotate": {
+    "emphasis": "숫자 크게",
+    "emphasisMinute": "분 숫자",
+    "emphasisHour": "시 숫자",
+    "fade": "바늘 흐리게",
+    "fadeHour": "짧은바늘",
+    "fadeMinute": "긴바늘",
+    "normal": "보통"
+  },
   "activity": {
     "add": "활동",
     "reset": "리셋",

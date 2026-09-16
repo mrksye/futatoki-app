@@ -43,6 +43,15 @@
     "timeFormat": "Format",
     "numeral": "Angka"
   },
+  "autoRotate": {
+    "emphasis": "Perbesar angka",
+    "emphasisMinute": "angka menit",
+    "emphasisHour": "angka jam",
+    "fade": "Samarkan jarum",
+    "fadeHour": "jarum pendek",
+    "fadeMinute": "jarum panjang",
+    "normal": "normal"
+  },
   "activity": {
     "add": "Kegiatan",
     "reset": "hapus",

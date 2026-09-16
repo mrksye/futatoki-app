@@ -1,5 +1,6 @@
 import { createEffect, onCleanup, Show, type Accessor, type Component } from "solid-js";
 import { clockMode } from "../../features/free-rotation/state";
+import { handOpacity } from "../../features/free-rotation/auto-rotate-view";
 import { clockRadius, handFactors } from "./geometry";
 
 /**
@@ -18,6 +19,12 @@ import { clockRadius, handFactors } from "./geometry";
  *
  * autoRotate 中は root に `.print-hands-hidden` が付き、印刷時に SVG 直下の <g> (時針 / 分針) が消える。
  * 中心ネジの <circle> は <g> 外なので残り、書き込み学習帳 (盤面 + ネジを見て針を書き込む) として刷れる。
+ *
+ * じどうかいてん中に選べる「針を薄める」(auto-rotate-view の handFade) は、時針 / 分針それぞれの
+ * <g> 全体の opacity として効く。timer の minuteHandStyle / overrunStyle が黒本体だけを薄めて白い
+ * 縁取りを不透明のまま残すのと違い、こちらは縁取りごと消す (縁取りだけ残ると針の位置が丸わかりで
+ * 「短針を隠して考える」練習にならない)。handOpacity は autoRotate 以外では常に 1 を返すので、
+ * 他モードの針の見え方はこの分岐の影響を受けない。
  */
 
 /** 分針 (長針) 本体の見た目 (色 + 不透明度)。色と濃さは「どう見せるか」として一体なので 1 つの値にまとめる。
@@ -81,6 +88,12 @@ const MINUTE_TICK_TIMING: KeyframeAnimationOptions = {
   easing: "ease-out",
 };
 
+/** 針を薄める / 戻すときのフェード。選んだ瞬間に切り替わったと分かる速さを優先し、色が飛ぶのを
+ *  防ぐ最小限の長さだけ残す。長くすると薄れていく途中の針が一番目に付いてしまい、消したいものを
+ *  かえって見せることになる。opacity だけの transition なので shake / minuteTick の WAAPI
+ *  transform とは別プロパティで干渉しない。 */
+const HAND_FADE_TRANSITION = "opacity 60ms linear";
+
 const HandsLayer: Component<HandsLayerProps> = (props) => {
   // 針長は detailMode × colorMode で決まる (geometry.handFactors)。タイマー扇も同じ helper を共有する。
   const R = clockRadius;
@@ -128,7 +141,11 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
             (側面/先端/根元の padding 全周均一 = (10-7)/2 = 1.5)。 */}
         <g
           transform={`rotate(${hourAngle() + 90} ${CENTER} ${CENTER})`}
-          style="will-change: transform"
+          style={{
+            "will-change": "transform",
+            opacity: handOpacity("hour"),
+            transition: HAND_FADE_TRANSITION,
+          }}
         >
           <line x1={CENTER} y1={CENTER + 10} x2={CENTER} y2={CENTER - R() * factors().hour}
             stroke="#ffffff" stroke-width="10" stroke-linecap="round" />
@@ -158,6 +175,8 @@ const HandsLayer: Component<HandsLayerProps> = (props) => {
           style={{
             "transform-box": "view-box",
             "transform-origin": "50% 50%",
+            opacity: handOpacity("minute"),
+            transition: HAND_FADE_TRANSITION,
           }}
         >
           <g

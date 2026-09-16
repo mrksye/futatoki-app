@@ -43,6 +43,15 @@
     "timeFormat": "Biçim",
     "numeral": "Rakamlar"
   },
+  "autoRotate": {
+    "emphasis": "Sayıları büyüt",
+    "emphasisMinute": "dakika sayıları",
+    "emphasisHour": "saat sayıları",
+    "fade": "İbreyi soluklaştır",
+    "fadeHour": "akrep",
+    "fadeMinute": "yelkovan",
+    "normal": "normal"
+  },
   "activity": {
     "add": "Etkinlik",
     "reset": "sıfırla",

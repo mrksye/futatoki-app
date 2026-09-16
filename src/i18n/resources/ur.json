@@ -43,6 +43,15 @@
     "timeFormat": "فارمَیٹ",
     "numeral": "اَعداد"
   },
+  "autoRotate": {
+    "emphasis": "اَعداد بَڑے کَرو",
+    "emphasisMinute": "مِنَٹ کے اَعداد",
+    "emphasisHour": "گَھنٹے کے اَعداد",
+    "fade": "سُوئی ہَلکی کَرو",
+    "fadeHour": "چھوٹی سُوئی",
+    "fadeMinute": "بَڑی سُوئی",
+    "normal": "عام"
+  },
   "activity": {
     "add": "سَرگَرمی",
     "reset": "ری سیٹ",
