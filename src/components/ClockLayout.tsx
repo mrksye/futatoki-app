@@ -209,9 +209,9 @@ export const ClockLayout: Component = () => {
   });
 
   /** drag / autoRotate 中は rotateMinutes が連続的に動く状態。release-snap の snap 抑制と
-   *  display の float-vs-ceil 切替に使う。タップで止めた じどうかいてん は動いていないので、
-   *  止めた瞬間に release-snap が走って針が整数分に収まる (止まった盤はそのまま読み取りの
-   *  問題になるため、小数分のまま残さない)。 */
+   *  display の float-vs-ceil 切替に使う。押下で止めた じどうかいてん は動いていないので、
+   *  指を離して dragging が落ちたところで release-snap が走り、針が整数分に収まる (止まった盤は
+   *  そのまま読み取りの問題になるため、小数分のまま残さない)。 */
   const [dragging, setDragging] = createSignal(false);
   const moving = createMemo(
     () => dragging() || (clockMode() === "autoRotate" && !autoRotatePaused()),
@@ -345,7 +345,7 @@ export const ClockLayout: Component = () => {
     if (clockMode() === "autoRotate") {
       transition("freeRotate");
       // 閾値までの移動は捨てて指の現在地から握り直す。押下時点の rotateMinutes を基準にすると、
-      // 確定までの間に自動進行した分だけ盤が巻き戻って見える。
+      // 再生側の押下から続けてドラッグした時に、確定までに自動進行した分だけ盤が巻き戻って見える。
       dragRef = dragStart(e, rotateMinutes());
     }
   };
@@ -371,6 +371,10 @@ export const ClockLayout: Component = () => {
     // やらないと dragStart が float の startMinutes を capture してしまい、commit が後から
     // 書き戻されて drag 中に逆回転が混じる。
     flushPendingCommit();
+    // 押した瞬間に じどうかいてん の進行を止める / また動かす。ここで止めても dragging が立つ間は
+    // moving のままなので、release-snap は指を離してから走る。閾値を超えて動いた時は
+    // confirmDragOnMove が じゆうかいてん へ移し、抜けた側で一時停止は解除される。
+    if (clockMode() === "autoRotate") toggleAutoRotatePause();
     pressOriginX = e.clientX;
     pressOriginY = e.clientY;
     setDragConfirmed(false);
@@ -403,12 +407,6 @@ export const ClockLayout: Component = () => {
     if (!s || e.pointerId !== s.pointerId) return;
     const el = e.currentTarget as HTMLElement;
     if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId);
-    // ドラッグに育たないまま指を離した = タップ。じどうかいてん の進行を止める / また動かす。
-    // pointercancel (browser にジェスチャを持って行かれた等) は本人の離す操作ではないので除く。
-    // setDragging(false) より先に倒すことで、止めた時だけ moving が落ちて release-snap が走る。
-    if (e.type === "pointerup" && !dragConfirmed() && clockMode() === "autoRotate") {
-      toggleAutoRotatePause();
-    }
     dragRef = null;
     setDragging(false);
     setDragConfirmed(false);
