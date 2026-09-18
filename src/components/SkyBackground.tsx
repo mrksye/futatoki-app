@@ -1,4 +1,4 @@
-import { For, Show, createMemo, createSignal, onCleanup, onMount } from "solid-js";
+import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount } from "solid-js";
 import type { Component } from "solid-js";
 import { isFullMoonActive } from "../features/full-moon-easter-egg";
 import { lerpColor } from "../lib/color";
@@ -10,7 +10,7 @@ import { lerpColor } from "../lib/color";
  * パフォーマンス指針:
  * - 位置は left/top でなく transform: translate (GPU composite のみ)
  * - drop-shadow / box-shadow は不使用 (毎フレーム GPU 再計算で重い)
- * - 背景グラデーションは 2 分刻みに量子化して repaint 頻度を抑える
+ * - 背景グラデーションの塗り直しは実時間で上限を切り、全画面 repaint の頻度を回す速さから切り離す
  * - 星は常時アニメだが数を絞る
  *
  * 印刷時は root の `.sky-background` を白で塗り潰し、子要素 (太陽 / 月 / 星) を display:none する。
@@ -127,13 +127,46 @@ interface SkyBackgroundProps {
  *  スパイクが出て合体 transition のフレームを落とすので、数フレームに分散する。 */
 const STAR_REVEAL_PER_FRAME = 3;
 
+/** 空グラデを塗り直す最短間隔 (ms)。背景は viewport 全面の linear-gradient なので、色が 1 段変わる
+ *  だけで全画面のラスタライズが走る。ドラッグは 6px で 1 分、じどうかいてんは 1 秒で 60 分 進むため、
+ *  分で刻むと回す速さしだいで毎フレーム塗り直しになる。実時間で上限を切れば、どれだけ速く回しても
+ *  全画面ペイントの回数は変わらない。12 回/秒 あれば色の移り変わりは目には連続に見える。 */
+const SKY_REPAINT_MIN_INTERVAL_MS = 80;
+
+/** source を実時間で間引いて返す。間引いた側も最後の 1 回だけは遅れて必ず反映するので、指を止めた
+ *  ところの色で空がちゃんと落ち着く。 */
+const useRepaintCappedMinutes = (source: () => number): (() => number) => {
+  const [painted, setPainted] = createSignal(source());
+  let lastPaintedAt = 0;
+  let trailingTimer: ReturnType<typeof setTimeout> | undefined;
+
+  createEffect(on(source, (minutes) => {
+    const waitMs = SKY_REPAINT_MIN_INTERVAL_MS - (performance.now() - lastPaintedAt);
+    if (waitMs <= 0) {
+      lastPaintedAt = performance.now();
+      setPainted(minutes);
+      return;
+    }
+    if (trailingTimer) return;
+    trailingTimer = setTimeout(() => {
+      trailingTimer = undefined;
+      lastPaintedAt = performance.now();
+      setPainted(source());
+    }, waitMs);
+  }));
+  onCleanup(() => clearTimeout(trailingTimer));
+
+  return painted;
+};
+
 const SkyBackground: Component<SkyBackgroundProps> = (props) => {
-  /** 2 分刻みに量子化した分。目で差がわからない粒度で repaint 頻度を下げる。 */
-  const quantizedMin = createMemo(() => Math.floor(props.totalMinutes / 2) * 2);
-  const sky = createMemo(() => skyAtMinute(quantizedMin()));
+  /** 空の色を決める分。太陽と月は間引かずに props をそのまま読む (位置の更新は transform = 合成だけで
+   *  済むので、全画面ペイントを伴うグラデとは別扱いにする)。 */
+  const paintedMinutes = useRepaintCappedMinutes(() => props.totalMinutes);
+  const sky = createMemo(() => skyAtMinute(paintedMinutes()));
   const sun = createMemo(() => sunPosition(props.totalMinutes));
   const moon = createMemo(() => moonPosition(props.totalMinutes));
-  const starOp = createMemo(() => Math.max(0, nightness(quantizedMin()) - 0.3) * 1.4);
+  const starOp = createMemo(() => Math.max(0, nightness(paintedMinutes()) - 0.3) * 1.4);
   const starsVisible = createMemo(() => starOp() > 0.01);
 
   /** 入室アニメ用の段階表示。mount 直後は gradient だけを出し (= 軽い reflow で合体 transition の

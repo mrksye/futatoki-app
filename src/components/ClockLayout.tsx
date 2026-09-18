@@ -565,6 +565,14 @@ export const ClockLayout: Component = () => {
   });
   onCleanup(() => document.body.classList.remove("slot-transitioning"));
 
+  /** 盤を握っている間 (dragging) は body に rotation-dragging を付与し、index.css の
+   *  `body.rotation-dragging .star-twinkle` rule で星の瞬きを止める。星は 1 個ずつが常駐の合成
+   *  レイヤーになっていて毎フレーム合成対象になるので、針と盤の描画にフレームを回す。 */
+  createEffect(() => {
+    document.body.classList.toggle("rotation-dragging", dragging());
+  });
+  onCleanup(() => document.body.classList.remove("rotation-dragging"));
+
   const cancelMergedPress = () => {
     if (mergedPressTimer) {
       clearTimeout(mergedPressTimer);

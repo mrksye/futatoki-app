@@ -327,6 +327,12 @@ body.chronostasis .star-twinkle {
   animation-play-state: paused;
 }
 
+/* 盤を握っている間は星の瞬きを止める。opacity アニメ自体は合成で完結するが、星 1 個ずつが常駐の
+   合成レイヤーとして毎フレーム合成対象になるため、針と盤の描画にフレームを譲る。 */
+body.rotation-dragging .star-twinkle {
+  animation-play-state: paused;
+}
+
 /* ClockLayout / SettingsPanel の transition 群を class 化。inline style だと @media query で消せず
    prefers-reduced-motion 対応ができないため class に切り出して body.motion-reduce 側で上書きする。 */
 /* AM/PM wrapper は opacity フェードを使わず visibility 切替にする。理由:
