@@ -217,8 +217,8 @@ export const ClockLayout: Component = () => {
     () => dragging() || (clockMode() === "autoRotate" && !autoRotatePaused()),
   );
   /** 実ドラッグが確定したか (pointerdown から閾値を超えて動いた)。静止長押し中は false のまま。
-   *  反対側 split 盤の unmount (合成負荷軽減) はこの確定後だけに限定し、長押し中は薄い側の盤も残す。 */
-  const [dragConfirmed, setDragConfirmed] = createSignal(false);
+   *  読むのは confirmDragOnMove の二重確定ガードだけで描画には効かないので、signal ではなく素の変数。 */
+  let dragConfirmed = false;
 
   const displayed = createMemo(() => {
     if (isRotating()) {
@@ -329,18 +329,17 @@ export const ClockLayout: Component = () => {
     }, ROTATION_LONG_PRESS_MS);
   };
 
-  /** pointer が pressOrigin から閾値を超えて動いたら実ドラッグと確定する。確定で反対側 split 盤の unmount を
-   *  許可し (dragConfirmed)、静止前提の長押し warning も取り消す。閾値内に留まる長押し中は dragConfirmed が
-   *  false のまま = 薄い側の盤も見えたまま残る。
+  /** pointer が pressOrigin から閾値を超えて動いたら実ドラッグと確定する。確定で静止前提の長押し warning を
+   *  取り消す。閾値内に留まる長押し中は dragConfirmed が false のまま = warning はそのまま出る。
    *
    *  じどうかいてん から じゆうかいてん へ移るのもこの確定が唯一の入口。タップと区別がつかないうちは
    *  モードを動かさず、閾値を超えて初めて「触って直したい」と判断する。 */
   const confirmDragOnMove = (e: PointerEvent) => {
-    if (dragConfirmed()) return;
+    if (dragConfirmed) return;
     const dx = e.clientX - pressOriginX;
     const dy = e.clientY - pressOriginY;
     if (Math.hypot(dx, dy) <= ROTATION_DRAG_CONFIRM_THRESHOLD_PX) return;
-    setDragConfirmed(true);
+    dragConfirmed = true;
     cancelLongPressWarning();
     if (clockMode() === "autoRotate") {
       transition("freeRotate");
@@ -377,7 +376,7 @@ export const ClockLayout: Component = () => {
     if (clockMode() === "autoRotate") toggleAutoRotatePause();
     pressOriginX = e.clientX;
     pressOriginY = e.clientY;
-    setDragConfirmed(false);
+    dragConfirmed = false;
     // pointer ができごとアイコン上で押された場合の長押し warning 検出を仕込む
     // (drag と並行: 閾値を超えて動いたら drag 確定で warning は出さない、500ms 静止なら warning に入る)。
     startLongPressWarning(e);
@@ -391,7 +390,7 @@ export const ClockLayout: Component = () => {
     if (!s || e.pointerId !== s.pointerId) return;
     // ガードの後に置くのが必須: clock モードでは onDragStart が early return して dragRef も
     // pressOrigin も更新しないため、ここを前に置くと clock モードの pointermove が古い pressOrigin
-    // との距離で dragConfirmed を誤って latch し、反対側の盤が永久に消える。
+    // との距離で dragConfirmed を誤って latch し、長押し warning が出せなくなる。
     confirmDragOnMove(e);
     // 確定時に じどうかいてん から握り直した場合 dragRef が差し替わっているので読み直す。
     const current = dragRef;
@@ -409,7 +408,7 @@ export const ClockLayout: Component = () => {
     if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId);
     dragRef = null;
     setDragging(false);
-    setDragConfirmed(false);
+    dragConfirmed = false;
     if (rafId !== null) {
       cancelAnimationFrame(rafId);
       rafId = null;
@@ -615,20 +614,15 @@ export const ClockLayout: Component = () => {
     () => amPmFlipped() || (isRotating() && !transitioning()),
   );
 
-  /** AM/PM 各 wrapper の表示条件: merged 中 (transitioning 以外) は隠す。実ドラッグ進行中 (pointer 押下中
-   *  かつ閾値を超えて移動済み) は反対側を unmount して合成負荷を軽減する。判定に dragging を必ず併せるので、
-   *  pointer を離す / clock モードでは dragConfirmed の値に関係なく両側表示へ戻る (静止長押し中も薄い側は
-   *  残る)。たいむ遷移中は split wrapper が動くフェーズ (splitSide の収束/発散) だけ出す
+  /** AM/PM 両 wrapper の表示条件: merged 中 (transitioning 以外) は隠す。じゆうかいてんのドラッグ中も
+   *  両側を出したままにする。ドラッグ中の反対側は盤もできごとアイコンも静止していて、動くのは針の
+   *  SVG transform だけなので、unmount で得られる分より「回している間だけ半日分が消える」不在の方が
+   *  高くつく。たいむ遷移中は split wrapper が動くフェーズ (splitSide の収束/発散) だけ出す
    *  (centerSlide や boing 中は merged 盤だけ / TimerLayout 側が描く)。 */
-  const amSplitVisible = createMemo(() =>
+  const splitVisible = createMemo(() =>
     timerTransitioning()
       ? timerWrappersActive()
-      : (!mergedVisible() || transitioning()) && (isAm() || !(dragging() && dragConfirmed())),
-  );
-  const pmSplitVisible = createMemo(() =>
-    timerTransitioning()
-      ? timerWrappersActive()
-      : (!mergedVisible() || transitioning()) && (!isAm() || !(dragging() && dragConfirmed())),
+      : !mergedVisible() || transitioning(),
   );
 
   /** AM/PM バッジを出すのは「とけい」静止時だけ。回転中・たいむ中はもちろん、たいむ遷移中も隠す。
@@ -746,7 +740,7 @@ export const ClockLayout: Component = () => {
               "will-change": transitioning() || timerTransitioning() ? "transform" : "auto",
             }}
           >
-            <Show when={amSplitVisible()}>
+            <Show when={splitVisible()}>
               <ClockSlot size={maxClockSize()}>
                 <DimOverlay opacity={amSelectionOpacity()}>
                   <ClockFace period="am" hours={amTime().hours} />
@@ -786,7 +780,7 @@ export const ClockLayout: Component = () => {
               "will-change": transitioning() || timerTransitioning() ? "transform" : "auto",
             }}
           >
-            <Show when={pmSplitVisible()}>
+            <Show when={splitVisible()}>
               <ClockSlot size={maxClockSize()}>
                 <DimOverlay opacity={pmSelectionOpacity()}>
                   <ClockFace period="pm" hours={pmTime().hours} />
