@@ -91,31 +91,26 @@ const NUMERAL_BASELINE_NUDGE = 1;
  *  時数 (18〜42) よりずっと小さく、同じ倍率では「大きくなった」と読めないため。どちらも隣の数字と
  *  比べてやっと分かる程度に留め、盤のリズムを崩さない。
  *
- *  transition は「強調が隣へ移る速さ」に対してほぼゼロでなければ強調にならない。じどうかいてんは
- *  1 日 24 秒なので長針は毎秒 1 周、短針は毎秒 1 時間ぶん進む。つまり分数は 1 フレーム (≒16ms)、
- *  時数は 1 秒ごとに隣へ移る。
- *   - 分数: 1 フレームしか居座らないので transition を掛けると目標倍率に届く前に縮み始め、数個の
- *     数字が中途半端に膨らんだ滲みになる。即時切替にして 1 フレームぶん確実に最大まで膨らませ、
- *     長針と一緒に回る 1 つのコブとして見せる。
- *   - 時数: 1 秒居座るので膨らむ間を取れるが、長さがそのまま「盤上で何分遅れて効くか」になる
- *     (60 分/秒 なので 200ms = 12 分の遅れ)。遅れが読み取りの邪魔にならない範囲まで詰める。 */
+ *  拡大は分数・時数とも即時で、transition は掛けない。じどうかいてんは 1 日 24 秒なので長針は毎秒
+ *  1 周、短針は毎秒 1 時間ぶん進み、強調は分数なら 1 フレーム (≒16ms)、時数なら 1 秒で隣へ移る。
+ *  膨らむ途中の中間フレームは「いまどれが強調されているか」をぼかすだけで、時数では transition の
+ *  長さがそのまま盤上の遅れになる (60 分/秒 なので 50ms で 3 分)。毎フレーム 60 個の <text> が
+ *  補間対象を抱え込むのも避けられる。 */
 const MINUTE_NUMERAL_EMPHASIS_SCALE = 1.45;
-const MINUTE_NUMERAL_EMPHASIS_TRANSITION = "none";
 /** 強調中の分数字のインク。通常の分数字は盤の主役を時数に譲るためグレー (5 分刻み #444 / それ以外
  *  #666) で置いているが、強調の 1 フレームだけ時数と同じ黒に振って前へ出す。倍率だけでは 1 フレーム
  *  の点滅が小さなグレー文字の中に埋もれるので、大きさと濃さの 2 つで同時に押し出す。 */
 const MINUTE_NUMERAL_EMPHASIS_FILL = "#111111";
 const HOUR_NUMERAL_EMPHASIS_SCALE = 1.14;
-const HOUR_NUMERAL_EMPHASIS_TRANSITION = "transform 50ms ease-out";
 
 /** 強調中の数字に載せる SVG インライン style。拡大の支点はグリフ自身の中央 (fill-box) に取り、
  *  盤上の座標 (x/y 属性) は動かさないので、時数の <g> バウンスや PM の 12 ドゥンドゥドゥンッと
  *  transform を取り合わない (親 <g> と子 <text> で別々の transform が乗るだけ)。 */
-const numeralEmphasisStyle = (emphasized: boolean, scale: number, transition: string) => ({
+const numeralEmphasisStyle = (emphasized: boolean, scale: number) => ({
   "transform-box": "fill-box" as const,
   "transform-origin": "center" as const,
   transform: emphasized ? `scale(${scale})` : "scale(1)",
-  transition,
+  transition: "none",
 });
 
 /** 時間の数字 font-size。ばっじ×すっきり×ものとーんだけバッジの円が白で消えるので数字を少し大きく。
@@ -393,11 +388,7 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                 x={x()}
                 y={y()}
                 dy={NUMERAL_BASELINE_NUDGE}
-                style={numeralEmphasisStyle(
-                  emphasized(),
-                  MINUTE_NUMERAL_EMPHASIS_SCALE,
-                  MINUTE_NUMERAL_EMPHASIS_TRANSITION,
-                )}
+                style={numeralEmphasisStyle(emphasized(), MINUTE_NUMERAL_EMPHASIS_SCALE)}
                 text-anchor="middle"
                 dominant-baseline="central"
                 font-size={is5() ? "11" : "8"}
@@ -466,11 +457,7 @@ const FaceDetail: Component<FaceDetailProps> = (props) => {
                 x={x()}
                 y={y()}
                 dy={NUMERAL_BASELINE_NUDGE}
-                style={numeralEmphasisStyle(
-                  emphasizedHour() === position,
-                  HOUR_NUMERAL_EMPHASIS_SCALE,
-                  HOUR_NUMERAL_EMPHASIS_TRANSITION,
-                )}
+                style={numeralEmphasisStyle(emphasizedHour() === position, HOUR_NUMERAL_EMPHASIS_SCALE)}
                 text-anchor="middle"
                 dominant-baseline="central"
                 font-size={numberFontSize(colorMode(), paletteId(), isKuwashiku(), num(), isCardinal)}
